@@ -1,0 +1,211 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AnalyticsService = void 0;
+const common_1 = require("@nestjs/common");
+const agendas_service_1 = require("../agendas/agendas.service");
+const minutes_service_1 = require("../minutes/minutes.service");
+const meetings_service_1 = require("../meetings/meetings.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const reports_service_1 = require("../reports/reports.service");
+let AnalyticsService = class AnalyticsService {
+    meetingsService;
+    agendasService;
+    reportsService;
+    minutesService;
+    notificationsService;
+    constructor(meetingsService, agendasService, reportsService, minutesService, notificationsService) {
+        this.meetingsService = meetingsService;
+        this.agendasService = agendasService;
+        this.reportsService = reportsService;
+        this.minutesService = minutesService;
+        this.notificationsService = notificationsService;
+    }
+    health() {
+        return { status: 'ok' };
+    }
+    async executiveKpis() {
+        const [meetings, agendas, reports, minutes, directorQueue, caoQueue, observability] = await Promise.all([
+            this.meetingsService.list({ inCamera: 'true' }, this.systemViewUser()),
+            this.agendasService.list(),
+            this.reportsService.list({}),
+            this.minutesService.list(),
+            this.reportsService.listPendingDirector(),
+            this.reportsService.listPendingCao(),
+            this.notificationsService.observability(),
+        ]);
+        const publishedAgendas = agendas.filter((entry) => entry.status === 'PUBLISHED' && entry.publishedAt);
+        const publishedMinutes = minutes.filter((entry) => entry.status === 'PUBLISHED' && entry.publishedAt);
+        const publishedReports = reports.filter((entry) => entry.workflowStatus === 'PUBLISHED');
+        const reportPublishedAtMap = new Map();
+        await Promise.all(publishedReports.map(async (report) => {
+            const history = await this.reportsService.getApprovalHistory(report.id);
+            const publishedEvent = history
+                .filter((event) => event.action === 'PUBLISHED')
+                .sort((left, right) => right.actedAt.localeCompare(left.actedAt))[0];
+            if (publishedEvent?.actedAt) {
+                reportPublishedAtMap.set(report.id, publishedEvent.actedAt);
+            }
+        }));
+        const agendaCycleHours = publishedAgendas
+            .map((entry) => durationHours(entry.createdAt, entry.publishedAt))
+            .filter((value) => value !== null);
+        const reportCycleHours = publishedReports
+            .map((entry) => durationHours(entry.createdAt, reportPublishedAtMap.get(entry.id)))
+            .filter((value) => value !== null);
+        const minutesCycleHours = publishedMinutes
+            .map((entry) => durationHours(entry.createdAt, entry.publishedAt))
+            .filter((value) => value !== null);
+        const approvedOrPublished = reports.filter((entry) => entry.workflowStatus === 'APPROVED' || entry.workflowStatus === 'PUBLISHED').length;
+        const rejected = reports.filter((entry) => entry.workflowStatus === 'REJECTED').length;
+        const monthlyPublications = buildMonthlyPublicationTrend({
+            agendas: publishedAgendas.map((entry) => entry.publishedAt),
+            reports: Array.from(reportPublishedAtMap.values()),
+            minutes: publishedMinutes.map((entry) => entry.publishedAt),
+        });
+        const digestDeliveryRate = percentage(observability.digest.delivered, Math.max(1, observability.digest.total));
+        return {
+            generatedAt: new Date().toISOString(),
+            totals: {
+                meetings: meetings.length,
+                agendas: agendas.length,
+                reports: reports.length,
+                minutes: minutes.length,
+            },
+            approvals: {
+                directorPending: directorQueue.length,
+                caoPending: caoQueue.length,
+                totalPending: directorQueue.length + caoQueue.length,
+            },
+            publicationCoverage: {
+                agendasPublishedPct: percentage(publishedAgendas.length, Math.max(1, agendas.length)),
+                reportsPublishedPct: percentage(publishedReports.length, Math.max(1, reports.length)),
+                minutesPublishedPct: percentage(publishedMinutes.length, Math.max(1, minutes.length)),
+            },
+            cycleTimeHours: {
+                agendaMedian: round1(median(agendaCycleHours)),
+                reportMedian: round1(median(reportCycleHours)),
+                minutesMedian: round1(median(minutesCycleHours)),
+            },
+            reportWorkflow: {
+                approvedOrPublishedRate: percentage(approvedOrPublished, Math.max(1, reports.length)),
+                rejectedRate: percentage(rejected, Math.max(1, reports.length)),
+            },
+            digest: {
+                total: observability.digest.total,
+                delivered: observability.digest.delivered,
+                failed: observability.digest.failed,
+                pending: observability.digest.pending,
+                deliveryRate: digestDeliveryRate,
+                latestDigestEventAt: observability.digest.latestDigestEventAt,
+            },
+            monthlyPublications,
+        };
+    }
+    systemViewUser() {
+        return {
+            id: 'system-analytics',
+            microsoftOid: 'system-analytics',
+            email: 'system@analytics.local',
+            displayName: 'System Analytics',
+            roles: ['SYSTEM'],
+            permissions: ['meeting.read.in_camera'],
+        };
+    }
+};
+exports.AnalyticsService = AnalyticsService;
+exports.AnalyticsService = AnalyticsService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [meetings_service_1.MeetingsService,
+        agendas_service_1.AgendasService,
+        reports_service_1.ReportsService,
+        minutes_service_1.MinutesService,
+        notifications_service_1.NotificationsService])
+], AnalyticsService);
+function durationHours(startAt, endAt) {
+    if (!startAt || !endAt) {
+        return null;
+    }
+    const start = new Date(startAt);
+    const end = new Date(endAt);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+        return null;
+    }
+    return (end.getTime() - start.getTime()) / (60 * 60 * 1000);
+}
+function median(values) {
+    if (values.length === 0) {
+        return 0;
+    }
+    const sorted = [...values].sort((left, right) => left - right);
+    const middle = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) {
+        return (sorted[middle - 1] + sorted[middle]) / 2;
+    }
+    return sorted[middle];
+}
+function percentage(value, total) {
+    if (total <= 0) {
+        return 0;
+    }
+    return Math.max(0, Math.min(100, round1((value / total) * 100)));
+}
+function round1(value) {
+    return Math.round(value * 10) / 10;
+}
+function buildMonthlyPublicationTrend(input) {
+    const monthKeys = lastMonthKeys(6);
+    const entries = monthKeys.map((month) => ({ month, agendas: 0, reports: 0, minutes: 0 }));
+    const byMonth = new Map(entries.map((entry) => [entry.month, entry]));
+    for (const value of input.agendas) {
+        const key = toMonthKey(value);
+        const bucket = byMonth.get(key);
+        if (bucket) {
+            bucket.agendas += 1;
+        }
+    }
+    for (const value of input.reports) {
+        const key = toMonthKey(value);
+        const bucket = byMonth.get(key);
+        if (bucket) {
+            bucket.reports += 1;
+        }
+    }
+    for (const value of input.minutes) {
+        const key = toMonthKey(value);
+        const bucket = byMonth.get(key);
+        if (bucket) {
+            bucket.minutes += 1;
+        }
+    }
+    return entries;
+}
+function toMonthKey(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+}
+function lastMonthKeys(monthCount) {
+    const now = new Date();
+    const keys = [];
+    for (let offset = monthCount - 1; offset >= 0; offset -= 1) {
+        const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1));
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        keys.push(`${year}-${month}`);
+    }
+    return keys;
+}
+//# sourceMappingURL=analytics.service.js.map

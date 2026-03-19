@@ -1,0 +1,386 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.NotificationsService = void 0;
+const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
+const notifications_repository_1 = require("./notifications.repository");
+let NotificationsService = class NotificationsService {
+    notificationsRepository;
+    configService;
+    constructor(notificationsRepository, configService) {
+        this.notificationsRepository = notificationsRepository;
+        this.configService = configService;
+    }
+    health() {
+        return { status: 'ok' };
+    }
+    async emit(input) {
+        const channels = this.resolveChannels();
+        const created = await this.notificationsRepository.create({
+            eventType: input.eventType,
+            entityType: input.entityType,
+            entityId: input.entityId,
+            actorUserId: input.actorUserId,
+            payloadJson: input.payloadJson ?? {},
+            channels,
+            status: 'PENDING',
+            deliveryAttempts: 0,
+        });
+        return this.dispatch(created);
+    }
+    list(query) {
+        return this.notificationsRepository.list(query);
+    }
+    async summary() {
+        const [pending, delivered, failed] = await Promise.all([
+            this.notificationsRepository.list({ status: 'PENDING', limit: 250 }),
+            this.notificationsRepository.list({ status: 'DELIVERED', limit: 250 }),
+            this.notificationsRepository.list({ status: 'FAILED', limit: 250 }),
+        ]);
+        return {
+            pending: pending.length,
+            delivered: delivered.length,
+            failed: failed.length,
+            total: pending.length + delivered.length + failed.length,
+        };
+    }
+    async observability() {
+        const events = await this.notificationsRepository.list({ limit: 500 });
+        const now = new Date();
+        const totals = {
+            total: events.length,
+            pending: events.filter((entry) => entry.status === 'PENDING').length,
+            delivered: events.filter((entry) => entry.status === 'DELIVERED').length,
+            failed: events.filter((entry) => entry.status === 'FAILED').length,
+        };
+        const channelMap = new Map();
+        for (const event of events) {
+            for (const channel of event.channels) {
+                const key = channel || 'IN_APP';
+                const bucket = channelMap.get(key) ?? {
+                    channel: key,
+                    total: 0,
+                    pending: 0,
+                    delivered: 0,
+                    failed: 0,
+                };
+                bucket.total += 1;
+                if (event.status === 'PENDING') {
+                    bucket.pending += 1;
+                }
+                else if (event.status === 'DELIVERED') {
+                    bucket.delivered += 1;
+                }
+                else if (event.status === 'FAILED') {
+                    bucket.failed += 1;
+                }
+                channelMap.set(key, bucket);
+            }
+        }
+        const digestEvents = events.filter((entry) => entry.eventType.startsWith('PUBLIC_DIGEST_'));
+        const latestDigestDate = digestEvents
+            .map((entry) => new Date(entry.createdAt))
+            .filter((value) => !Number.isNaN(value.getTime()))
+            .sort((left, right) => right.getTime() - left.getTime())[0];
+        const pendingEvents = events.filter((entry) => entry.status === 'PENDING');
+        const oldestPending = pendingEvents
+            .map((entry) => new Date(entry.createdAt))
+            .filter((value) => !Number.isNaN(value.getTime()))
+            .sort((left, right) => left.getTime() - right.getTime())[0];
+        const pendingOldestAgeMinutes = oldestPending
+            ? Math.max(0, Math.floor((now.getTime() - oldestPending.getTime()) / (60 * 1000)))
+            : 0;
+        return {
+            generatedAt: now.toISOString(),
+            windowSize: events.length,
+            totals,
+            byChannel: Array.from(channelMap.values()).sort((left, right) => right.total - left.total),
+            digest: {
+                total: digestEvents.length,
+                delivered: digestEvents.filter((entry) => entry.status === 'DELIVERED').length,
+                failed: digestEvents.filter((entry) => entry.status === 'FAILED').length,
+                pending: digestEvents.filter((entry) => entry.status === 'PENDING').length,
+                latestDigestEventAt: latestDigestDate?.toISOString(),
+            },
+            backlog: {
+                pendingOldestAgeMinutes,
+                highRetryCount: events.filter((entry) => entry.deliveryAttempts >= 3).length,
+            },
+        };
+    }
+    async retry(id) {
+        await this.notificationsRepository.getById(id);
+        const reset = await this.notificationsRepository.updateDelivery(id, {
+            status: 'PENDING',
+            deliveryAttempts: 0,
+            lastError: undefined,
+            deliveredAt: undefined,
+        });
+        return this.dispatch(reset);
+    }
+    async dispatch(record) {
+        const maxAttempts = this.resolveMaxAttempts();
+        let attempt = Math.max(0, record.deliveryAttempts);
+        while (attempt < maxAttempts) {
+            attempt += 1;
+            try {
+                await this.deliverThroughChannels(record);
+                return await this.notificationsRepository.updateDelivery(record.id, {
+                    status: 'DELIVERED',
+                    deliveryAttempts: attempt,
+                    deliveredAt: new Date().toISOString(),
+                    lastError: undefined,
+                });
+            }
+            catch (error) {
+                const message = error instanceof Error ? error.message : 'Unknown notification dispatch error';
+                const isFinalAttempt = attempt >= maxAttempts;
+                const updated = await this.notificationsRepository.updateDelivery(record.id, {
+                    status: isFinalAttempt ? 'FAILED' : 'PENDING',
+                    deliveryAttempts: attempt,
+                    deliveredAt: undefined,
+                    lastError: message,
+                });
+                if (isFinalAttempt) {
+                    return updated;
+                }
+                await sleep(this.resolveRetryDelayMs(attempt));
+            }
+        }
+        return this.notificationsRepository.updateDelivery(record.id, {
+            status: 'FAILED',
+            deliveryAttempts: attempt,
+            deliveredAt: undefined,
+            lastError: 'Notification dispatch exhausted retry attempts.',
+        });
+    }
+    resolveChannels() {
+        const raw = this.configService.get('notificationChannels') ?? process.env.NOTIFICATION_CHANNELS;
+        if (!raw || raw.trim().length === 0) {
+            return ['IN_APP'];
+        }
+        const channels = raw
+            .split(',')
+            .map((value) => value.trim().toUpperCase())
+            .filter((value) => value.length > 0);
+        return channels.length > 0 ? Array.from(new Set(channels)) : ['IN_APP'];
+    }
+    resolveMaxAttempts() {
+        const raw = this.configService.get('notificationRetryMaxAttempts') ?? Number(process.env.NOTIFICATION_RETRY_MAX_ATTEMPTS ?? 3);
+        if (!Number.isFinite(raw)) {
+            return 3;
+        }
+        return Math.max(1, Math.min(10, Number(raw)));
+    }
+    resolveRetryDelayMs(attempt) {
+        const base = this.configService.get('notificationRetryBaseDelayMs') ??
+            Number(process.env.NOTIFICATION_RETRY_BASE_DELAY_MS ?? 400);
+        const safeBase = Number.isFinite(base) ? Math.max(50, Number(base)) : 400;
+        return Math.min(5000, safeBase * 2 ** Math.max(0, attempt - 1));
+    }
+    async deliverThroughChannels(record) {
+        for (const channel of record.channels) {
+            await this.deliverToChannel(channel, record);
+        }
+    }
+    async deliverToChannel(channel, record) {
+        if (channel === 'IN_APP') {
+            return;
+        }
+        if (channel === 'WEBHOOK') {
+            const endpoint = this.configService.get('notificationWebhookUrl') ?? process.env.NOTIFICATION_WEBHOOK_URL;
+            if (!endpoint) {
+                throw new Error('WEBHOOK channel configured without NOTIFICATION_WEBHOOK_URL.');
+            }
+            await this.postJson(endpoint, this.buildWebhookPayload(record, 'WEBHOOK'));
+            return;
+        }
+        if (channel === 'TEAMS') {
+            const endpoint = this.configService.get('notificationTeamsWebhookUrl') ?? process.env.NOTIFICATION_TEAMS_WEBHOOK_URL;
+            if (!endpoint) {
+                throw new Error('TEAMS channel configured without NOTIFICATION_TEAMS_WEBHOOK_URL.');
+            }
+            await this.postJson(endpoint, this.buildWebhookPayload(record, 'TEAMS'));
+            return;
+        }
+        if (channel === 'EMAIL') {
+            const endpoint = this.configService.get('notificationEmailWebhookUrl') ?? process.env.NOTIFICATION_EMAIL_WEBHOOK_URL;
+            if (!endpoint) {
+                throw new Error('EMAIL channel configured without NOTIFICATION_EMAIL_WEBHOOK_URL.');
+            }
+            await this.postJson(endpoint, this.buildWebhookPayload(record, 'EMAIL'));
+            return;
+        }
+        throw new Error(`Unsupported notification channel: ${channel}`);
+    }
+    buildWebhookPayload(record, channel) {
+        const digestView = this.toDigestView(record);
+        if (digestView) {
+            if (channel === 'EMAIL') {
+                return this.buildEmailDigestPayload(record, digestView);
+            }
+            if (channel === 'TEAMS') {
+                return this.buildTeamsDigestPayload(record, digestView);
+            }
+            if (channel === 'WEBHOOK') {
+                return this.buildWebhookDigestPayload(record, digestView);
+            }
+        }
+        return {
+            channel,
+            eventType: record.eventType,
+            entityType: record.entityType,
+            entityId: record.entityId,
+            actorUserId: record.actorUserId,
+            createdAt: record.createdAt,
+            payload: record.payloadJson,
+        };
+    }
+    buildWebhookDigestPayload(record, digest) {
+        return {
+            channel: 'WEBHOOK',
+            eventType: record.eventType,
+            entityType: record.entityType,
+            entityId: record.entityId,
+            recipientEmail: digest.recipientEmail,
+            frequency: digest.frequency,
+            topics: digest.topics,
+            watchKeywords: digest.watchKeywords,
+            summary: this.buildDigestSummaryText(digest),
+            matches: digest.matches,
+            createdAt: record.createdAt,
+        };
+    }
+    buildEmailDigestPayload(record, digest) {
+        const subject = `[Council Digest] ${digest.frequency === 'DAILY_DIGEST' ? 'Daily' : 'Weekly'} Watchlist Update`;
+        const lines = this.buildDigestLines(digest);
+        return {
+            channel: 'EMAIL',
+            template: 'public-digest-v1',
+            to: digest.recipientEmail,
+            subject,
+            text: lines.join('\n'),
+            metadata: {
+                eventType: record.eventType,
+                subscriptionId: record.entityId,
+            },
+        };
+    }
+    buildTeamsDigestPayload(record, digest) {
+        return {
+            '@type': 'MessageCard',
+            '@context': 'https://schema.org/extensions',
+            summary: this.buildDigestSummaryText(digest),
+            themeColor: '0F5D7A',
+            title: `${digest.frequency === 'DAILY_DIGEST' ? 'Daily' : 'Weekly'} Council Watchlist Digest`,
+            sections: [
+                {
+                    activityTitle: `Subscriber: ${digest.recipientEmail}`,
+                    facts: [
+                        { name: 'Event', value: record.eventType },
+                        { name: 'Frequency', value: digest.frequency },
+                        { name: 'Topics', value: digest.topics.join(', ') || 'None' },
+                        { name: 'Keywords', value: digest.watchKeywords.join(', ') || 'All public items' },
+                    ],
+                    text: this.buildDigestLines(digest).join('\n'),
+                },
+            ],
+        };
+    }
+    buildDigestSummaryText(digest) {
+        return `${digest.matches.length} matching public item(s) for ${digest.recipientEmail}`;
+    }
+    buildDigestLines(digest) {
+        const lines = [];
+        lines.push(`Council watchlist digest for ${digest.recipientEmail}`);
+        lines.push(`Frequency: ${digest.frequency}`);
+        lines.push(`Topics: ${digest.topics.join(', ') || 'None'}`);
+        lines.push(`Keywords: ${digest.watchKeywords.join(', ') || 'All public items'}`);
+        lines.push('');
+        lines.push(`Matches (${digest.matches.length}):`);
+        for (const match of digest.matches.slice(0, 10)) {
+            lines.push(`- [${match.topic}] ${match.title}`);
+        }
+        if (digest.matches.length > 10) {
+            lines.push(`- +${digest.matches.length - 10} more`);
+        }
+        return lines;
+    }
+    toDigestView(record) {
+        if (!record.eventType.startsWith('PUBLIC_DIGEST_')) {
+            return null;
+        }
+        const payload = record.payloadJson;
+        const recipientEmail = typeof payload.recipientEmail === 'string' ? payload.recipientEmail : null;
+        const frequency = typeof payload.frequency === 'string' ? payload.frequency : null;
+        const topics = Array.isArray(payload.topics) ? payload.topics.filter((entry) => typeof entry === 'string') : [];
+        const watchKeywords = Array.isArray(payload.watchKeywords)
+            ? payload.watchKeywords.filter((entry) => typeof entry === 'string')
+            : [];
+        const matches = Array.isArray(payload.matches)
+            ? payload.matches
+                .map((entry) => {
+                if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+                    return null;
+                }
+                const obj = entry;
+                if (typeof obj.topic !== 'string' || typeof obj.title !== 'string' || typeof obj.id !== 'string') {
+                    return null;
+                }
+                return {
+                    topic: obj.topic,
+                    title: obj.title,
+                    id: obj.id,
+                    source: typeof obj.source === 'string' ? obj.source : 'unknown',
+                };
+            })
+                .filter((entry) => Boolean(entry))
+            : [];
+        if (!recipientEmail || !frequency) {
+            return null;
+        }
+        return {
+            recipientEmail,
+            frequency,
+            topics,
+            watchKeywords,
+            matches,
+        };
+    }
+    async postJson(url, payload) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+            throw new Error(`Notification channel request failed with ${response.status}`);
+        }
+    }
+};
+exports.NotificationsService = NotificationsService;
+exports.NotificationsService = NotificationsService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [notifications_repository_1.NotificationsRepository,
+        config_1.ConfigService])
+], NotificationsService);
+async function sleep(durationMs) {
+    if (!Number.isFinite(durationMs) || durationMs <= 0) {
+        return;
+    }
+    await new Promise((resolve) => {
+        setTimeout(() => resolve(), durationMs);
+    });
+}
+//# sourceMappingURL=notifications.service.js.map
