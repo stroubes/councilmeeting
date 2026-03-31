@@ -1,1 +1,0 @@
-{"version":3,"file":"set-active-profile.dto.js","sourceRoot":"","sources":["../../../src/governance/dto/set-active-profile.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,qDAAuC;AACvC,gFAAoE;AAEpE,MAAM,WAAW,GAAG,gDAAkB,CAAC,GAAG,CAAC,CAAC,OAAO,EAAE,EAAE,CAAC,OAAO,CAAC,EAAE,CAAC,CAAC;AAEpE,MAAa,mBAAmB;IAE9B,SAAS,CAAgC;CAC1C;AAHD,kDAGC;AADC;IADC,IAAA,sBAAI,EAAC,WAAW,CAAC;;sDACuB"}
