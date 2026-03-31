@@ -8,14 +8,14 @@ describe('ReportsService publish', () => {
       { resolveBase64: jest.fn(), uploadBase64File: jest.fn() } as never,
       { hasAgendaItem: jest.fn().mockResolvedValue(true) } as never,
       {
-        getById: jest.fn().mockResolvedValue({ id: 'r1', workflowStatus: 'APPROVED' }),
-        updateWorkflowStatus: jest.fn().mockResolvedValue({ id: 'r1', workflowStatus: 'PUBLISHED' }),
-        appendApproval: jest.fn().mockResolvedValue({}),
+        getById: jest.fn().mockResolvedValue({ id: 'r1', workflowStatus: 'APPROVED', updatedAt: '2026-03-23T00:00:00.000Z' }),
+        transitionWorkflow: jest.fn().mockResolvedValue({ id: 'r1', workflowStatus: 'PUBLISHED' }),
       } as never,
       { log: jest.fn().mockResolvedValue(undefined) } as never,
       { getById: jest.fn() } as never,
       { emit: jest.fn().mockResolvedValue(undefined) } as never,
       { getActiveProfile: jest.fn().mockReturnValue({ id: 'BC_BASELINE' }) } as never,
+      { list: jest.fn().mockResolvedValue([]), getById: jest.fn() } as never,
     );
 
     const result = await service.publish('r1', {
@@ -36,12 +36,13 @@ describe('ReportsService publish', () => {
       { resolveBase64: jest.fn(), uploadBase64File: jest.fn() } as never,
       { hasAgendaItem: jest.fn().mockResolvedValue(true) } as never,
       {
-        getById: jest.fn().mockResolvedValue({ id: 'r1', workflowStatus: 'APPROVED' }),
+        getById: jest.fn().mockResolvedValue({ id: 'r1', workflowStatus: 'APPROVED', updatedAt: '2026-03-23T00:00:00.000Z' }),
       } as never,
       { log: jest.fn().mockResolvedValue(undefined) } as never,
       { getById: jest.fn() } as never,
       { emit: jest.fn().mockResolvedValue(undefined) } as never,
       { getActiveProfile: jest.fn().mockReturnValue({ id: 'BC_BASELINE' }) } as never,
+      { list: jest.fn().mockResolvedValue([]), getById: jest.fn() } as never,
     );
 
     await expect(

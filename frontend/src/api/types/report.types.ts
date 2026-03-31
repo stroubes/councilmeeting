@@ -2,6 +2,7 @@ export type ReportWorkflowStatus =
   | 'DRAFT'
   | 'PENDING_DIRECTOR_APPROVAL'
   | 'PENDING_CAO_APPROVAL'
+  | 'PENDING_WORKFLOW_APPROVAL'
   | 'APPROVED'
   | 'REJECTED'
   | 'PUBLISHED';
@@ -26,6 +27,10 @@ export interface StaffReportRecord {
   parsingVersion: string;
   parsingWarnings: string[];
   workflowStatus: ReportWorkflowStatus;
+  workflowConfigId?: string;
+  currentWorkflowStageIndex?: number;
+  currentWorkflowStageKey?: string;
+  currentWorkflowApproverRole?: string;
   authorUserId: string;
   createdBy: string;
   createdAt: string;
@@ -49,6 +54,7 @@ export interface ReportAttachmentRecord {
 
 export interface CreateStaffReportPayload {
   agendaItemId: string;
+  workflowConfigId?: string;
   templateId?: string;
   reportNumber?: string;
   title: string;
@@ -61,6 +67,7 @@ export interface CreateStaffReportPayload {
 
 export interface ImportDocxReportPayload {
   agendaItemId: string;
+  workflowConfigId?: string;
   fileName: string;
   contentBase64?: string;
   sharePointSiteId?: string;

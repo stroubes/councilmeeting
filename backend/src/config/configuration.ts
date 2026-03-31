@@ -11,6 +11,14 @@ export default () => ({
   publicDigestSchedulerEnabled: process.env.PUBLIC_DIGEST_SCHEDULER_ENABLED !== 'false',
   publicDigestSchedulerIntervalMs: Number(process.env.PUBLIC_DIGEST_SCHEDULER_INTERVAL_MS ?? 600000),
   authBypassEnabled: process.env.AUTH_BYPASS_ENABLED === 'true',
+  authBypassAllowedEnvs: (process.env.AUTH_BYPASS_ALLOWED_ENVS ?? 'development,test,local')
+    .split(',')
+    .map((value) => value.trim().toLowerCase())
+    .filter((value) => value.length > 0),
+  rateLimitWindowMs: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 60000),
+  rateLimitGeneralMax: Number(process.env.RATE_LIMIT_GENERAL_MAX ?? 120),
+  rateLimitPublicMax: Number(process.env.RATE_LIMIT_PUBLIC_MAX ?? 90),
+  rateLimitAuthMax: Number(process.env.RATE_LIMIT_AUTH_MAX ?? 30),
   databaseUrl: process.env.DATABASE_URL,
   microsoft: {
     tenantId: process.env.MS_TENANT_ID,

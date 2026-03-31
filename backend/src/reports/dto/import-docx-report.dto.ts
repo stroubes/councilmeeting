@@ -27,4 +27,8 @@ export class ImportDocxReportDto {
   @IsOptional()
   @IsString()
   sharePointWebUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  workflowConfigId?: string;
 }

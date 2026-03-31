@@ -26,6 +26,12 @@ import { GovernanceModule } from './governance/governance.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ApiSettingsModule } from './api-settings/api-settings.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ResolutionsModule } from './resolutions/resolutions.module';
+import { ActionsModule } from './actions/actions.module';
+import { AttendeesModule } from './attendees/attendees.module';
+import { VotesModule } from './votes/votes.module';
+import { ConflictDeclarationsModule } from './conflict-declarations/conflict-declarations.module';
+import { BylawsModule } from './bylaws/bylaws.module';
 
 @Module({
   imports: [
@@ -51,6 +57,12 @@ import { AnalyticsModule } from './analytics/analytics.module';
     NotificationsModule,
     ApiSettingsModule,
     AnalyticsModule,
+    ResolutionsModule,
+    ActionsModule,
+    AttendeesModule,
+    VotesModule,
+    ConflictDeclarationsModule,
+    BylawsModule,
   ],
   providers: [
     {

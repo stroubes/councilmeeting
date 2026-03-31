@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import { listSystemRoles } from '../../api/roles.api';
 import type { SystemRoleRecord } from '../../api/types/admin.types';
 import AppShell from '../../components/layout/AppShell';
+import MetricTile from '../../components/ui/MetricTile';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
+
+interface RoleColumn {
+  key: string;
+  header: string;
+  render?: (row: SystemRoleRecord) => JSX.Element;
+}
 
 export default function RolesAdmin(): JSX.Element {
   const [roles, setRoles] = useState<SystemRoleRecord[]>([]);
@@ -24,56 +33,52 @@ export default function RolesAdmin(): JSX.Element {
     void load();
   }, []);
 
+  const columns: RoleColumn[] = [
+    {
+      key: 'code',
+      header: 'Role',
+      render: (row) => <strong>{row.code}</strong>,
+    },
+    {
+      key: 'permissions',
+      header: 'Permissions',
+      render: (row) => <>{row.permissions.join(', ') || 'No permissions assigned'}</>,
+    },
+  ];
+
   return (
     <AppShell title="Roles" subtitle="Role-to-permission matrix for governance controls." workspaceVariant="admin">
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">System Roles</p>
-          <p className="metric-value">{roles.length}</p>
-          <p className="metric-foot">Defined role bundles in authorization model</p>
-        </article>
+        <MetricTile
+          label="System Roles"
+          value={roles.length}
+          foot="Defined role bundles in authorization model"
+          icon="lock"
+          variant="primary"
+        />
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">RLS</span>
-              System Role Matrix
-            </h2>
-            <p>Current role permission bundles used at authorization time.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="System Role Matrix"
+          description="Current role permission bundles used at authorization time."
+        />
+        <CardBody>
           {isLoading ? <p className="muted">Loading role definitions...</p> : null}
           {error ? <p className="inline-alert">{error}</p> : null}
           {!isLoading && roles.length === 0 ? (
             <div className="empty-state">No role definitions found for this environment.</div>
           ) : null}
           {roles.length > 0 ? (
-            <div className="table-wrap">
-              <table className="data-table" aria-label="Role matrix">
-                <thead>
-                  <tr>
-                    <th>Role</th>
-                    <th>Permissions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {roles.map((role) => (
-                    <tr key={role.code}>
-                      <td>
-                        <strong>{role.code}</strong>
-                      </td>
-                      <td>{role.permissions.join(', ') || 'No permissions assigned'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              rowKey={(row) => (row as unknown as { code: string }).code}
+              data={roles as unknown as { id: string | number }[]}
+              columns={columns as unknown as { key: string; header: string; render?: (row: { id: string | number }) => JSX.Element }[]}
+              emptyMessage="No role definitions found for this environment."
+            />
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
     </AppShell>
   );
 }

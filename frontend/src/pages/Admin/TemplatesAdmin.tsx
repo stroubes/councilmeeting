@@ -12,6 +12,8 @@ import {
 import type { TemplateRecord, TemplateSectionRecord, TemplateType } from '../../api/types/template.types';
 import AppShell from '../../components/layout/AppShell';
 import { useToast } from '../../hooks/useToast';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import MetricTile from '../../components/ui/MetricTile';
 
 type TemplateTab = 'AGENDA' | 'STAFF_REPORT';
 type AgendaProfile = 'REGULAR_COUNCIL' | 'SPECIAL_COUNCIL' | 'COMMITTEE_OF_WHOLE' | 'IN_CAMERA';
@@ -696,34 +698,17 @@ export default function TemplatesAdmin(): JSX.Element {
       workspaceVariant="admin"
     >
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">Total Templates</p>
-          <p className="metric-value">{templates.length}</p>
-          <p className="metric-foot">Agenda and staff-report definitions</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Agenda Templates</p>
-          <p className="metric-value">{templates.filter((template) => template.type === 'AGENDA').length}</p>
-          <p className="metric-foot">Council package structures</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Staff Report Templates</p>
-          <p className="metric-value">{templates.filter((template) => template.type === 'STAFF_REPORT').length}</p>
-          <p className="metric-foot">Authoring guides for staff</p>
-        </article>
+        <MetricTile label="Total Templates" value={templates.length} foot="Agenda and staff-report definitions" variant="primary" />
+        <MetricTile label="Agenda Templates" value={templates.filter((template) => template.type === 'AGENDA').length} foot="Council package structures" />
+        <MetricTile label="Staff Report Templates" value={templates.filter((template) => template.type === 'STAFF_REPORT').length} foot="Authoring guides for staff" />
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">TPL</span>
-              Create Template
-            </h2>
-            <p>Add a new reusable structure for agenda packages or staff reports.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Create Template"
+          description="Add a new reusable structure for agenda packages or staff reports."
+        />
+        <CardBody>
           <form onSubmit={(event) => void handleCreateTemplate(event)}>
             <div className="form-grid">
               <div className="form-field">
@@ -810,33 +795,33 @@ export default function TemplatesAdmin(): JSX.Element {
               </button>
             </div>
           </form>
-        </div>
-      </section>
+        </CardBody>
+      </Card>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>Template Library</h2>
-            <p>Choose a template and manage section order with drag and drop.</p>
-          </div>
-          <div className="page-actions">
-            <button
-              type="button"
-              className={`btn ${activeTab === 'AGENDA' ? 'btn-primary' : ''}`}
-              onClick={() => setActiveTab('AGENDA')}
-            >
-              Agenda Templates
-            </button>
-            <button
-              type="button"
-              className={`btn ${activeTab === 'STAFF_REPORT' ? 'btn-primary' : ''}`}
-              onClick={() => setActiveTab('STAFF_REPORT')}
-            >
-              Staff Report Templates
-            </button>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Template Library"
+          description="Choose a template and manage section order with drag and drop."
+          actions={
+            <div className="page-actions">
+              <button
+                type="button"
+                className={`btn ${activeTab === 'AGENDA' ? 'btn-primary' : ''}`}
+                onClick={() => setActiveTab('AGENDA')}
+              >
+                Agenda Templates
+              </button>
+              <button
+                type="button"
+                className={`btn ${activeTab === 'STAFF_REPORT' ? 'btn-primary' : ''}`}
+                onClick={() => setActiveTab('STAFF_REPORT')}
+              >
+                Staff Report Templates
+              </button>
+            </div>
+          }
+        />
+        <CardBody>
           {isLoading ? <p className="muted">Loading templates...</p> : null}
           {error ? <p className="inline-alert">{error}</p> : null}
 
@@ -1108,8 +1093,8 @@ export default function TemplatesAdmin(): JSX.Element {
               ) : null}
             </>
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
     </AppShell>
   );
 }

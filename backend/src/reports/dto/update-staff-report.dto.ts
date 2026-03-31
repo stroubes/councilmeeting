@@ -7,6 +7,10 @@ export class UpdateStaffReportDto {
 
   @IsOptional()
   @IsString()
+  workflowConfigId?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(500)
   title?: string;
 

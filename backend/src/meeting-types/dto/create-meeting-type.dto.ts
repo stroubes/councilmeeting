@@ -1,4 +1,45 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsInt, IsOptional, IsString, MaxLength, Min, ValidateNested } from 'class-validator';
+
+class StandingItemDto {
+  @IsString()
+  itemType!: string;
+
+  @IsString()
+  @MaxLength(500)
+  title!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isInCamera?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  carryForwardToNext?: boolean;
+}
+
+class MeetingTypeWizardConfigDto {
+  @IsOptional()
+  @IsString()
+  defaultAgendaTemplateId?: string;
+
+  @IsOptional()
+  @IsString()
+  defaultWorkflowCode?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  publishWindowHours?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  carryForwardEnabled?: boolean;
+}
 
 export class CreateMeetingTypeDto {
   @IsString()
@@ -20,4 +61,15 @@ export class CreateMeetingTypeDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MeetingTypeWizardConfigDto)
+  wizardConfig?: MeetingTypeWizardConfigDto;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => StandingItemDto)
+  standingItems?: StandingItemDto[];
 }

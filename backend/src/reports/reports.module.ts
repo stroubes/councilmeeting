@@ -9,11 +9,12 @@ import { AuditModule } from '../audit/audit.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { GovernanceModule } from '../governance/governance.module';
+import { WorkflowConfigRepository } from '../workflows/workflow-config.repository';
 
 @Module({
   imports: [AgendasModule, AuditModule, TemplatesModule, NotificationsModule, GovernanceModule],
   controllers: [ReportsController],
-  providers: [ReportsService, DocxParserService, SharePointDocxService, ReportsRepository],
+  providers: [ReportsService, DocxParserService, SharePointDocxService, ReportsRepository, WorkflowConfigRepository],
   exports: [ReportsService],
 })
 export class ReportsModule {}

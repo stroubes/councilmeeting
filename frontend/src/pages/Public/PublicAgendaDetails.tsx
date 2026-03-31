@@ -116,26 +116,6 @@ export default function PublicAgendaDetails(): JSX.Element {
     ];
   }, [state.agenda]);
 
-  const pageRangesByItem = useMemo(() => {
-    if (!state.agenda) {
-      return new Map<string, string>();
-    }
-
-    const ranges = new Map<string, string>();
-    let currentPage = 1;
-
-    for (const item of orderedAgendaItems) {
-      const linkedReport = state.reports.find((report) => report.agendaItemId === item.id);
-      const narrativeLength = `${linkedReport?.executiveSummary ?? ''} ${linkedReport?.recommendations ?? ''}`.length;
-      const estimatedPages = linkedReport ? Math.max(4, Math.ceil(narrativeLength / 850) + 3) : 1;
-      const endPage = currentPage + estimatedPages - 1;
-      ranges.set(item.id, estimatedPages > 1 ? `${currentPage} - ${endPage}` : `${currentPage}`);
-      currentPage = endPage + 1;
-    }
-
-    return ranges;
-  }, [state.agenda, state.reports, orderedAgendaItems]);
-
   return (
     <AppShell
       title="Public Agenda"
@@ -185,7 +165,6 @@ export default function PublicAgendaDetails(): JSX.Element {
                     <div className="agenda-doc-section-title">
                       <span>{index + 1}.</span>
                       <strong>{item.title.toUpperCase()}</strong>
-                      <span className="agenda-doc-range">{pageRangesByItem.get(item.id) ?? '-'}</span>
                     </div>
                     {linkedReport ? (
                       <div className="agenda-doc-subentry">
@@ -218,7 +197,6 @@ export default function PublicAgendaDetails(): JSX.Element {
                   <p>
                     <strong>Department:</strong> {report.department ?? 'General Administration'}
                   </p>
-                  <p className="agenda-report-footer">Page {index + 1} of {state.reports.length}</p>
                 </article>
               ))}
             </section>

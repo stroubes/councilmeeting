@@ -14,7 +14,13 @@ export interface AgendaItemRecord {
   description?: string;
   parentItemId?: string;
   isInCamera: boolean;
+  isPublicVisible: boolean;
+  publishAt?: string;
+  redactionNote?: string;
+  carryForwardToNext: boolean;
   sortOrder: number;
+  itemNumber?: string;
+  bylawId?: string;
   status: AgendaStatus;
   createdBy: string;
   createdAt: string;

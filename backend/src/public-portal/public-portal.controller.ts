@@ -41,6 +41,30 @@ export class PublicPortalController {
   }
 
   @Public()
+  @Get('motions')
+  motions() {
+    return this.publicPortalService.listMotions();
+  }
+
+  @Public()
+  @Get('resolutions')
+  resolutions() {
+    return this.publicPortalService.listResolutions();
+  }
+
+  @Public()
+  @Get('actions')
+  actions() {
+    return this.publicPortalService.listActions();
+  }
+
+  @Public()
+  @Get('packages')
+  packages(@Query('q') query?: string) {
+    return this.publicPortalService.listPackages(query);
+  }
+
+  @Public()
   @Post('subscriptions')
   createSubscription(@Body() dto: CreatePublicSubscriptionDto) {
     return this.publicPortalService.createSubscription(dto);

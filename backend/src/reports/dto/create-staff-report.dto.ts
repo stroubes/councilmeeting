@@ -10,6 +10,10 @@ export class CreateStaffReportDto {
 
   @IsOptional()
   @IsString()
+  workflowConfigId?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(100)
   reportNumber?: string;
 

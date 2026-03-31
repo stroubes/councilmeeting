@@ -1,35 +1,42 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import Login from './pages/Login';
-import MeetingDetails from './pages/Meetings/MeetingDetails';
-import PublicPortal from './pages/Public/PublicPortal';
-import PublicAgendaDetails from './pages/Public/PublicAgendaDetails';
-import InCameraPortal from './pages/Meetings/InCameraPortal';
-import MeetingsList from './pages/Meetings/MeetingsList';
-import AgendaList from './pages/Agendas/AgendaList';
-import ReportList from './pages/Reports/ReportList';
-import LiveMotionsConsole from './pages/Motions/LiveMotionsConsole';
-import DirectorApprovalQueue from './pages/Approvals/DirectorApprovalQueue';
-import CaoApprovalQueue from './pages/Approvals/CaoApprovalQueue';
-import MinutesRegister from './pages/Minutes/MinutesRegister';
-import UsersAdmin from './pages/Admin/UsersAdmin';
-import RolesAdmin from './pages/Admin/RolesAdmin';
-import AdminLogin from './pages/Admin/AdminLogin';
-import AdminPortalHome from './pages/Admin/AdminPortalHome';
-import TemplatesAdmin from './pages/Admin/TemplatesAdmin';
-import NotificationsAdmin from './pages/Admin/NotificationsAdmin';
-import ApiSettingsAdmin from './pages/Admin/ApiSettingsAdmin';
-import MeetingTypesAdmin from './pages/Admin/MeetingTypesAdmin';
-import ExecutiveKpisDashboard from './pages/Admin/ExecutiveKpisDashboard';
-import PublicLiveMotionScreen from './pages/Public/PublicLiveMotionScreen';
-import PublicLiveMeetingScreen from './pages/Public/PublicLiveMeetingScreen';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Login = lazy(() => import('./pages/Login'));
+const MeetingDetails = lazy(() => import('./pages/Meetings/MeetingDetails'));
+const PublicPortal = lazy(() => import('./pages/Public/PublicPortal'));
+const PublicAgendaDetails = lazy(() => import('./pages/Public/PublicAgendaDetails'));
+const InCameraPortal = lazy(() => import('./pages/Meetings/InCameraPortal'));
+const MeetingsList = lazy(() => import('./pages/Meetings/MeetingsList'));
+const AgendaList = lazy(() => import('./pages/Agendas/AgendaList'));
+const ReportList = lazy(() => import('./pages/Reports/ReportList'));
+const LiveMotionsConsole = lazy(() => import('./pages/Motions/LiveMotionsConsole'));
+const DirectorApprovalQueue = lazy(() => import('./pages/Approvals/DirectorApprovalQueue'));
+const CaoApprovalQueue = lazy(() => import('./pages/Approvals/CaoApprovalQueue'));
+const MyApprovalQueue = lazy(() => import('./pages/Approvals/MyApprovalQueue'));
+const MinutesRegister = lazy(() => import('./pages/Minutes/MinutesRegister'));
+const UsersAdmin = lazy(() => import('./pages/Admin/UsersAdmin'));
+const RolesAdmin = lazy(() => import('./pages/Admin/RolesAdmin'));
+const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
+const AdminPortalHome = lazy(() => import('./pages/Admin/AdminPortalHome'));
+const TemplatesAdmin = lazy(() => import('./pages/Admin/TemplatesAdmin'));
+const NotificationsAdmin = lazy(() => import('./pages/Admin/NotificationsAdmin'));
+const ApiSettingsAdmin = lazy(() => import('./pages/Admin/ApiSettingsAdmin'));
+const AuditLogsAdmin = lazy(() => import('./pages/Admin/AuditLogsAdmin'));
+const MeetingTypesAdmin = lazy(() => import('./pages/Admin/MeetingTypesAdmin'));
+const ExecutiveKpisDashboard = lazy(() => import('./pages/Admin/ExecutiveKpisDashboard'));
+const WorkflowsAdmin = lazy(() => import('./pages/Admin/WorkflowsAdmin'));
+const ResolutionsRegister = lazy(() => import('./pages/Resolutions/ResolutionsRegister'));
+const ActionTracker = lazy(() => import('./pages/Actions/ActionTracker'));
+const PublicLiveMotionScreen = lazy(() => import('./pages/Public/PublicLiveMotionScreen'));
+const PublicLiveMeetingScreen = lazy(() => import('./pages/Public/PublicLiveMeetingScreen'));
 import ProtectedRoute from './guards/ProtectedRoute';
 import PermissionRoute from './guards/PermissionRoute';
 import AdminAccessRoute from './guards/AdminAccessRoute';
 
 export default function App(): JSX.Element {
   return (
-    <Routes>
+    <Suspense fallback={<div style={{ padding: '1rem' }}>Loading...</div>}>
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route
@@ -79,6 +86,34 @@ export default function App(): JSX.Element {
             <PermissionRoute requiredPermission="agenda.write">
               <LiveMotionsConsole />
             </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/resolutions"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="resolution.manage">
+              <ResolutionsRegister />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/actions"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="action.manage">
+              <ActionTracker />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/approvals/my"
+        element={
+          <ProtectedRoute>
+            <MyApprovalQueue />
           </ProtectedRoute>
         }
       />
@@ -187,6 +222,30 @@ export default function App(): JSX.Element {
         }
       />
       <Route
+        path="/admin-portal/workflows"
+        element={
+          <ProtectedRoute>
+            <AdminAccessRoute>
+              <PermissionRoute requiredPermission="templates.manage">
+                <WorkflowsAdmin />
+              </PermissionRoute>
+            </AdminAccessRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin-portal/audit-logs"
+        element={
+          <ProtectedRoute>
+            <AdminAccessRoute>
+              <PermissionRoute requiredPermission="public.publish">
+                <AuditLogsAdmin />
+              </PermissionRoute>
+            </AdminAccessRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin-portal/api-settings"
         element={
           <ProtectedRoute>
@@ -213,6 +272,7 @@ export default function App(): JSX.Element {
         }
       />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }

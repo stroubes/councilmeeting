@@ -2,6 +2,7 @@ import { httpDelete, httpGet, httpPatch, httpPost } from './httpClient';
 import type { AgendaRecord } from './types/agenda.types';
 import type { MeetingRecord } from './types/meeting.types';
 import type {
+  PublicMeetingPackage,
   PublicSubscriptionPreview,
   PublicSubscriptionRecord,
   PublicSummaryResponse,
@@ -22,6 +23,11 @@ export function listPublicMeetings(): Promise<MeetingRecord[]> {
 
 export function listPublicReports(): Promise<StaffReportRecord[]> {
   return httpGet<StaffReportRecord[]>('/public/reports');
+}
+
+export function listPublicPackages(query?: string): Promise<PublicMeetingPackage[]> {
+  const suffix = query ? `?q=${encodeURIComponent(query)}` : '';
+  return httpGet<PublicMeetingPackage[]>(`/public/packages${suffix}`);
 }
 
 export function createPublicSubscription(payload: {

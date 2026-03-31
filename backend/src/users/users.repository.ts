@@ -73,6 +73,20 @@ export class UsersRepository {
       ) ?? null);
   }
 
+  async getUserDisplayName(userId: string): Promise<string> {
+    return this.withFallback(async () => {
+      const result = await this.postgresService.query<{ display_name: string | null; first_name: string | null; last_name: string | null }>(
+        `SELECT display_name, first_name, last_name FROM users WHERE id = $1 LIMIT 1`,
+        [userId],
+      );
+      if (result.rows.length === 0) {
+        return 'Unknown User';
+      }
+      const row = result.rows[0];
+      return row.display_name || [row.first_name, row.last_name].filter(Boolean).join(' ') || 'Unknown User';
+    }, () => 'Unknown User');
+  }
+
   async upsert(input: UpsertUserInput): Promise<ManagedUserRecord> {
     return this.withFallback(async () => {
       await this.ensureSchema();

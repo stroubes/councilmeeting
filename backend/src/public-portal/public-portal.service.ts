@@ -3,7 +3,10 @@ import { MeetingsService } from '../meetings/meetings.service';
 import { AgendasService } from '../agendas/agendas.service';
 import { ReportsService } from '../reports/reports.service';
 import { MinutesService } from '../minutes/minutes.service';
+import { MotionsService } from '../motions/motions.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ResolutionsService } from '../resolutions/resolutions.service';
+import { ActionsService } from '../actions/actions.service';
 import type { CreatePublicSubscriptionDto } from './dto/create-public-subscription.dto';
 import type { UpdatePublicSubscriptionDto } from './dto/update-public-subscription.dto';
 import {
@@ -19,16 +22,23 @@ export class PublicPortalService {
     private readonly agendasService: AgendasService,
     private readonly reportsService: ReportsService,
     private readonly minutesService: MinutesService,
+    private readonly motionsService: MotionsService,
+    private readonly resolutionsService: ResolutionsService,
+    private readonly actionsService: ActionsService,
     private readonly publicSubscriptionsRepository: PublicSubscriptionsRepository,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   async summary() {
-    const [meetings, agendas, reports, minutes] = await Promise.all([
+    const [meetings, agendas, reports, minutes, motions, resolutions, actions, packages] = await Promise.all([
       this.listMeetings(),
       this.listAgendas(),
       this.listReports(),
       this.listMinutes(),
+      this.listMotions(),
+      this.listResolutions(),
+      this.listActions(),
+      this.listPackages(),
     ]);
 
     return {
@@ -36,11 +46,19 @@ export class PublicPortalService {
       agendas,
       reports,
       minutes,
+      motions,
+      resolutions,
+      actions,
+      packages,
       counts: {
         meetings: meetings.length,
         agendas: agendas.length,
         reports: reports.length,
         minutes: minutes.length,
+        motions: motions.length,
+        resolutions: resolutions.length,
+        actions: actions.length,
+        packages: packages.length,
       },
     };
   }
@@ -55,8 +73,67 @@ export class PublicPortalService {
       .filter((agenda) => agenda.status === 'PUBLISHED')
       .map((agenda) => ({
         ...agenda,
-        items: agenda.items.filter((item) => item.status === 'PUBLISHED' && !item.isInCamera),
+        items: agenda.items.filter(
+          (item) =>
+            item.status === 'PUBLISHED' &&
+            !item.isInCamera &&
+            item.isPublicVisible &&
+            (!item.publishAt || new Date(item.publishAt).getTime() <= Date.now()),
+        ),
       }));
+  }
+
+  async listMotions() {
+    const meetings = await this.meetingsService.listPublic();
+    const motionGroups = await Promise.all(meetings.map((meeting) => this.motionsService.list(meeting.id)));
+    return motionGroups.flat();
+  }
+
+  async listResolutions() {
+    const meetings = await this.meetingsService.listPublic();
+    const grouped = await Promise.all(meetings.map((meeting) => this.resolutionsService.list(meeting.id)));
+    return grouped.flat().filter((resolution) => resolution.status === 'ADOPTED');
+  }
+
+  async listActions() {
+    return this.actionsService.list({ status: 'OPEN' });
+  }
+
+  async listPackages(search?: string) {
+    const [meetings, agendas, reports, minutes, motions, resolutions] = await Promise.all([
+      this.listMeetings(),
+      this.listAgendas(),
+      this.listReports(),
+      this.listMinutes(),
+      this.listMotions(),
+      this.listResolutions(),
+    ]);
+    const needle = search?.trim().toLowerCase();
+    return meetings
+      .map((meeting) => {
+        const meetingAgenda = agendas.find((agenda) => agenda.meetingId === meeting.id);
+        const meetingAgendaItemIds = new Set((meetingAgenda?.items ?? []).map((item) => item.id));
+        return {
+          meetingId: meeting.id,
+          meetingTitle: meeting.title,
+          meetingStartsAt: meeting.startsAt,
+          agenda: meetingAgenda,
+          reports: reports.filter((report) => meetingAgendaItemIds.has(report.agendaItemId)),
+          minutes: minutes.find((entry) => entry.meetingId === meeting.id) ?? null,
+          motions: motions.filter((motion) => motion.meetingId === meeting.id),
+          resolutions: resolutions.filter((resolution) => resolution.meetingId === meeting.id),
+        };
+      })
+      .filter((entry) => {
+        if (!needle) {
+          return true;
+        }
+        return (
+          entry.meetingTitle.toLowerCase().includes(needle) ||
+          entry.reports.some((report) => report.title.toLowerCase().includes(needle)) ||
+          entry.resolutions.some((resolution) => resolution.title.toLowerCase().includes(needle))
+        );
+      });
   }
 
   async listReports() {

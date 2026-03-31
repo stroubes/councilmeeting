@@ -14,6 +14,8 @@ import {
 import type { ApiRuntimeMetadata, ApiSettingRecord } from '../../api/types/api-settings.types';
 import AppShell from '../../components/layout/AppShell';
 import { useToast } from '../../hooks/useToast';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import MetricTile from '../../components/ui/MetricTile';
 
 export default function ApiSettingsAdmin(): JSX.Element {
   const [settings, setSettings] = useState<ApiSettingRecord[]>([]);
@@ -130,34 +132,17 @@ export default function ApiSettingsAdmin(): JSX.Element {
       workspaceVariant="admin"
     >
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">Stored Settings</p>
-          <p className="metric-value">{settings.length}</p>
-          <p className="metric-foot">Admin-managed runtime configuration entries</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Configured Integrations</p>
-          <p className="metric-value">{configuredIntegrationCount}</p>
-          <p className="metric-foot">Detected from runtime environment metadata</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Policy Profile</p>
-          <p className="metric-value">{runtimeMetadata?.profileId ?? 'BC_BASELINE'}</p>
-          <p className="metric-foot">Active municipal baseline profile id</p>
-        </article>
+        <MetricTile label="Stored Settings" value={settings.length} foot="Admin-managed runtime configuration entries" variant="primary" />
+        <MetricTile label="Configured Integrations" value={configuredIntegrationCount} foot="Detected from runtime environment metadata" />
+        <MetricTile label="Policy Profile" value={runtimeMetadata?.profileId ?? 'BC_BASELINE'} foot="Active municipal baseline profile id" />
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">POL</span>
-              Municipal Policy Profile
-            </h2>
-            <p>Switch active jurisdiction baseline profile without requiring backend environment file edits.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Municipal Policy Profile"
+          description="Switch active jurisdiction baseline profile without requiring backend environment file edits."
+        />
+        <CardBody>
           <div className="page-actions">
             <select
               className="field"
@@ -175,20 +160,15 @@ export default function ApiSettingsAdmin(): JSX.Element {
             </button>
           </div>
           <p className="muted">Profile changes immediately affect readiness rules and policy-pack responses.</p>
-        </div>
-      </section>
+        </CardBody>
+      </Card>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">API</span>
-              Integration Settings
-            </h2>
-            <p>Store and review integration settings with secure value masking for secret entries.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Integration Settings"
+          description="Store and review integration settings with secure value masking for secret entries."
+        />
+        <CardBody>
           <form onSubmit={(event) => void handleSubmit(event)} className="form-grid">
             <div className="form-field">
               <label htmlFor="api-setting-key">Key</label>
@@ -297,38 +277,38 @@ export default function ApiSettingsAdmin(): JSX.Element {
             </div>
           ) : null}
 
-          <div className="card" style={{ marginTop: '1rem' }}>
-            <header className="card-header">
-              <div>
-                <h3>Runtime Metadata Snapshot</h3>
-                <p>Visibility-only environment metadata. Secrets are never returned.</p>
-              </div>
-            </header>
-            <div className="card-body">
-              {runtimeMetadata ? (
-                <div className="table-wrap">
-                  <table className="data-table" aria-label="Runtime integration metadata">
-                    <thead>
-                      <tr>
-                        <th>Integration Key</th>
-                        <th>Configured</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {runtimeMetadata.integrations.map((entry) => (
-                        <tr key={entry.key}>
-                          <td>{entry.key}</td>
-                          <td>{entry.configured ? 'Yes' : 'No'}</td>
+          <div style={{ marginTop: '1rem' }}>
+            <Card>
+              <CardHeader
+                title="Runtime Metadata Snapshot"
+                description="Visibility-only environment metadata. Secrets are never returned."
+              />
+              <CardBody>
+                {runtimeMetadata ? (
+                  <div className="table-wrap">
+                    <table className="data-table" aria-label="Runtime integration metadata">
+                      <thead>
+                        <tr>
+                          <th>Integration Key</th>
+                          <th>Configured</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
-            </div>
+                      </thead>
+                      <tbody>
+                        {runtimeMetadata.integrations.map((entry) => (
+                          <tr key={entry.key}>
+                            <td>{entry.key}</td>
+                            <td>{entry.configured ? 'Yes' : 'No'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
+              </CardBody>
+            </Card>
           </div>
-        </div>
-      </section>
+        </CardBody>
+      </Card>
     </AppShell>
   );
 }

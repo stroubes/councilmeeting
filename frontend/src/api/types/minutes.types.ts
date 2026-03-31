@@ -1,4 +1,4 @@
-export type MinutesStatus = 'DRAFT' | 'IN_PROGRESS' | 'FINALIZED' | 'PUBLISHED';
+export type MinutesStatus = 'DRAFT' | 'IN_PROGRESS' | 'FINALIZED' | 'ADOPTED' | 'PUBLISHED';
 
 export type AttendanceRole = 'CHAIR' | 'COUNCIL_MEMBER' | 'STAFF' | 'GUEST';
 export type MotionOutcome = 'PENDING' | 'CARRIED' | 'DEFEATED' | 'WITHDRAWN' | 'TABLED' | 'DEFERRED' | 'REFERRED';
@@ -65,9 +65,13 @@ export interface MinutesRecord {
   meetingId: string;
   minuteTakerUserId?: string;
   contentJson: MinutesContent;
+  richTextSummary?: Record<string, unknown>;
+  isInCamera: boolean;
   status: MinutesStatus;
   startedAt?: string;
   finalizedAt?: string;
+  adoptedAt?: string;
+  adoptedBy?: string;
   publishedAt?: string;
   createdBy: string;
   createdAt: string;

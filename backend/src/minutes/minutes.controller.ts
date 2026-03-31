@@ -26,8 +26,8 @@ export class MinutesController {
 
   @Permissions(PERMISSIONS.MEETING_READ)
   @Get()
-  list(@Query('meetingId') meetingId?: string) {
-    return this.minutesService.list(meetingId);
+  list(@Query('meetingId') meetingId?: string, @Query('isInCamera') isInCamera?: string) {
+    return this.minutesService.list(meetingId, isInCamera === 'true' ? true : isInCamera === 'false' ? false : undefined);
   }
 
   @Permissions(PERMISSIONS.MEETING_READ)
@@ -58,5 +58,23 @@ export class MinutesController {
   @Post(':id/publish')
   publish(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.minutesService.publish(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MINUTES_WRITE)
+  @Post(':id/auto-populate')
+  autoPopulate(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.minutesService.autoPopulate(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MINUTES_ADOPT)
+  @Post(':id/adopt')
+  adopt(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.minutesService.adopt(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MINUTES_WRITE)
+  @Post('in-camera/:meetingId')
+  recordInCameraMinutes(@Param('meetingId') meetingId: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.minutesService.recordInCameraMinutes(meetingId, user);
   }
 }

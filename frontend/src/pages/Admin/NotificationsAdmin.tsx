@@ -14,6 +14,8 @@ import type {
 } from '../../api/types/notification.types';
 import AppShell from '../../components/layout/AppShell';
 import { useToast } from '../../hooks/useToast';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import MetricTile from '../../components/ui/MetricTile';
 
 type StatusFilter = 'ALL' | NotificationDeliveryStatus;
 
@@ -93,41 +95,15 @@ export default function NotificationsAdmin(): JSX.Element {
       workspaceVariant="admin"
     >
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">Events Tracked</p>
-          <p className="metric-value">{summary.total}</p>
-          <p className="metric-foot">Recent workflow notification events</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Delivered</p>
-          <p className="metric-value">{summary.delivered}</p>
-          <p className="metric-foot">Last delivered: {lastDeliveredLabel}</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Pending / Failed</p>
-          <p className="metric-value">
-            {summary.pending} / {summary.failed}
-          </p>
-          <p className="metric-foot">Use retry for failed dispatches</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Oldest Pending Age</p>
-          <p className="metric-value">{observability?.backlog.pendingOldestAgeMinutes ?? 0}m</p>
-          <p className="metric-foot">Queue aging indicator for delivery backlog</p>
-        </article>
+        <MetricTile label="Events Tracked" value={summary.total} foot="Recent workflow notification events" variant="primary" />
+        <MetricTile label="Delivered" value={summary.delivered} foot={`Last delivered: ${lastDeliveredLabel}`} />
+        <MetricTile label="Pending / Failed" value={`${summary.pending} / ${summary.failed}`} foot="Use retry for failed dispatches" />
+        <MetricTile label="Oldest Pending Age" value={`${observability?.backlog.pendingOldestAgeMinutes ?? 0}m`} foot="Queue aging indicator for delivery backlog" />
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">OBS</span>
-              Pipeline Observability
-            </h2>
-            <p>Realtime health signals for notification throughput, digest output, and retry pressure.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader title="Pipeline Observability" description="Realtime health signals for notification throughput, digest output, and retry pressure." />
+        <CardBody>
           {observability ? (
             <>
               <p className="muted">
@@ -169,36 +145,33 @@ export default function NotificationsAdmin(): JSX.Element {
           ) : (
             <p className="muted">Observability metrics not available.</p>
           )}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">NTF</span>
-              Notification Event Pipeline
-            </h2>
-            <p>Operational event stream for submit, approve, reject, finalize, and publish workflow actions.</p>
-          </div>
-          <div className="card-header-meta">
-            <button type="button" className="btn" disabled={isRunningDigest} onClick={() => void handleRunDigest()}>
-              {isRunningDigest ? 'Running Digest...' : 'Run Digest Sweep'}
-            </button>
-            <select
-              className="field"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-              aria-label="Filter by notification status"
-            >
-              <option value="ALL">All statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="DELIVERED">Delivered</option>
-              <option value="FAILED">Failed</option>
-            </select>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Notification Event Pipeline"
+          description="Operational event stream for submit, approve, reject, finalize, and publish workflow actions."
+          actions={
+            <>
+              <button type="button" className="btn" disabled={isRunningDigest} onClick={() => void handleRunDigest()}>
+                {isRunningDigest ? 'Running Digest...' : 'Run Digest Sweep'}
+              </button>
+              <select
+                className="field"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+                aria-label="Filter by notification status"
+              >
+                <option value="ALL">All statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="FAILED">Failed</option>
+              </select>
+            </>
+          }
+        />
+        <CardBody>
           {isLoading ? <p className="muted">Loading notification events...</p> : null}
           {error ? <p className="inline-alert">{error}</p> : null}
           {!isLoading && events.length === 0 ? (
@@ -249,8 +222,8 @@ export default function NotificationsAdmin(): JSX.Element {
               </table>
             </div>
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
     </AppShell>
   );
 }

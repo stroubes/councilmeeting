@@ -693,6 +693,259 @@ This file tracks implemented scope, architecture decisions, and local test proce
 - Added admin Executive KPI dashboard UI module with refresh action and trend table.
 - Added analytics service unit tests and wired admin navigation for KPI dashboard access.
 
+### Phase 52 - Meeting Selection Label Disambiguation
+
+- Added shared frontend meeting display label helpers to disambiguate recurring meetings with identical titles.
+- Updated meeting selectors in key workflow screens to show:
+  - meeting title
+  - scheduled date/time
+  - short meeting id suffix.
+- Applied selectors update to:
+  - `/minutes` create-minutes workflow
+  - `/agendas` create-agenda workflow
+  - `/motions` live display console.
+- Updated minutes register table meeting column to include scheduled date/time alongside meeting title for quick operator verification.
+
+### Phase 53 - Agenda Template Selection Guardrails
+
+- Updated `/agendas` create drawer template loading to inspect both active and inactive agenda templates.
+- Added clear operator guidance when no selectable template is available:
+  - no templates exist
+  - templates exist but are disabled.
+- Added default template auto-selection when active agenda templates exist and enforced create validation so agenda creation cannot proceed without a selected template in that case.
+
+### Phase 54 - Database Degradation Visibility
+
+- Updated backend health endpoint (`/api/health`) to report database check state (`up`, `down`, `disabled`) with explicit persistence messaging.
+- Updated database service behavior to avoid permanently disabling PostgreSQL usage after one transient query failure.
+- Added global frontend warning banner in `AppShell` that polls health and surfaces persistence-risk alerts to operators/admin users.
+
+### Phase 55 - Larger Create Workflow Modal
+
+- Upgraded shared `Drawer` UX to use a large centered modal layout by default for create/edit workflows.
+- Preserved optional side-panel mode support for future cases via component prop (`layout='side'`).
+- Applied responsive sizing updates so modal workflows remain usable on mobile while maximizing desktop working area.
+
+### Phase 56 - Minutes Create Modal + Public Meetings Calendar
+
+- Replaced `/minutes` inline create control with a full create modal workflow for improved operator space and consistency.
+- Added public meetings calendar view in `/public` with:
+  - list/calendar toggle
+  - month navigation (previous, today, next)
+  - day-cell meeting cards showing title, time, and location.
+
+### Phase 57 - Configurable Workflow Definitions (Admin Baseline)
+
+- Added backend workflow configuration persistence for report-domain workflow definitions:
+  - `app_workflows` and `app_workflow_stages` auto-ensure schema path
+  - resilient PostgreSQL + in-memory fallback behavior.
+- Added workflow configuration API endpoints under `/api/workflows/configurations`:
+  - list/get/create/update/delete workflow definitions
+  - add/update/remove/reorder workflow stages.
+- Added validation and service guardrails for workflow administration:
+  - unique workflow code enforcement
+  - unique stage key enforcement per workflow
+  - single default workflow handling per domain (`REPORT`).
+- Added admin portal workflow management UI:
+  - new route: `/admin-portal/workflows`
+  - create/delete workflow definitions
+  - configure stage metadata and stage ordering.
+- Wired admin shell and admin home navigation so workflow management is discoverable in the Admin workspace.
+
+### Phase 58 - Report Runtime Uses Configured Default Workflow (Two-Stage Baseline)
+
+- Updated report approval runtime orchestration to resolve current approver role and stage key from the active default `REPORT` workflow definition.
+- Director/CAO queue endpoints now filter pending reports by configured stage approver role instead of assuming fixed role-to-status mapping.
+- Director/CAO approve/reject endpoints now execute generic stage transitions using runtime stage metadata:
+  - stage keys recorded in approval history now follow configured workflow stage keys when available
+  - first-stage approval can now complete directly to `APPROVED` when only one stage is configured
+  - two-stage progression remains supported via existing statuses (`PENDING_DIRECTOR_APPROVAL` -> `PENDING_CAO_APPROVAL` -> `APPROVED`).
+- Expanded approval event typing (`stage: string`) so workflow history can represent configurable stage identifiers.
+
+### Phase 59 - Per-Report Workflow Instance Metadata and Generic Pending Lane
+
+- Added per-report workflow instance metadata in report persistence contract:
+  - `workflowConfigId`
+  - `currentWorkflowStageIndex`
+  - `currentWorkflowStageKey`
+  - `currentWorkflowApproverRole`
+- Added schema evolution migration:
+  - `backend/src/database/migrations/1700000006000-report-workflow-instance.sql`
+- Updated report create/import flows to bind new reports to the active default report workflow (or explicit workflow id when supplied).
+- Updated submit/resubmit runtime to initialize workflow instance state from stage 1 and map pending status by role:
+  - `DIRECTOR` -> `PENDING_DIRECTOR_APPROVAL`
+  - `CAO` -> `PENDING_CAO_APPROVAL`
+  - all other roles -> `PENDING_WORKFLOW_APPROVAL`
+- Added generic pending workflow list support in repository/service and updated queue resolution logic to include this lane for role-based filtering.
+- Updated approval transition runtime to persist stage pointer advancement between configured stages and clear pointer state on reject/publish/final approval.
+
+### Phase 60 - Report Authoring UI Wired to Workflow Definitions
+
+- Updated staff report create/edit/import flows to support selecting a workflow definition from active `REPORT` workflows.
+- Added workflow selector fields in report drawers:
+  - create report
+  - edit report
+  - import Word report.
+- Added default workflow auto-selection behavior in UI when a default active workflow is present.
+- Added report register visibility of runtime workflow stage (`currentWorkflowStageKey`) to improve lifecycle transparency.
+- Added frontend status filter support for `PENDING_WORKFLOW_APPROVAL` to reflect non-Director/non-CAO stage routing.
+
+### Phase 61 - Generic Role Queue + Current Stage Approvals
+
+- Added backend role-aware queue endpoint for dynamic workflow stages:
+  - `GET /api/workflows/reports/my-queue`
+- Added backend generic current-stage decision endpoints:
+  - `POST /api/workflows/reports/:reportId/approve-current`
+  - `POST /api/workflows/reports/:reportId/reject-current`
+- Added frontend operations page for dynamic role approvals:
+  - route: `/approvals/my`
+  - page: `frontend/src/pages/Approvals/MyApprovalQueue.tsx`
+- Updated operations navigation/search to expose My Queue alongside Director/CAO queues.
+
+### Phase 62 - Workflow Admin Completion (Edit + Activate + Default)
+
+- Expanded workflow admin page to support maintenance operations beyond create/delete:
+  - set workflow as default
+  - activate/deactivate workflow
+  - edit existing stage metadata
+  - cancel stage edit mode and return to add mode.
+- Reused existing workflow configuration APIs (`PATCH` workflow + `PATCH` stage) to avoid introducing duplicate endpoints.
+- Improved admin operations ergonomics so workflow governance can be fully managed from a single page.
+
+### Phase 63 - Resolution + Bylaw Packet Foundation
+
+- Added resolution register backend module (`/api/resolutions`) with CRUD and meeting export sheet support.
+- Added resolution data model fields required for legislative packeting:
+  - resolution number
+  - bylaw number
+  - mover/seconder
+  - vote breakdown and adoption status.
+- Added frontend resolutions register page (`/resolutions`) with resolution sheet export preview.
+
+### Phase 64 - Action / Follow-Up Tracker
+
+- Added backend action tracker module (`/api/actions`) with:
+  - CRUD lifecycle
+  - owner + due-date assignment
+  - dashboard metrics (open, in progress, blocked, overdue, completed).
+- Added frontend action tracker page (`/actions`) for creating, completing, and monitoring follow-up tasks.
+
+### Phase 65 - Meeting Type Wizard + Standing Items
+
+- Extended meeting type model with wizard configuration and standing-item templates.
+- Added meeting type update endpoint support for wizard settings and standing-item definitions.
+- Updated meeting type admin UI to capture wizard defaults and standing agenda items.
+- Agenda creation now seeds standing items from the selected meeting type profile.
+
+### Phase 66 - Advanced Publish Controls + Carry Forward
+
+- Extended agenda item model with publish-control metadata:
+  - `isPublicVisible`
+  - `publishAt`
+  - `redactionNote`
+  - `carryForwardToNext`
+- Agenda publish now respects public visibility/timed release and redaction behavior for public-facing content.
+- Added carry-forward endpoint to copy marked unresolved items into a target draft agenda.
+- Updated agenda UI to manage publish controls and carry-forward tagging on item creation.
+
+### Phase 67 - Public Package Completeness
+
+- Expanded public portal backend summary to include:
+  - motions
+  - resolutions
+  - open actions
+  - assembled meeting package records.
+- Added public package endpoint (`/api/public/packages`) with search support.
+- Updated public portal UI with package search and package-composition table (agenda/reports/minutes/motions/resolutions).
+
+### Phase 68 - Governance Expansion Migration + Validation
+
+- Added migration `1700000007000-governance-expansion.sql` covering:
+  - agenda publish-control fields
+  - meeting type wizard fields
+  - resolutions table
+  - action items table.
+- Verified post-change stability with backend build/tests and frontend production build.
+
+### Phase 69 - Screenshot Gap Polish (Automation + Public Visibility)
+
+- Added automated action-item creation when a resolution transitions to `ADOPTED` with `isActionRequired = true`.
+- Added meeting-type wizard default template application at agenda creation when no explicit template is selected.
+- Expanded public portal to show motions, resolutions, and action-item tables (not just package counts/search).
+
+### Phase 70 - Stabilization Pass (Tests + RBAC + Workflow Runtime Cleanup)
+
+- Added backend unit tests for newly introduced governance behavior:
+  - `backend/src/resolutions/resolutions.service.spec.ts`
+  - `backend/src/agendas/agendas.service.spec.ts`
+- Hardened RBAC for new governance modules:
+  - new permissions: `resolution.manage`, `action.manage`
+  - controller guards updated for resolution/action write endpoints
+  - role map + seed permissions updated.
+- Reduced workflow runtime dependency on legacy Director/CAO pending statuses:
+  - new report submissions now route through `PENDING_WORKFLOW_APPROVAL`
+  - next-stage transitions are stage-pointer driven (not role-status hardcoded).
+
+### Phase 71 - Remaining Integration Finish (Linkages + Backfill + Admin UX)
+
+- Added motion-to-resolution workflow shortcut in live meeting console (`Create Resolution`).
+- Added minutes register governance context metrics (resolution volume + overdue follow-up actions).
+- Added workflow admin duplication operation for rapid route variant setup.
+- Expanded public package table with inline detail drill-down for package contents.
+- Added governance backfill migration `1700000008000-governance-backfill.sql`:
+  - report workflow config/pointer backfill
+  - agenda publish metadata legacy-row normalization.
+- Added action service unit coverage (`backend/src/actions/actions.service.spec.ts`).
+
+### Phase 72 - Frontend Delivery Hardening (Route Code-Splitting)
+
+- Converted primary application routes in `frontend/src/App.tsx` to lazy-loaded modules with suspense fallback.
+- Reduced initial bundle pressure by splitting page-level chunks for operations/admin/public areas.
+- Updated frontend smoke suite with governance workflow checks (`resolutions`, `actions`, `my queue`, public package details).
+
+### Phase 73 - Frontend Design System Foundation
+
+- **Phase 1a — Design Token Foundation:** Added complete typography scale (`--text-xs` through `--text-3xl`, 1.25 ratio), spacing scale (`--space-1` through `--space-16`, 4px base grid), transition tokens, shadow tokens, radius tokens, 10 status badge color states with dark mode variants, button color tokens, and dark mode via `@media (prefers-color-scheme: dark)`. Admin accent uses warm brown `#d4905a` override.
+- **Phase 1b — Tokenization of globals.css:** Reduced hardcoded hex values from 253 → 114 across the stylesheet.
+- **Phase 2 — Icon System:** Created `components/ui/types.ts` (`IconName` type, 54 icons), `components/ui/icons.ts` (all SVG definitions), `components/ui/Icon.tsx` (wrapper with `name`/`size`/`color`/`strokeWidth`/`className`/`aria-label`). Added `.icon-spinner` CSS keyframe with `prefers-reduced-motion` override.
+- **Phase 3 — Shared UI Components:** Created 8 shared components:
+  - `components/ui/Skeleton.tsx`
+  - `components/ui/TextField.tsx`
+  - `components/ui/Card.tsx` — exports `Card`, `CardHeader`, `CardBody` as **named** exports; `CardHeader` requires `title` string prop and uses `description` string prop (not children); does not accept `style` prop
+  - `components/ui/MetricTile.tsx` — **default** export; uses `foot` prop (not `footer`)
+  - `components/ui/DataTable.tsx` — **default** export; uses `rowKey`/`emptyMessage` props; uses `render: (row: T) => ReactNode` (not `cell`); generic constraint `T extends { id: string | number }`; `ColumnDef` type not re-exported
+  - `components/ui/Pagination.tsx` — uses `currentPage`/`totalPages`/`onPageChange` props
+  - `components/ui/ListToolbar.tsx`
+  - `components/ui/Breadcrumb.tsx`
+- **Phase 4 — Navigation Restructure:** Reorganized sidebar into 4 grouped sections with `.nav-group-sep` dividers, added `buildBreadcrumbs(pathname)` for page breadcrumbs, reduced shortcuts from 8 → 4 (each with icon), switched `.nav-link` to `display: flex` with gap for icon alignment, added `.nav-link-icon` and `.nav-group-sep` CSS.
+- **Phase 5 — Accessibility Fixes:** Added `.skip-link` as first child of `.app-shell` linking to `#main-content`; converted health meters from `div[aria-hidden]` to `div[role="progressbar"]` with `aria-valuenow/min/max`; added `prefers-reduced-motion` coverage for `drawer-panel-modal` and `drawer-panel-side` keyframes.
+- **Phase 6 — Page Refactoring (all 22 pages, all verified with `npm run build`):**
+  - `Dashboard.tsx` — MetricTile (4), Card/CardHeader/CardBody (4), DataTable
+  - `MeetingsList.tsx` — MetricTile (3), Card/CardHeader/CardBody, DataTable (list view; calendar tables preserved)
+  - `MeetingDetails.tsx` — MetricTile (3), Card/CardHeader/CardBody (3), DataTable; fixed `list` → `file-text` icon
+  - `AgendaList.tsx` — MetricTile (3), Card/CardHeader/CardBody, DataTable (7-column)
+  - `ReportList.tsx` — metric tiles (4), card, DataTable (5), Pagination in `page-controls` div
+  - `MyApprovalQueue.tsx` — MetricTile, Card/CardHeader/CardBody, DataTable (5)
+  - `DirectorApprovalQueue.tsx` — MetricTile (2), Card/CardHeader/CardBody, DataTable (5)
+  - `CaoApprovalQueue.tsx` — MetricTile (2), Card/CardHeader/CardBody, DataTable (5)
+  - `ResolutionsRegister.tsx` — Card/CardBody, DataTable (5)
+  - `MinutesRegister.tsx` — MetricTile (4), Card/CardHeader/CardBody, DataTable (7)
+  - `ActionTracker.tsx` — MetricTile (4), Card/CardBody, DataTable (4)
+  - `AdminPortalHome.tsx` — MetricTile, Card/CardHeader/CardBody
+  - `RolesAdmin.tsx` — MetricTile, Card/CardHeader/CardBody, DataTable (2); needed `as unknown as` casting for `SystemRoleRecord[]` (no `id` property)
+  - `ExecutiveKpisDashboard.tsx` — MetricTile (3), Card/CardHeader/CardBody (2), DataTable for monthly publications; needed `as unknown as` casting for `monthlyPublications` rows
+  - `InCameraPortal.tsx` — Card/CardHeader/CardBody, DataTable (4); uses `stat-card` not `MetricTile`
+  - `LiveMotionsConsole.tsx` — All 3 card sections replaced with Card/CardHeader/CardBody; 3 inline `<table>` elements preserved (agenda slides, presentations, motions — custom row highlighting, inline editing, `colSpan`)
+  - `NotificationsAdmin.tsx` — MetricTile (4, default import), Card/CardHeader/CardBody (2); raw tables preserved (channel observability + retry actions)
+  - `ApiSettingsAdmin.tsx` — MetricTile (3, default import), Card/CardHeader/CardBody (2); nested Runtime Metadata Snapshot card uses `Card`/`CardBody` with `h3` via `CardHeader`; raw tables preserved (settings table, Runtime Metadata table)
+  - `UsersAdmin.tsx` — MetricTile (2, default import), Card/CardHeader/CardBody (2); raw tables preserved (Managed Users with per-row role assignment)
+  - `WorkflowsAdmin.tsx` — MetricTile (1, default import), Card/CardHeader/CardBody (3); all 3 tables preserved as raw HTML (Configure Workflows with 5-button rows, Workflow Stages with Up/Down/Edit/Delete)
+  - `MeetingTypesAdmin.tsx` — MetricTile (1, default import), Card/CardHeader/CardBody (2); both tables preserved as raw HTML (Enable Wizard + Delete per row)
+  - `TemplatesAdmin.tsx` — MetricTile (3, default import), Card/CardHeader/CardBody (2); Template Library card's tab buttons moved to `CardHeader` `actions` prop; drag-and-drop table preserved as raw HTML
+  - `PublicPortal.tsx` — Replaced 3 `section.card` blocks with `Card`/`CardHeader`/`CardBody`; tab buttons (Calendar/List View) and email input+Load moved to `CardHeader` `actions`; `article.stat-card` blocks left intact (`.stat-card` pattern distinct from `MetricTile`); all data tables preserved as raw HTML
+- **Do NOT refactor (read-only pages):** `PublicAgendaDetails.tsx` (print document layout), `PublicLiveMeetingScreen.tsx` (fullscreen display), `PublicLiveMotionScreen.tsx` (fullscreen display).
+- **Phase 7 — Performance Polish:** Added `preconnect` + `preload` + `stylesheet` `<link>` tags for Google Fonts (IBM Plex Sans, Playfair Display, Public Sans) in `index.html`; added `manualChunks` in `vite.config.ts` splitting `react-vendor` (163KB) and `pdf-worker` (446KB) into separate chunks; build verified with `npm run build`.
+
 ## API Snapshot
 
 ### Auth
@@ -724,6 +977,7 @@ This file tracks implemented scope, architecture decisions, and local test proce
 - `POST /api/agendas/:id/approve-cao`
 - `POST /api/agendas/:id/reject`
 - `POST /api/agendas/:id/publish`
+- `POST /api/agendas/:id/carry-forward/:targetAgendaId`
 - `DELETE /api/agendas/:id`
 
 ### Reports
@@ -757,12 +1011,27 @@ This file tracks implemented scope, architecture decisions, and local test proce
 
 - `GET /api/workflows/reports/director-queue`
 - `GET /api/workflows/reports/cao-queue`
+- `GET /api/workflows/reports/my-queue`
 - `GET /api/workflows/reports/:reportId/history`
 - `POST /api/workflows/reports/:reportId/approve-director`
 - `POST /api/workflows/reports/:reportId/reject-director`
 - `POST /api/workflows/reports/:reportId/approve-cao`
 - `POST /api/workflows/reports/:reportId/reject-cao`
+- `POST /api/workflows/reports/:reportId/approve-current`
+- `POST /api/workflows/reports/:reportId/reject-current`
 - `POST /api/workflows/reports/:reportId/resubmit`
+
+### Workflows (Configurations)
+
+- `GET /api/workflows/configurations`
+- `GET /api/workflows/configurations/:id`
+- `POST /api/workflows/configurations`
+- `PATCH /api/workflows/configurations/:id`
+- `DELETE /api/workflows/configurations/:id`
+- `POST /api/workflows/configurations/:workflowId/stages`
+- `PATCH /api/workflows/configurations/:workflowId/stages/:stageId`
+- `DELETE /api/workflows/configurations/:workflowId/stages/:stageId`
+- `POST /api/workflows/configurations/:workflowId/stages/reorder`
 
 ### Minutes
 
@@ -786,10 +1055,30 @@ This file tracks implemented scope, architecture decisions, and local test proce
 - `GET /api/motions/public/live`
 - `GET /api/motions/public/state`
 
+### Resolutions
+
+- `GET /api/resolutions`
+- `GET /api/resolutions/:id`
+- `POST /api/resolutions`
+- `PATCH /api/resolutions/:id`
+- `DELETE /api/resolutions/:id`
+- `GET /api/resolutions/meeting/:meetingId/export-sheet`
+
+### Action Tracker
+
+- `GET /api/actions`
+- `GET /api/actions/dashboard`
+- `GET /api/actions/:id`
+- `POST /api/actions`
+- `PATCH /api/actions/:id`
+- `DELETE /api/actions/:id`
+
 ### Meeting Types
 
 - `GET /api/meeting-types`
+- `GET /api/meeting-types/:id`
 - `POST /api/meeting-types`
+- `PATCH /api/meeting-types/:id`
 - `DELETE /api/meeting-types/:id`
 
 ### Meeting Display
@@ -830,6 +1119,10 @@ This file tracks implemented scope, architecture decisions, and local test proce
 - `GET /api/public/agendas`
 - `GET /api/public/reports`
 - `GET /api/public/minutes`
+- `GET /api/public/motions`
+- `GET /api/public/resolutions`
+- `GET /api/public/actions`
+- `GET /api/public/packages`
 
 ### Audit
 
@@ -855,6 +1148,10 @@ psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/sr
 psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/src/database/migrations/1700000003000-governance-operations.sql
 psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/src/database/migrations/1700000004000-templates-and-attachments.sql
 psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/src/database/migrations/1700000005000-report-template-linking.sql
+psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/src/database/migrations/1700000006000-report-workflow-instance.sql
+psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/src/database/migrations/1700000007000-governance-expansion.sql
+psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/src/database/migrations/1700000008000-governance-backfill.sql
+psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/src/database/migrations/1700000009000-app-integrity-constraints.sql
 psql "postgres://postgres:postgres@localhost:5432/council_meeting" -f backend/src/database/seeds/1700000001000-seed-roles-permissions.sql
 ```
 
@@ -891,3 +1188,129 @@ Then open `http://127.0.0.1:4173/login` and click **Use Local Dev Login**.
 - Automated frontend end-to-end tests are documented as smoke runbook and not yet implemented in CI (CI currently runs frontend build validation).
 - Table sorting/pagination are currently client-side in the frontend and not yet server-backed query pagination.
 - Live meeting public display now uses SSE push with polling fallback; broader event-driven transport across other modules is not yet implemented.
+
+## 2026-03-23 Security Hardening Pass (Phase 1 Started)
+
+- Removed hardcoded dev bypass credential usage from frontend auth context.
+- Updated frontend dev bypass flow to use local bypass state + `X-Dev-Bypass` header only when explicitly enabled.
+- Updated backend auth guard to require all three conditions for bypass:
+  - `AUTH_BYPASS_ENABLED=true`
+  - request header `X-Dev-Bypass: true`
+  - `NODE_ENV` included in `AUTH_BYPASS_ALLOWED_ENVS`
+- Added startup safety check to reject bypass in disallowed environments.
+- Added global in-memory API rate limiting middleware with separate buckets for auth, public, and general API traffic.
+- Added CSRF header middleware: unsafe methods now require `X-CMMS-CSRF`.
+- Updated frontend HTTP client to:
+  - send `X-CMMS-CSRF` for `POST`, `PATCH`, `DELETE`
+  - avoid cookie credentials on API calls (`credentials: omit`)
+  - attach `X-Dev-Bypass` only for explicit local bypass sessions.
+- Updated environment and security docs (`README.md`, `docs/SECURITY_OPERATIONS_HARDENING.md`, `docs/ENVIRONMENT_CHECKLIST.md`, `docs/GO_LIVE_CHECKLIST.md`).
+
+## 2026-03-23 Data Integrity Pass (Phase 2 Started)
+
+- Added transactional support in `PostgresService` with `withTransaction(...)`.
+- Added atomic report workflow transition repository path that writes workflow state and approval history in one transaction.
+- Added optimistic concurrency control for report workflow transitions using `expectedUpdatedAt` guard checks.
+- Added orphan cleanup and foreign key constraints for core app persistence tables:
+  - `app_agendas` -> `app_meetings` (`ON DELETE CASCADE`)
+  - `app_agenda_items` -> `app_agendas` (`ON DELETE CASCADE`)
+  - `app_staff_reports` -> `app_agenda_items` (`ON DELETE CASCADE`)
+  - `app_report_approvals` -> `app_staff_reports` (`ON DELETE CASCADE`)
+  - `app_report_attachments` -> `app_staff_reports` (`ON DELETE CASCADE`)
+  - `app_minutes` -> `app_meetings` (`ON DELETE CASCADE`)
+- Added migration `1700000009000-app-integrity-constraints.sql` for explicit deployment-time integrity backfill + constraints.
+
+## 2026-03-23 Data Integrity Pass (Phase 2 Continued)
+
+- Added atomic agenda workflow transition path (`transitionWorkflowState`) so item status replacement and parent agenda workflow status/version updates are committed together.
+- Added optimistic concurrency guard for agenda workflow transitions using `expectedUpdatedAt` checks.
+- Updated agenda service workflow methods (`submitForDirector`, `approveByDirector`, `approveByCao`, `reject`, `publish`) to use transactional transition path.
+
+## 2026-03-31 Clerk + Governance Workflow Upgrade
+
+- Added clerk-facing minutes acceleration action in the frontend register:
+  - `Auto-Populate` now calls `POST /api/minutes/:id/auto-populate` to synchronize attendance, motions, and vote outcomes into minutes content.
+  - Added structured record snapshot visibility in the minutes edit drawer.
+  - Files:
+    - `frontend/src/pages/Minutes/MinutesRegister.tsx`
+    - `frontend/src/api/minutes.api.ts`
+
+- Added explicit conflict-of-interest declaration management UI to Meeting Details:
+  - list declarations for a meeting
+  - create declaration (person + optional agenda item + reason)
+  - update reason
+  - remove declaration
+  - Files:
+    - `frontend/src/components/ConflictDeclarationsPanel.tsx`
+    - `frontend/src/api/conflictDeclarations.api.ts`
+    - `frontend/src/api/types/conflict-declaration.types.ts`
+    - `frontend/src/pages/Meetings/MeetingDetails.tsx`
+
+- Added governance/compliance audit visibility in Admin Portal:
+  - new admin route: `/admin-portal/audit-logs`
+  - searchable and filterable audit log register (`GET /api/audit/logs`)
+  - wired into admin navigation and admin home module grid
+  - Files:
+    - `frontend/src/pages/Admin/AuditLogsAdmin.tsx`
+    - `frontend/src/api/audit.api.ts`
+    - `frontend/src/api/types/audit.types.ts`
+    - `frontend/src/App.tsx`
+    - `frontend/src/components/layout/AppShell.tsx`
+    - `frontend/src/pages/Admin/AdminPortalHome.tsx`
+
+- Updated top-level docs to reflect clerk/compliance workflows:
+  - `README.md`
+
+## 2026-03-31 Minutes Structured Editor Upgrade
+
+- Replaced minutes drawer from rich-text-only editing to a full structured editor for clerk operations.
+- Added editable sections in the minutes drawer for:
+  - attendance
+  - motions
+  - votes
+  - action items
+  - clerk notes
+- Added editable structured summary text (`contentJson.summary`) alongside existing rich text summary.
+- Updated save flow to persist both `richTextSummary` and structured `contentJson` in a single update call.
+- Files:
+  - `frontend/src/pages/Minutes/MinutesRegister.tsx`
+
+### Phase 75 - P0 Credibility Gaps
+
+**1. Production hard-fail for missing database (`backend/src/database/postgres.service.ts`):**
+- Added `NODE_ENV` check in constructor: if `NODE_ENV === 'production'` and `DATABASE_URL` is not configured, throw `Error` at startup instead of warning
+- Added `NODE_ENV` check in `query()` and `withTransaction()`: if production and DB fails, throw `Error` (not `DatabaseUnavailableError`) so repositories' in-memory fallback is not triggered
+- In-memory fallback now only occurs in non-production environments
+
+**2. Async notification delivery (`backend/src/notifications/notifications.service.ts`):**
+- Refactored from synchronous inline retry loop with `sleep()` to queue-based async delivery
+- `emit()` now creates notification and enqueues for async processing, returning immediately
+- Added `processQueue()` method running on 2-second interval via `OnModuleInit`
+- Added `drainQueueForId()` for inline synchronous drain (used by `emit()` to maintain backward-compatible final-state return)
+- Removed `sleep()` helper and `resolveRetryDelayMs()` (no longer needed with queue-based retries)
+- Failed deliveries are re-enqueued automatically; interval processor handles retry cycles
+- `flush()` method exposed for test synchronization
+- Updated unit tests to mock `getById` for async queue drain scenarios
+
+**3. Playwright E2E in CI (`.github/workflows/ci.yml`):**
+- Added `e2e` job that runs after `backend` and `frontend` builds
+- Installs Playwright browsers with `npx playwright install --with-deps chromium`
+- Runs `npx playwright test` with `CI=true` environment variable
+- Uses existing `playwright.config.ts` web server entries to auto-start backend and frontend
+
+**4. Removed official-record heuristics from public agenda packet (`frontend/src/pages/Public/PublicAgendaDetails.tsx`):**
+- Removed `pageRangesByItem` memo that estimated page numbers based on narrative length (`Math.ceil(narrativeLength / 850)`)
+- Removed page range display from agenda item section titles (`agenda-doc-range` span)
+- Removed "Page X of Y" footer from report package sections
+- Public agenda packet no longer simulates print pagination for official record purposes
+
+## 2026-03-31 Presentation Display Bug Fix
+
+**Bug**: After clerk clicks "Show Presentation", public screen stays on "Waiting for Agenda" instead of switching to presentation mode.
+
+**Root Cause**: SSE stream's `distinctUntilChanged` used `JSON.stringify(state)` as the signature for deduplication. This included `updatedAt`, which is set via `new Date().toISOString()`. If two consecutive `getState()` polls happened within the same second (or if no upsert occurred between polls), `updatedAt` remained the same, causing `distinctUntilChanged` to suppress the emission even though `displayMode` changed from `'AGENDA'` to `'PRESENTATION'`.
+
+**Fix**: Replaced `JSON.stringify(state)` with a computed signature based on meaningful state fields (`displayMode`, `agendaItemId`, `motionLiveId`, `motionOutcomeId`, `presentationId`, `presentationSlideIndex`). This ensures `distinctUntilChanged` properly emits when actual display state changes, regardless of whether `updatedAt` changed.
+
+**Files Modified**:
+- `backend/src/meeting-display/meeting-display.service.ts`: Added `computeStateSignature()` method and updated `streamPublicState()` to use it

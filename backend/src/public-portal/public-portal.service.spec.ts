@@ -24,6 +24,9 @@ describe('PublicPortalService', () => {
         ]),
       } as never,
       { list: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
       { listByEmail: jest.fn().mockResolvedValue([]) } as never,
       { emit: jest.fn().mockResolvedValue({}) } as never,
     );
@@ -58,6 +61,9 @@ describe('PublicPortalService', () => {
           { id: 'min1', meetingId: 'm1', status: 'PUBLISHED', contentJson: { summary: 'Budget deliberations' } },
         ]),
       } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
       {
         getById: jest.fn().mockResolvedValue({
           id: 's1',
@@ -103,6 +109,9 @@ describe('PublicPortalService', () => {
           { id: 'min1', meetingId: 'm1', status: 'PUBLISHED', contentJson: { summary: 'Parks minutes' } },
         ]),
       } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
       {
         listActiveByFrequency: jest
           .fn()

@@ -16,6 +16,7 @@ import {
 import { createMotion, deleteMotion, listMotions, setMotionLive, setMotionOutcome, updateMotion } from '../../api/motions.api';
 import { listMeetings } from '../../api/meetings.api';
 import { createPresentation, deletePresentation, listPresentations } from '../../api/presentations.api';
+import { createResolution } from '../../api/resolutions.api';
 import type { AgendaItemRecord } from '../../api/types/agenda.types';
 import type { MeetingDisplayState } from '../../api/types/meeting-display.types';
 import type { MeetingRecord } from '../../api/types/meeting.types';
@@ -24,6 +25,8 @@ import type { PresentationRecord } from '../../api/types/presentation.types';
 import AppShell from '../../components/layout/AppShell';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { useToast } from '../../hooks/useToast';
+import { formatMeetingSelectionLabel } from '../../utils/meetingDisplay';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 
 async function fileToBase64(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
@@ -408,6 +411,30 @@ export default function LiveMotionsConsole(): JSX.Element {
     }
   };
 
+  const handleCreateResolutionFromMotion = async (motion: MotionRecord): Promise<void> => {
+    if (!selectedMeetingId) {
+      return;
+    }
+    setPendingAction(`resolution:${motion.id}`);
+    setError(null);
+    try {
+      await createResolution({
+        meetingId: selectedMeetingId,
+        motionId: motion.id,
+        agendaItemId: motion.agendaItemId,
+        resolutionNumber: `RES-${new Date().getFullYear()}-${String(motion.sortOrder).padStart(3, '0')}`,
+        title: motion.title,
+        body: motion.body,
+      });
+      addToast('Resolution created from motion.', 'success');
+    } catch {
+      setError('Could not create resolution from motion.');
+      addToast('Could not create resolution from motion.', 'error');
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
   const handleSetAgendaSlide = async (agendaItemId: string): Promise<void> => {
     if (!selectedMeetingId) {
       return;
@@ -532,14 +559,9 @@ export default function LiveMotionsConsole(): JSX.Element {
         </a>
       }
     >
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>Display Console</h2>
-            <p>Agenda stays primary. Switch to motions instantly when needed.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader title="Display Console" description="Agenda stays primary. Switch to motions instantly when needed." />
+        <CardBody>
           <div className="workspace-toolbar-row">
             <select
               className="field"
@@ -550,7 +572,7 @@ export default function LiveMotionsConsole(): JSX.Element {
               {meetings.length === 0 ? <option value="">No meetings available</option> : null}
               {meetings.map((meeting) => (
                 <option key={meeting.id} value={meeting.id}>
-                  {meeting.title}
+                  {formatMeetingSelectionLabel(meeting)}
                 </option>
               ))}
             </select>
@@ -713,23 +735,24 @@ export default function LiveMotionsConsole(): JSX.Element {
             )}
           </section>
 
-          <section className="card" style={{ marginTop: '0.95rem' }}>
-            <header className="card-header">
-              <div>
-                <h3>Agenda Slides</h3>
-                <p>Jump to a specific slide without scrolling the full agenda page.</p>
-              </div>
-              <button
-                type="button"
-                className="btn btn-quiet"
-                onClick={() => setIsAgendaSectionOpen((current) => !current)}
-                aria-expanded={isAgendaSectionOpen}
-              >
-                {isAgendaSectionOpen ? 'Collapse' : 'Expand'}
-              </button>
-            </header>
+          <div style={{ marginTop: '0.95rem' }}>
+            <Card>
+              <CardHeader
+                title="Agenda Slides"
+              description="Jump to a specific slide without scrolling the full agenda page."
+              actions={
+                <button
+                  type="button"
+                  className="btn btn-quiet"
+                  onClick={() => setIsAgendaSectionOpen((current) => !current)}
+                  aria-expanded={isAgendaSectionOpen}
+                >
+                  {isAgendaSectionOpen ? 'Collapse' : 'Expand'}
+                </button>
+              }
+            />
             {isAgendaSectionOpen ? (
-              <div className="card-body">
+              <CardBody>
                 <div className="table-wrap">
                   <table className="data-table" aria-label="Agenda display slides">
                     <thead>
@@ -774,26 +797,28 @@ export default function LiveMotionsConsole(): JSX.Element {
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </CardBody>
             ) : null}
-          </section>
+          </Card>
+          </div>
 
-          <section className="card" style={{ marginTop: '0.95rem' }}>
-            <header className="card-header">
-              <div>
-                <h3>Presentation Decks</h3>
-                <p>Upload PDF/PPT/PPTX, then run slides from this same console.</p>
-              </div>
-              <button
-                type="button"
-                className="btn btn-quiet"
-                onClick={() => setIsPresentationSectionOpen((current) => !current)}
-                aria-expanded={isPresentationSectionOpen}
-              >
-                {isPresentationSectionOpen ? 'Collapse' : 'Expand'}
-              </button>
-            </header>
-            {isPresentationSectionOpen ? <div className="card-body">
+          <div style={{ marginTop: '0.95rem' }}>
+            <Card>
+              <CardHeader
+                title="Presentation Decks"
+              description="Upload PDF/PPT/PPTX, then run slides from this same console."
+              actions={
+                <button
+                  type="button"
+                  className="btn btn-quiet"
+                  onClick={() => setIsPresentationSectionOpen((current) => !current)}
+                  aria-expanded={isPresentationSectionOpen}
+                >
+                  {isPresentationSectionOpen ? 'Collapse' : 'Expand'}
+                </button>
+              }
+            />
+            {isPresentationSectionOpen ? <CardBody>
               <form onSubmit={(event) => void handleUploadPresentation(event)}>
                 <div className="form-grid">
                   <div className="form-field span-all">
@@ -896,27 +921,26 @@ export default function LiveMotionsConsole(): JSX.Element {
                   </tbody>
                 </table>
               </div>
-            </div> : null}
-          </section>
+            </CardBody> : null}
+          </Card>
         </div>
-      </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>Motion Controls</h2>
-            <p>Prepare and publish motions without leaving this page.</p>
-          </div>
-          <button
-            type="button"
-            className="btn btn-quiet"
-            onClick={() => setIsMotionSectionOpen((current) => !current)}
-            aria-expanded={isMotionSectionOpen}
-          >
-            {isMotionSectionOpen ? 'Collapse' : 'Expand'}
-          </button>
-        </header>
-        {isMotionSectionOpen ? <div className="card-body">
+        <Card>
+          <CardHeader
+            title="Motion Controls"
+          description="Prepare and publish motions without leaving this page."
+          actions={
+            <button
+              type="button"
+              className="btn btn-quiet"
+              onClick={() => setIsMotionSectionOpen((current) => !current)}
+              aria-expanded={isMotionSectionOpen}
+            >
+              {isMotionSectionOpen ? 'Collapse' : 'Expand'}
+            </button>
+          }
+        />
+        {isMotionSectionOpen ? <CardBody>
           <div className="workspace-toolbar-row">
             <span className="pill">{liveMotion ? `Live: ${liveMotion.title}` : 'No live motion'}</span>
           </div>
@@ -1080,6 +1104,14 @@ export default function LiveMotionsConsole(): JSX.Element {
                                 >
                                   Delete
                                 </button>
+                                <button
+                                  type="button"
+                                  className="btn"
+                                  disabled={pendingAction === `resolution:${motion.id}`}
+                                  onClick={() => void handleCreateResolutionFromMotion(motion)}
+                                >
+                                  Create Resolution
+                                </button>
                               </>
                             )}
                           </div>
@@ -1091,8 +1123,10 @@ export default function LiveMotionsConsole(): JSX.Element {
               </table>
             </div>
           )}
-        </div> : null}
-      </section>
+        </CardBody> : null}
+      </Card>
+      </CardBody>
+      </Card>
     </AppShell>
   );
 }

@@ -17,6 +17,11 @@ Use this checklist to keep local/dev/staging values aligned.
 - `PUBLIC_DIGEST_SCHEDULER_ENABLED` (defaults to `true`)
 - `PUBLIC_DIGEST_SCHEDULER_INTERVAL_MS` (defaults to `600000`, min effective interval `60000`)
 - `AUTH_BYPASS_ENABLED` (must be `false` outside local dev)
+- `AUTH_BYPASS_ALLOWED_ENVS` (defaults to `development,test,local`)
+- `RATE_LIMIT_WINDOW_MS` (defaults to `60000`)
+- `RATE_LIMIT_GENERAL_MAX` (defaults to `120`)
+- `RATE_LIMIT_PUBLIC_MAX` (defaults to `90`)
+- `RATE_LIMIT_AUTH_MAX` (defaults to `30`)
 - `MS_TENANT_ID`
 - `MS_CLIENT_ID`
 - `MS_CLIENT_SECRET`
@@ -40,8 +45,10 @@ Use this checklist to keep local/dev/staging values aligned.
 ## Safety Rules
 
 - Never enable bypass auth in production.
+- Keep `AUTH_BYPASS_ALLOWED_ENVS` restricted to non-production values.
 - Keep `.env` files out of commits.
 - Validate database connectivity before running workflow UAT.
+- Ensure rate limit defaults are not disabled in shared environments.
 
 ## Local Runtime Validation
 
@@ -60,7 +67,8 @@ Use this checklist to keep local/dev/staging values aligned.
 
 - Symptom: UI save fails but backend appears running.
 - Check order:
-  1. confirm logged in via dev bypass (`VITE_AUTH_BYPASS=true` and Use Local Dev Login)
+  1. confirm logged in via dev bypass (`VITE_AUTH_BYPASS=true`, Use Local Dev Login, and `AUTH_BYPASS_ENABLED=true`)
   2. confirm backend is running on expected port (`3000`)
   3. confirm API base URL matches backend (`VITE_API_BASE_URL=http://localhost:3000/api`)
   4. confirm browser request is not blocked by CORS
+  5. confirm state-changing requests include `X-CMMS-CSRF` (frontend sets this automatically)

@@ -9,6 +9,6 @@ import { MotionsService } from './motions.service';
   imports: [MeetingsModule, AuditModule],
   controllers: [MotionsController],
   providers: [MotionsService, MotionsRepository],
-  exports: [MotionsService],
+  exports: [MotionsService, MotionsRepository],
 })
 export class MotionsModule {}

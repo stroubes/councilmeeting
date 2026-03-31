@@ -109,6 +109,16 @@ export class AgendasController {
   }
 
   @Permissions(PERMISSIONS.AGENDA_WRITE)
+  @Post(':id/carry-forward/:targetAgendaId')
+  carryForward(
+    @Param('id') id: string,
+    @Param('targetAgendaId') targetAgendaId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.agendasService.carryForwardItems(id, targetAgendaId, user);
+  }
+
+  @Permissions(PERMISSIONS.AGENDA_WRITE)
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.agendasService.remove(id, user);

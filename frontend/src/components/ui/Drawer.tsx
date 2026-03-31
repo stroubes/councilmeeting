@@ -6,9 +6,17 @@ interface DrawerProps {
   subtitle?: string;
   onClose: () => void;
   children: ReactNode;
+  layout?: 'modal' | 'side';
 }
 
-export default function Drawer({ isOpen, title, subtitle, onClose, children }: DrawerProps): JSX.Element | null {
+export default function Drawer({
+  isOpen,
+  title,
+  subtitle,
+  onClose,
+  children,
+  layout = 'modal',
+}: DrawerProps): JSX.Element | null {
   if (!isOpen) {
     return null;
   }
@@ -16,7 +24,7 @@ export default function Drawer({ isOpen, title, subtitle, onClose, children }: D
   return (
     <div className="drawer-root" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="drawer-backdrop" onClick={onClose} aria-label="Close drawer" />
-      <section className="drawer-panel">
+      <section className={`drawer-panel ${layout === 'modal' ? 'drawer-panel-modal' : 'drawer-panel-side'}`}>
         <header className="drawer-header">
           <div>
             <p className="drawer-kicker">Workflow Panel</p>

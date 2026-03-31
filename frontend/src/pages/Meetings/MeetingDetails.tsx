@@ -2,10 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { listAgendas } from '../../api/agendas.api';
 import { getMeetingById, listMeetings } from '../../api/meetings.api';
+import { recordInCameraMinutes } from '../../api/minutes.api';
 import type { AgendaRecord } from '../../api/types/agenda.types';
 import type { MeetingRecord } from '../../api/types/meeting.types';
 import AppShell from '../../components/layout/AppShell';
 import StatusBadge from '../../components/ui/StatusBadge';
+import MetricTile from '../../components/ui/MetricTile';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
+import AttendeesPanel from '../../components/AttendeesPanel';
+import RollCallVotingPanel from '../../components/RollCallVotingPanel';
+import BylawsManagementPanel from '../../components/BylawsManagementPanel';
+import ConflictDeclarationsPanel from '../../components/ConflictDeclarationsPanel';
+import { useToast } from '../../hooks/useToast';
 
 function formatDateTime(value?: string): string {
   if (!value) {
@@ -26,6 +35,8 @@ export default function MeetingDetails(): JSX.Element {
   const [agendas, setAgendas] = useState<AgendaRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRecordingInCamera, setIsRecordingInCamera] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     const load = async (): Promise<void> => {
@@ -72,37 +83,65 @@ export default function MeetingDetails(): JSX.Element {
     [agendas],
   );
 
+  const handleRecordInCameraMinutes = async (): Promise<void> => {
+    if (!meeting) return;
+    setIsRecordingInCamera(true);
+    try {
+      await recordInCameraMinutes(meeting.id);
+      addToast('In-camera minutes record created.', 'success');
+    } catch {
+      addToast('Could not create in-camera minutes record.', 'error');
+    } finally {
+      setIsRecordingInCamera(false);
+    }
+  };
+
   return (
     <AppShell title="Meeting Details" subtitle="Detailed meeting timeline, agenda package, and supporting records.">
       <section className="stats-grid">
-        <article className="stat-card">
-          <p className="stat-label">Agendas Linked</p>
-          <p className="stat-value">{agendas.length}</p>
-        </article>
-        <article className="stat-card">
-          <p className="stat-label">Agenda Items</p>
-          <p className="stat-value">{agendaItemCount}</p>
-        </article>
-        <article className="stat-card">
-          <p className="stat-label">Visibility</p>
-          <p className="stat-value">{meeting?.isInCamera ? 'In-Camera' : 'Public'}</p>
-        </article>
+        <MetricTile
+          label="Agendas Linked"
+          value={agendas.length}
+          icon="file-text"
+        />
+        <MetricTile
+          label="Agenda Items"
+          value={agendaItemCount}
+          icon="file-text"
+        />
+        <MetricTile
+          label="Visibility"
+          value={meeting?.isInCamera ? 'In-Camera' : 'Public'}
+          icon={meeting?.isInCamera ? 'lock' : 'globe'}
+        />
       </section>
+
+      {!isLoading && !error && meeting?.isInCamera ? (
+        <div className="page-actions" style={{ marginTop: 'var(--space-4)' }}>
+          <button
+            type="button"
+            className="btn"
+            disabled={isRecordingInCamera}
+            onClick={() => void handleRecordInCameraMinutes()}
+          >
+            {isRecordingInCamera ? 'Creating Minutes...' : 'Record In-Camera Minutes'}
+          </button>
+        </div>
+      ) : null}
 
       {isLoading ? <p className="muted">Loading meeting details...</p> : null}
       {error ? <p className="inline-alert">{error}</p> : null}
 
       {!isLoading && !error && meeting ? (
+        <>
         <section className="split-grid">
-          <article className="card">
-            <header className="card-header">
-              <div>
-                <h2>{meeting.title}</h2>
-                <p>{meeting.description ?? 'No meeting description provided.'}</p>
-              </div>
-              <StatusBadge status={meeting.status} />
-            </header>
-            <div className="card-body">
+          <Card>
+            <CardHeader
+              title={meeting.title}
+              description={meeting.description ?? 'No meeting description provided.'}
+              actions={<StatusBadge status={meeting.status} />}
+            />
+            <CardBody>
               <ul className="timeline-list">
                 <li className="timeline-item">
                   <h4>Schedule</h4>
@@ -119,44 +158,29 @@ export default function MeetingDetails(): JSX.Element {
                   <p>{meeting.meetingTypeCode}</p>
                 </li>
               </ul>
-            </div>
-          </article>
+            </CardBody>
+          </Card>
 
-          <article className="card">
-            <header className="card-header">
-              <div>
-                <h3>Agenda Packages</h3>
-                <p>All agenda versions currently associated with this meeting.</p>
-              </div>
-            </header>
-            <div className="card-body">
+          <Card>
+            <CardHeader
+              title="Agenda Packages"
+              description="All agenda versions currently associated with this meeting."
+            />
+            <CardBody>
               {agendas.length === 0 ? (
                 <div className="empty-state">No agendas have been linked to this meeting yet.</div>
               ) : (
-                <div className="table-wrap">
-                  <table className="data-table" aria-label="Meeting agendas">
-                    <thead>
-                      <tr>
-                        <th>Title</th>
-                        <th>Status</th>
-                        <th>Version</th>
-                        <th>Items</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {agendas.map((agenda) => (
-                        <tr key={agenda.id}>
-                          <td>{agenda.title}</td>
-                          <td>
-                            <StatusBadge status={agenda.status} />
-                          </td>
-                          <td>v{agenda.version}</td>
-                          <td>{agenda.items.length}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <DataTable
+                  columns={[
+                    { key: 'title', header: 'Title', render: (agenda: AgendaRecord) => agenda.title },
+                    { key: 'status', header: 'Status', render: (agenda: AgendaRecord) => <StatusBadge status={agenda.status} /> },
+                    { key: 'version', header: 'Version', render: (agenda: AgendaRecord) => `v${agenda.version}` },
+                    { key: 'items', header: 'Items', render: (agenda: AgendaRecord) => agenda.items.length },
+                  ]}
+                  data={agendas}
+                  rowKey={(agenda: AgendaRecord) => agenda.id}
+                  emptyMessage="No agendas have been linked to this meeting yet."
+                />
               )}
               <div className="page-actions content-actions">
                 <Link className="btn" to="/agendas">
@@ -172,25 +196,31 @@ export default function MeetingDetails(): JSX.Element {
                   Open Public Meeting Screen
                 </Link>
               </div>
-            </div>
-          </article>
+            </CardBody>
+          </Card>
         </section>
+
+        <AttendeesPanel meetingId={meeting.id} />
+        <ConflictDeclarationsPanel meetingId={meeting.id} />
+        <RollCallVotingPanel meetingId={meeting.id} />
+        <BylawsManagementPanel meetingId={meeting.id} />
+        </>
       ) : null}
 
       {!isLoading && !meeting && !error ? (
-        <section className="card">
-          <div className="card-body">
+        <Card>
+          <CardBody>
             <div className="empty-state">No meeting data is available for this route.</div>
-          </div>
-        </section>
+          </CardBody>
+        </Card>
       ) : null}
 
       {!isLoading && error ? (
-        <section className="card">
-          <div className="card-body">
+        <Card>
+          <CardBody>
             <div className="empty-state">Try returning to the Meetings register and selecting a valid entry.</div>
-          </div>
-        </section>
+          </CardBody>
+        </Card>
       ) : null}
     </AppShell>
   );

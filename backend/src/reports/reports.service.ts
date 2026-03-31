@@ -15,11 +15,13 @@ import { AuditService } from '../audit/audit.service';
 import { TemplatesService } from '../templates/templates.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GovernanceService } from '../governance/governance.service';
+import { WorkflowConfigRepository, type WorkflowRecord } from '../workflows/workflow-config.repository';
 
 export type ReportWorkflowStatus =
   | 'DRAFT'
   | 'PENDING_DIRECTOR_APPROVAL'
   | 'PENDING_CAO_APPROVAL'
+  | 'PENDING_WORKFLOW_APPROVAL'
   | 'APPROVED'
   | 'REJECTED'
   | 'PUBLISHED';
@@ -27,7 +29,7 @@ export type ReportWorkflowStatus =
 export interface ReportApprovalEvent {
   id: string;
   staffReportId: string;
-  stage: 'DIRECTOR' | 'CAO' | 'SYSTEM';
+  stage: string;
   action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RESUBMITTED' | 'PUBLISHED';
   actedByUserId: string;
   actedAt: string;
@@ -54,6 +56,10 @@ export interface StaffReportRecord {
   parsingVersion: string;
   parsingWarnings: string[];
   workflowStatus: ReportWorkflowStatus;
+  workflowConfigId?: string;
+  currentWorkflowStageIndex?: number;
+  currentWorkflowStageKey?: string;
+  currentWorkflowApproverRole?: string;
   authorUserId: string;
   createdBy: string;
   createdAt: string;
@@ -86,6 +92,7 @@ export class ReportsService {
     private readonly templatesService: TemplatesService,
     private readonly notificationsService: NotificationsService,
     private readonly governanceService: GovernanceService,
+    private readonly workflowConfigRepository: WorkflowConfigRepository,
   ) {}
 
   health(): { status: string } {
@@ -111,6 +118,8 @@ export class ReportsService {
       dto.executiveSummary ??
       (defaultSections.length > 0 ? `Prepared using template: ${template?.name ?? ''}`.trim() : undefined);
 
+    const selectedWorkflow = await this.resolveWorkflowConfiguration(dto.workflowConfigId);
+
     const created = await this.reportsRepository.create({
       agendaItemId: dto.agendaItemId,
       templateId: dto.templateId,
@@ -131,6 +140,10 @@ export class ReportsService {
       parsingVersion: '1.0-manual',
       parsingWarnings: [],
       workflowStatus: 'DRAFT',
+      workflowConfigId: selectedWorkflow?.id,
+      currentWorkflowStageIndex: null,
+      currentWorkflowStageKey: null,
+      currentWorkflowApproverRole: null,
       authorUserId: user.id,
       createdBy: user.id,
     });
@@ -160,6 +173,8 @@ export class ReportsService {
     }
 
     const parsed = await this.docxParserService.parseFromBase64(dto.fileName, contentBase64);
+    const selectedWorkflow = await this.resolveWorkflowConfiguration(dto.workflowConfigId);
+
     const created = await this.reportsRepository.create({
       agendaItemId: dto.agendaItemId,
       title: parsed.title,
@@ -178,6 +193,10 @@ export class ReportsService {
       parsingVersion: '2.0-docx-openxml',
       parsingWarnings: parsed.warnings,
       workflowStatus: 'DRAFT',
+      workflowConfigId: selectedWorkflow?.id,
+      currentWorkflowStageIndex: null,
+      currentWorkflowStageKey: null,
+      currentWorkflowApproverRole: null,
       authorUserId: user.id,
       createdBy: user.id,
     });
@@ -210,8 +229,15 @@ export class ReportsService {
       await this.ensureTemplateType(dto.templateId, 'STAFF_REPORT');
     }
 
+    let workflowConfigId: string | undefined;
+    if (dto.workflowConfigId !== undefined) {
+      const selectedWorkflow = await this.resolveWorkflowConfiguration(dto.workflowConfigId);
+      workflowConfigId = selectedWorkflow?.id;
+    }
+
     const updated = await this.reportsRepository.update(id, {
       templateId: dto.templateId,
+      workflowConfigId,
       title: dto.title,
       department: dto.department,
       executiveSummary: dto.executiveSummary,
@@ -249,13 +275,28 @@ export class ReportsService {
       });
     }
 
-    const updated = await this.reportsRepository.updateWorkflowStatus(id, 'PENDING_DIRECTOR_APPROVAL');
-    await this.reportsRepository.appendApproval({
+    const workflow = await this.resolveWorkflowForReport(report);
+    const firstStage = this.getStageByOrder(workflow, 1);
+    if (!firstStage) {
+      throw new BadRequestException('No active report workflow stages are configured.');
+    }
+
+    const updated = await this.reportsRepository.transitionWorkflow({
       reportId: id,
-      stage: 'DIRECTOR',
-      action: previousStatus === 'REJECTED' ? 'RESUBMITTED' : 'SUBMITTED',
-      actedByUserId: user.id,
-      comments,
+      expectedUpdatedAt: report.updatedAt,
+      patch: {
+        workflowStatus: this.toPendingStatus(firstStage.approverRole),
+        currentWorkflowStageIndex: 1,
+        currentWorkflowStageKey: firstStage.key,
+        currentWorkflowApproverRole: firstStage.approverRole,
+        workflowConfigId: workflow.id,
+      },
+      approval: {
+        stage: firstStage.key,
+        action: previousStatus === 'REJECTED' ? 'RESUBMITTED' : 'SUBMITTED',
+        actedByUserId: user.id,
+        comments,
+      },
     });
 
     await this.auditService.log({
@@ -269,7 +310,7 @@ export class ReportsService {
       entityType: 'report',
       entityId: id,
       actorUserId: user.id,
-      payloadJson: { status: 'PENDING_DIRECTOR_APPROVAL' },
+      payloadJson: { status: updated.workflowStatus, stage: firstStage.key },
     });
 
     return updated;
@@ -280,13 +321,18 @@ export class ReportsService {
     const report = await this.reportsRepository.getById(id);
     this.ensureStatus(report.workflowStatus, ['PENDING_DIRECTOR_APPROVAL']);
 
-    const updated = await this.reportsRepository.updateWorkflowStatus(id, 'PENDING_CAO_APPROVAL');
-    await this.reportsRepository.appendApproval({
+    const updated = await this.reportsRepository.transitionWorkflow({
       reportId: id,
-      stage: 'DIRECTOR',
-      action: 'APPROVED',
-      actedByUserId: user.id,
-      comments,
+      expectedUpdatedAt: report.updatedAt,
+      patch: {
+        workflowStatus: 'PENDING_CAO_APPROVAL',
+      },
+      approval: {
+        stage: 'DIRECTOR',
+        action: 'APPROVED',
+        actedByUserId: user.id,
+        comments,
+      },
     });
 
     await this.auditService.log({
@@ -306,18 +352,87 @@ export class ReportsService {
     return updated;
   }
 
+  async approveAtCurrentStage(
+    id: string,
+    user: AuthenticatedUser,
+    input: {
+      expectedRole: string;
+      stage: string;
+      nextStatus: ReportWorkflowStatus;
+      comments?: string;
+      notificationEventType?: string;
+    },
+  ): Promise<StaffReportRecord> {
+    this.ensureApproverRole(user, [input.expectedRole.toUpperCase(), SYSTEM_ROLES.ADMIN]);
+    const report = await this.reportsRepository.getById(id);
+    this.ensureStatus(report.workflowStatus, [
+      'PENDING_DIRECTOR_APPROVAL',
+      'PENDING_CAO_APPROVAL',
+      'PENDING_WORKFLOW_APPROVAL',
+    ]);
+
+    const nextStageIndex = input.nextStatus === 'APPROVED' ? null : (report.currentWorkflowStageIndex ?? 0) + 1;
+    const nextStage = nextStageIndex ? this.getStageByOrder(await this.resolveWorkflowForReport(report), nextStageIndex) : null;
+
+    const updated = await this.reportsRepository.transitionWorkflow({
+      reportId: id,
+      expectedUpdatedAt: report.updatedAt,
+      patch: {
+        workflowStatus: input.nextStatus,
+        currentWorkflowStageIndex: nextStageIndex,
+        currentWorkflowStageKey: nextStage?.key,
+        currentWorkflowApproverRole: nextStage?.approverRole,
+      },
+      approval: {
+        stage: input.stage,
+        action: 'APPROVED',
+        actedByUserId: user.id,
+        comments: input.comments,
+      },
+    });
+
+    await this.auditService.log({
+      actorUserId: user.id,
+      action: 'report.approve_stage',
+      entityType: 'report',
+      entityId: id,
+      changesJson: {
+        stage: input.stage,
+        role: input.expectedRole,
+        nextStatus: input.nextStatus,
+      },
+    });
+
+    if (input.notificationEventType) {
+      await this.emitNotification({
+        eventType: input.notificationEventType,
+        entityType: 'report',
+        entityId: id,
+        actorUserId: user.id,
+        payloadJson: { status: input.nextStatus, stage: input.stage },
+      });
+    }
+
+    return updated;
+  }
+
   async approveCao(id: string, user: AuthenticatedUser, comments?: string): Promise<StaffReportRecord> {
     this.ensureApproverRole(user, [SYSTEM_ROLES.CAO, SYSTEM_ROLES.ADMIN]);
     const report = await this.reportsRepository.getById(id);
     this.ensureStatus(report.workflowStatus, ['PENDING_CAO_APPROVAL']);
 
-    const updated = await this.reportsRepository.updateWorkflowStatus(id, 'APPROVED');
-    await this.reportsRepository.appendApproval({
+    const updated = await this.reportsRepository.transitionWorkflow({
       reportId: id,
-      stage: 'CAO',
-      action: 'APPROVED',
-      actedByUserId: user.id,
-      comments,
+      expectedUpdatedAt: report.updatedAt,
+      patch: {
+        workflowStatus: 'APPROVED',
+      },
+      approval: {
+        stage: 'CAO',
+        action: 'APPROVED',
+        actedByUserId: user.id,
+        comments,
+      },
     });
 
     await this.auditService.log({
@@ -347,13 +462,21 @@ export class ReportsService {
     const report = await this.reportsRepository.getById(id);
     this.ensureStatus(report.workflowStatus, ['PENDING_DIRECTOR_APPROVAL', 'PENDING_CAO_APPROVAL']);
 
-    const updated = await this.reportsRepository.updateWorkflowStatus(id, 'REJECTED');
-    await this.reportsRepository.appendApproval({
+    const updated = await this.reportsRepository.transitionWorkflow({
       reportId: id,
-      stage,
-      action: 'REJECTED',
-      actedByUserId: user.id,
-      comments,
+      expectedUpdatedAt: report.updatedAt,
+      patch: {
+        workflowStatus: 'REJECTED',
+        currentWorkflowStageIndex: null,
+        currentWorkflowStageKey: null,
+        currentWorkflowApproverRole: null,
+      },
+      approval: {
+        stage,
+        action: 'REJECTED',
+        actedByUserId: user.id,
+        comments,
+      },
     });
 
     await this.auditService.log({
@@ -374,6 +497,63 @@ export class ReportsService {
     return updated;
   }
 
+  async rejectAtCurrentStage(
+    id: string,
+    user: AuthenticatedUser,
+    input: {
+      expectedRole: string;
+      stage: string;
+      comments: string;
+      notificationEventType?: string;
+    },
+  ): Promise<StaffReportRecord> {
+    this.ensureApproverRole(user, [input.expectedRole.toUpperCase(), SYSTEM_ROLES.ADMIN]);
+    const report = await this.reportsRepository.getById(id);
+    this.ensureStatus(report.workflowStatus, [
+      'PENDING_DIRECTOR_APPROVAL',
+      'PENDING_CAO_APPROVAL',
+      'PENDING_WORKFLOW_APPROVAL',
+    ]);
+
+    const updated = await this.reportsRepository.transitionWorkflow({
+      reportId: id,
+      expectedUpdatedAt: report.updatedAt,
+      patch: {
+        workflowStatus: 'REJECTED',
+      },
+      approval: {
+        stage: input.stage,
+        action: 'REJECTED',
+        actedByUserId: user.id,
+        comments: input.comments,
+      },
+    });
+
+    await this.auditService.log({
+      actorUserId: user.id,
+      action: 'report.reject_stage',
+      entityType: 'report',
+      entityId: id,
+      changesJson: {
+        stage: input.stage,
+        role: input.expectedRole,
+        comments: input.comments,
+      },
+    });
+
+    if (input.notificationEventType) {
+      await this.emitNotification({
+        eventType: input.notificationEventType,
+        entityType: 'report',
+        entityId: id,
+        actorUserId: user.id,
+        payloadJson: { status: 'REJECTED', stage: input.stage, comments: input.comments },
+      });
+    }
+
+    return updated;
+  }
+
   async resubmit(id: string, user: AuthenticatedUser, comments?: string): Promise<StaffReportRecord> {
     const report = await this.reportsRepository.getById(id);
     this.ensureStatus(report.workflowStatus, ['REJECTED']);
@@ -388,13 +568,28 @@ export class ReportsService {
       });
     }
 
-    const updated = await this.reportsRepository.updateWorkflowStatus(id, 'PENDING_DIRECTOR_APPROVAL');
-    await this.reportsRepository.appendApproval({
+    const workflow = await this.resolveWorkflowForReport(report);
+    const firstStage = this.getStageByOrder(workflow, 1);
+    if (!firstStage) {
+      throw new BadRequestException('No active report workflow stages are configured.');
+    }
+
+    const updated = await this.reportsRepository.transitionWorkflow({
       reportId: id,
-      stage: 'DIRECTOR',
-      action: 'RESUBMITTED',
-      actedByUserId: user.id,
-      comments,
+      expectedUpdatedAt: report.updatedAt,
+      patch: {
+        workflowStatus: this.toPendingStatus(firstStage.approverRole),
+        currentWorkflowStageIndex: 1,
+        currentWorkflowStageKey: firstStage.key,
+        currentWorkflowApproverRole: firstStage.approverRole,
+        workflowConfigId: workflow.id,
+      },
+      approval: {
+        stage: firstStage.key,
+        action: 'RESUBMITTED',
+        actedByUserId: user.id,
+        comments,
+      },
     });
 
     await this.auditService.log({
@@ -408,7 +603,7 @@ export class ReportsService {
       entityType: 'report',
       entityId: id,
       actorUserId: user.id,
-      payloadJson: { status: 'PENDING_DIRECTOR_APPROVAL' },
+      payloadJson: { status: updated.workflowStatus, stage: firstStage.key },
     });
 
     return updated;
@@ -422,13 +617,21 @@ export class ReportsService {
     const report = await this.reportsRepository.getById(id);
     this.ensureStatus(report.workflowStatus, ['APPROVED']);
 
-    const updated = await this.reportsRepository.updateWorkflowStatus(id, 'PUBLISHED');
-    await this.reportsRepository.appendApproval({
+    const updated = await this.reportsRepository.transitionWorkflow({
       reportId: id,
-      stage: 'SYSTEM',
-      action: 'PUBLISHED',
-      actedByUserId: user.id,
-      comments: 'Published to public portal.',
+      expectedUpdatedAt: report.updatedAt,
+      patch: {
+        workflowStatus: 'PUBLISHED',
+        currentWorkflowStageIndex: null,
+        currentWorkflowStageKey: null,
+        currentWorkflowApproverRole: null,
+      },
+      approval: {
+        stage: 'SYSTEM',
+        action: 'PUBLISHED',
+        actedByUserId: user.id,
+        comments: 'Published to public portal.',
+      },
     });
 
     await this.auditService.log({
@@ -539,6 +742,10 @@ export class ReportsService {
     return this.reportsRepository.listPendingCao();
   }
 
+  listPendingWorkflow(): Promise<StaffReportRecord[]> {
+    return this.reportsRepository.listPendingWorkflow();
+  }
+
   async getApprovalHistory(reportId: string): Promise<ReportApprovalEvent[]> {
     await this.reportsRepository.getById(reportId);
     return this.reportsRepository.getApprovalHistory(reportId);
@@ -622,5 +829,34 @@ export class ReportsService {
     } catch {
       // notification failures should never block workflow transitions
     }
+  }
+
+  private async resolveWorkflowConfiguration(workflowConfigId?: string): Promise<WorkflowRecord | null> {
+    if (workflowConfigId) {
+      return this.workflowConfigRepository.getById(workflowConfigId);
+    }
+    const workflows = await this.workflowConfigRepository.list({ domain: 'REPORT', includeInactive: false });
+    return workflows.find((workflow) => workflow.isDefault) ?? null;
+  }
+
+  private async resolveWorkflowForReport(report: StaffReportRecord): Promise<WorkflowRecord> {
+    const workflow = await this.resolveWorkflowConfiguration(report.workflowConfigId);
+    if (!workflow) {
+      throw new BadRequestException('No active default report workflow is configured.');
+    }
+    return workflow;
+  }
+
+  private getStageByOrder(workflow: WorkflowRecord, index: number) {
+    const ordered = [...workflow.stages].sort((left, right) => left.sortOrder - right.sortOrder);
+    return ordered[index - 1] ?? null;
+  }
+
+  private toPendingStatus(approverRole: string): ReportWorkflowStatus {
+    const normalizedRole = approverRole.trim().toUpperCase();
+    if (!normalizedRole) {
+      throw new BadRequestException('Workflow stage approver role is required');
+    }
+    return 'PENDING_WORKFLOW_APPROVAL';
   }
 }

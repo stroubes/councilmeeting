@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 const AGENDA_ITEM_TYPES = [
   'SECTION',
@@ -29,4 +29,24 @@ export class CreateAgendaItemDto {
   @IsOptional()
   @IsBoolean()
   isInCamera?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublicVisible?: boolean;
+
+  @IsOptional()
+  @IsString()
+  publishAt?: string;
+
+  @IsOptional()
+  @IsString()
+  redactionNote?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  carryForwardToNext?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  bylawId?: string;
 }

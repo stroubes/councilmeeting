@@ -301,13 +301,24 @@ export class MeetingDisplayService {
     };
   }
 
+  private computeStateSignature(state: MeetingDisplayStateResponse): string {
+    return JSON.stringify({
+      displayMode: state.displayMode,
+      agendaItemId: state.agenda.currentItem?.id ?? null,
+      motionLiveId: state.motion.liveMotion?.id ?? null,
+      motionOutcomeId: state.motion.recentOutcomeMotion?.id ?? null,
+      presentationId: state.presentation.currentPresentation?.id ?? null,
+      presentationSlideIndex: state.presentation.currentSlideIndex,
+    });
+  }
+
   streamPublicState(meetingId: string): Observable<MessageEvent> {
     return interval(1000).pipe(
       startWith(0),
       switchMap(() => from(this.getState(meetingId))),
       map((state) => ({
         state,
-        signature: JSON.stringify(state),
+        signature: this.computeStateSignature(state),
       })),
       distinctUntilChanged((left, right) => left.signature === right.signature),
       map(({ state }) => ({

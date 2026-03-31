@@ -3,6 +3,8 @@ import { listMeetings } from '../../api/meetings.api';
 import type { MeetingRecord } from '../../api/types/meeting.types';
 import AppShell from '../../components/layout/AppShell';
 import StatusBadge from '../../components/ui/StatusBadge';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
 
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString(undefined, {
@@ -54,50 +56,50 @@ export default function InCameraPortal(): JSX.Element {
         </article>
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>Confidential Workspace</h2>
-            <p>Visible only to users with in-camera permissions.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader title="Confidential Workspace" description="Visible only to users with in-camera permissions." />
+        <CardBody>
           {isLoading ? <p className="muted">Loading in-camera meetings...</p> : null}
           {error ? <p className="inline-alert">{error}</p> : null}
           {!isLoading && meetings.length === 0 ? (
             <div className="empty-state">No in-camera meetings are currently available.</div>
           ) : null}
           {meetings.length > 0 ? (
-            <div className="table-wrap">
-              <table className="data-table" aria-label="In-camera meetings">
-                <thead>
-                  <tr>
-                    <th>Meeting</th>
-                    <th>Status</th>
-                    <th>Start Time</th>
-                    <th>Location</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {meetings.map((meeting) => (
-                    <tr key={meeting.id}>
-                      <td>
-                        <strong>{meeting.title}</strong>
-                        <div className="muted">{meeting.meetingTypeCode}</div>
-                      </td>
-                      <td>
-                        <StatusBadge status={meeting.status} />
-                      </td>
-                      <td>{formatDateTime(meeting.startsAt)}</td>
-                      <td>{meeting.location ?? 'Not specified'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              rowKey={(row) => row.id}
+              data={meetings}
+              columns={[
+                {
+                  key: 'title',
+                  header: 'Meeting',
+                  render: (meeting) => (
+                    <>
+                      <strong>{meeting.title}</strong>
+                      <div className="muted">{meeting.meetingTypeCode}</div>
+                    </>
+                  ),
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (meeting) => <StatusBadge status={meeting.status} />,
+                },
+                {
+                  key: 'startsAt',
+                  header: 'Start Time',
+                  render: (meeting) => formatDateTime(meeting.startsAt),
+                },
+                {
+                  key: 'location',
+                  header: 'Location',
+                  render: (meeting) => meeting.location ?? 'Not specified',
+                },
+              ]}
+              emptyMessage="No in-camera meetings are currently available."
+            />
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
     </AppShell>
   );
 }

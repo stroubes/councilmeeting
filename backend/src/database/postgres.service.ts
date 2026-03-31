@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Pool, type QueryResult, type QueryResultRow } from 'pg';
+import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
 
 export class DatabaseUnavailableError extends Error {
   constructor(message: string) {
@@ -13,36 +13,79 @@ export class DatabaseUnavailableError extends Error {
 export class PostgresService implements OnModuleDestroy {
   private readonly logger = new Logger(PostgresService.name);
   private readonly pool: Pool | null;
-  private isAvailable = true;
 
   constructor(private readonly configService: ConfigService) {
     const databaseUrl = this.configService.get<string>('databaseUrl') ?? process.env.DATABASE_URL;
-    this.pool = databaseUrl ? new Pool({ connectionString: databaseUrl }) : null;
+    const isProduction = process.env['NODE_ENV'] === 'production';
 
-    if (!this.pool) {
+    if (!databaseUrl) {
+      if (isProduction) {
+        throw new Error('FATAL: DATABASE_URL is not configured. Cannot start in production mode without a database.');
+      }
       this.logger.warn('DATABASE_URL is not configured. Falling back to in-memory repositories.');
+      this.pool = null;
+      return;
     }
+
+    this.pool = new Pool({ connectionString: databaseUrl });
   }
 
   get isEnabled(): boolean {
-    return this.pool !== null && this.isAvailable;
+    return this.pool !== null;
   }
 
   async query<T extends QueryResultRow = QueryResultRow>(
     sql: string,
     params: unknown[] = [],
   ): Promise<QueryResult<T>> {
-    if (!this.pool || !this.isAvailable) {
-      throw new DatabaseUnavailableError('Database is not configured or currently unavailable.');
+    if (!this.pool) {
+      throw new Error('Database is not configured or currently unavailable.');
     }
+
+    const isProduction = process.env['NODE_ENV'] === 'production';
 
     try {
       return await this.pool.query<T>(sql, params);
     } catch (error) {
-      this.isAvailable = false;
       const message = error instanceof Error ? error.message : 'Unknown database error';
-      this.logger.warn(`Database unavailable, switching to in-memory mode: ${message}`);
+      if (isProduction) {
+        throw new Error(`FATAL: Database query failed in production: ${message}`);
+      }
+      this.logger.warn(`Database query failed; repositories may use in-memory fallback for this request: ${message}`);
       throw new DatabaseUnavailableError(message);
+    }
+  }
+
+  async withTransaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
+    if (!this.pool) {
+      throw new Error('Database is not configured or currently unavailable.');
+    }
+
+    const isProduction = process.env['NODE_ENV'] === 'production';
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      const result = await callback(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {}
+
+      if (!isPgError(error)) {
+        throw error;
+      }
+
+      const message = error instanceof Error ? error.message : 'Unknown database transaction error';
+      if (isProduction) {
+        throw new Error(`FATAL: Database transaction failed in production: ${message}`);
+      }
+      this.logger.warn(`Database transaction failed; repositories may use in-memory fallback for this request: ${message}`);
+      throw new DatabaseUnavailableError(message);
+    } finally {
+      client.release();
     }
   }
 
@@ -51,4 +94,8 @@ export class PostgresService implements OnModuleDestroy {
       await this.pool.end();
     }
   }
+}
+
+function isPgError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error;
 }

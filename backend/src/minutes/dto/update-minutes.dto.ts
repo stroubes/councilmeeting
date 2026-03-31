@@ -7,6 +7,10 @@ export class UpdateMinutesDto {
   contentJson?: MinutesContent;
 
   @IsOptional()
+  @IsObject()
+  richTextSummary?: Record<string, unknown>;
+
+  @IsOptional()
   @IsString()
   note?: string;
 }

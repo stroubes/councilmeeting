@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DatabaseUnavailableError, PostgresService } from '../database/postgres.service';
 import type { AgendaItemRecord, AgendaRecord, AgendaStatus } from './agendas.service';
@@ -17,9 +17,31 @@ interface CreateAgendaItemInput {
   description?: string;
   parentItemId?: string;
   isInCamera: boolean;
+  isPublicVisible: boolean;
+  publishAt?: string;
+  redactionNote?: string;
+  carryForwardToNext: boolean;
   sortOrder: number;
   createdBy: string;
   status: AgendaStatus;
+  bylawId?: string;
+}
+
+interface SaveVersionSnapshotInput {
+  agendaId: string;
+  version: number;
+  title: string;
+  status: string;
+  snapshotJson: Record<string, unknown>;
+  changedBy?: string;
+}
+
+interface TransitionAgendaWorkflowInput {
+  agendaId: string;
+  expectedUpdatedAt: string;
+  agendaPatch: Pick<AgendaRecord, 'status' | 'version'> &
+    Partial<Pick<AgendaRecord, 'rejectionReason' | 'publishedAt'>>;
+  items: AgendaItemRecord[];
 }
 
 @Injectable()
@@ -162,10 +184,12 @@ export class AgendasRepository {
         await this.postgresService.query(
           `INSERT INTO app_agenda_items (
             id, agenda_id, item_type, title, description, parent_item_id,
-            is_in_camera, sort_order, status, created_by, created_at, updated_at
+            is_in_camera, is_public_visible, publish_at, redaction_note, carry_forward_to_next,
+            sort_order, status, bylaw_id, item_number, created_by, created_at, updated_at
           ) VALUES (
             $1, $2, $3, $4, $5, $6,
-            $7, $8, $9, $10, $11, $12
+            $7, $8, $9, $10, $11,
+            $12, $13, $14, $15, $16, $17, $18
           )`,
           [
             item.id,
@@ -175,8 +199,14 @@ export class AgendasRepository {
             item.description,
             item.parentItemId,
             item.isInCamera,
+            item.isPublicVisible,
+            item.publishAt,
+            item.redactionNote,
+            item.carryForwardToNext,
             item.sortOrder,
             item.status,
+            item.bylawId ?? null,
+            item.itemNumber ?? null,
             item.createdBy,
             item.createdAt,
             item.updatedAt,
@@ -193,6 +223,106 @@ export class AgendasRepository {
     });
   }
 
+  async transitionWorkflowState(input: TransitionAgendaWorkflowInput): Promise<AgendaRecord> {
+    return this.withFallback(async () => {
+      await this.ensureSchema();
+
+      return this.postgresService.withTransaction(async (client) => {
+        const agendaResult = await client.query<DbAgendaRow>(
+          `SELECT * FROM app_agendas WHERE id = $1 LIMIT 1 FOR UPDATE`,
+          [input.agendaId],
+        );
+
+        if (agendaResult.rows.length === 0) {
+          throw new NotFoundException('Agenda not found');
+        }
+
+        const existing = agendaResult.rows[0];
+        if (existing.updated_at !== input.expectedUpdatedAt) {
+          throw new ConflictException('Agenda changed by another user. Refresh and try again.');
+        }
+
+        await client.query(`DELETE FROM app_agenda_items WHERE agenda_id = $1`, [input.agendaId]);
+        for (const item of input.items) {
+          await client.query(
+            `INSERT INTO app_agenda_items (
+              id, agenda_id, item_type, title, description, parent_item_id,
+              is_in_camera, is_public_visible, publish_at, redaction_note, carry_forward_to_next,
+              sort_order, status, bylaw_id, item_number, created_by, created_at, updated_at
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6,
+              $7, $8, $9, $10, $11,
+              $12, $13, $14, $15, $16, $17, $18
+            )`,
+            [
+              item.id,
+              input.agendaId,
+              item.itemType,
+              item.title,
+              item.description,
+              item.parentItemId,
+              item.isInCamera,
+              item.isPublicVisible,
+              item.publishAt,
+              item.redactionNote,
+              item.carryForwardToNext,
+              item.sortOrder,
+              item.status,
+              item.bylawId ?? null,
+              item.itemNumber ?? null,
+              item.createdBy,
+              item.createdAt,
+              item.updatedAt,
+            ],
+          );
+        }
+
+        const updatedAgendaResult = await client.query<DbAgendaRow>(
+          `UPDATE app_agendas
+             SET status = $2,
+                 version = $3,
+                 rejection_reason = $4,
+                 published_at = $5,
+                 updated_at = NOW()
+           WHERE id = $1
+           RETURNING *`,
+          [
+            input.agendaId,
+            input.agendaPatch.status,
+            input.agendaPatch.version,
+            input.agendaPatch.rejectionReason ?? null,
+            input.agendaPatch.publishedAt ?? null,
+          ],
+        );
+
+        const itemsResult = await client.query<DbAgendaItemRow>(
+          `SELECT * FROM app_agenda_items WHERE agenda_id = $1 ORDER BY sort_order ASC`,
+          [input.agendaId],
+        );
+
+        return toAgendaRecord(updatedAgendaResult.rows[0], itemsResult.rows.map((row) => toAgendaItemRecord(row)));
+      });
+    }, async () => {
+      const existing = await this.getById(input.agendaId);
+      if (existing.updatedAt !== input.expectedUpdatedAt) {
+        throw new ConflictException('Agenda changed by another user. Refresh and try again.');
+      }
+
+      const updated: AgendaRecord = {
+        ...existing,
+        status: input.agendaPatch.status,
+        version: input.agendaPatch.version,
+        rejectionReason: input.agendaPatch.rejectionReason,
+        publishedAt: input.agendaPatch.publishedAt,
+        items: input.items,
+        updatedAt: new Date().toISOString(),
+      };
+
+      this.memoryAgendas.set(input.agendaId, updated);
+      return updated;
+    });
+  }
+
   async addItem(input: CreateAgendaItemInput): Promise<AgendaItemRecord> {
     return this.withFallback(async () => {
       await this.ensureSchema();
@@ -201,10 +331,12 @@ export class AgendasRepository {
       const result = await this.postgresService.query<DbAgendaItemRow>(
         `INSERT INTO app_agenda_items (
           id, agenda_id, item_type, title, description, parent_item_id,
-          is_in_camera, sort_order, status, created_by, created_at, updated_at
+          is_in_camera, is_public_visible, publish_at, redaction_note, carry_forward_to_next,
+          sort_order, status, bylaw_id, item_number, created_by, created_at, updated_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6,
-          $7, $8, $9, $10, $11, $12
+          $7, $8, $9, $10, $11,
+          $12, $13, $14, $15, $16, $17, $18
         ) RETURNING *`,
         [
           id,
@@ -214,8 +346,14 @@ export class AgendasRepository {
           input.description,
           input.parentItemId,
           input.isInCamera,
+          input.isPublicVisible,
+          input.publishAt,
+          input.redactionNote,
+          input.carryForwardToNext,
           input.sortOrder,
           input.status,
+          input.bylawId ?? null,
+          null,
           input.createdBy,
           now,
           now,
@@ -234,8 +372,13 @@ export class AgendasRepository {
         description: input.description,
         parentItemId: input.parentItemId,
         isInCamera: input.isInCamera,
+        isPublicVisible: input.isPublicVisible,
+        publishAt: input.publishAt,
+        redactionNote: input.redactionNote,
+        carryForwardToNext: input.carryForwardToNext,
         sortOrder: input.sortOrder,
         status: input.status,
+        bylawId: input.bylawId,
         createdBy: input.createdBy,
         createdAt: now,
         updatedAt: now,
@@ -254,7 +397,12 @@ export class AgendasRepository {
   async updateItem(
     agendaId: string,
     itemId: string,
-    patch: Partial<Pick<AgendaItemRecord, 'title' | 'description' | 'parentItemId' | 'isInCamera' | 'itemType' | 'status'>>,
+    patch: Partial<
+      Pick<
+        AgendaItemRecord,
+        'title' | 'description' | 'parentItemId' | 'isInCamera' | 'itemType' | 'status' | 'isPublicVisible' | 'publishAt' | 'redactionNote' | 'carryForwardToNext' | 'bylawId' | 'itemNumber'
+      >
+    >,
   ): Promise<AgendaItemRecord> {
     return this.withFallback(async () => {
       await this.ensureSchema();
@@ -276,10 +424,16 @@ export class AgendasRepository {
              description = $5,
              parent_item_id = $6,
              is_in_camera = $7,
-             status = $8,
-             updated_at = $9
-         WHERE agenda_id = $1 AND id = $2
-         RETURNING *`,
+             is_public_visible = $8,
+             publish_at = $9,
+             redaction_note = $10,
+             carry_forward_to_next = $11,
+             status = $12,
+             bylaw_id = $13,
+             item_number = $14,
+             updated_at = $15
+          WHERE agenda_id = $1 AND id = $2
+          RETURNING *`,
         [
           agendaId,
           itemId,
@@ -288,7 +442,13 @@ export class AgendasRepository {
           patch.description ?? null,
           patch.parentItemId ?? null,
           patch.isInCamera ?? current.isInCamera,
+          patch.isPublicVisible ?? current.isPublicVisible,
+          patch.publishAt ?? current.publishAt ?? null,
+          patch.redactionNote ?? current.redactionNote ?? null,
+          patch.carryForwardToNext ?? current.carryForwardToNext,
           patch.status ?? current.status,
+          patch.bylawId ?? current.bylawId ?? null,
+          patch.itemNumber ?? current.itemNumber ?? null,
           updatedAt,
         ],
       );
@@ -346,6 +506,32 @@ export class AgendasRepository {
     });
   }
 
+  async saveVersionSnapshot(input: SaveVersionSnapshotInput): Promise<void> {
+    await this.ensureSchema();
+    await this.postgresService.query(
+      `INSERT INTO agenda_version_history (id, agenda_id, version, title, status, snapshot_json, changed_by, changed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+      [
+        randomUUID(),
+        input.agendaId,
+        input.version,
+        input.title,
+        input.status,
+        JSON.stringify(input.snapshotJson),
+        input.changedBy ?? null,
+      ],
+    );
+  }
+
+  async getAgendaVersionHistory(agendaId: string): Promise<unknown[]> {
+    await this.ensureSchema();
+    const result = await this.postgresService.query(
+      `SELECT * FROM agenda_version_history WHERE agenda_id = $1 ORDER BY version ASC`,
+      [agendaId],
+    );
+    return result.rows;
+  }
+
   private async ensureSchema(): Promise<void> {
     if (this.schemaEnsured || !this.postgresService.isEnabled) {
       return;
@@ -376,6 +562,10 @@ export class AgendasRepository {
         description TEXT,
         parent_item_id UUID,
         is_in_camera BOOLEAN NOT NULL DEFAULT FALSE,
+        is_public_visible BOOLEAN NOT NULL DEFAULT TRUE,
+        publish_at TIMESTAMPTZ,
+        redaction_note TEXT,
+        carry_forward_to_next BOOLEAN NOT NULL DEFAULT FALSE,
         sort_order INTEGER NOT NULL,
         status VARCHAR(50) NOT NULL,
         created_by VARCHAR(255) NOT NULL,
@@ -390,6 +580,47 @@ export class AgendasRepository {
     await this.postgresService.query(
       `CREATE INDEX IF NOT EXISTS idx_app_agenda_items_agenda_id ON app_agenda_items(agenda_id)`,
     );
+    await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS is_public_visible BOOLEAN NOT NULL DEFAULT TRUE`);
+    await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS publish_at TIMESTAMPTZ`);
+    await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS redaction_note TEXT`);
+    await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS carry_forward_to_next BOOLEAN NOT NULL DEFAULT FALSE`);
+    await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS bylaw_id UUID`);
+    await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS item_number VARCHAR(50)`);
+    await this.postgresService.query(`CREATE INDEX IF NOT EXISTS idx_app_agenda_items_bylaw_id ON app_agenda_items(bylaw_id) WHERE bylaw_id IS NOT NULL`);
+    await this.postgresService.query(`CREATE INDEX IF NOT EXISTS idx_app_agenda_items_item_number ON app_agenda_items(item_number) WHERE item_number IS NOT NULL`);
+
+    await this.postgresService.query(
+      `DELETE FROM app_agendas a WHERE NOT EXISTS (
+         SELECT 1 FROM app_meetings m WHERE m.id = a.meeting_id
+       )`,
+    );
+    await this.postgresService.query(
+      `DELETE FROM app_agenda_items i WHERE NOT EXISTS (
+         SELECT 1 FROM app_agendas a WHERE a.id = i.agenda_id
+       )`,
+    );
+
+    await this.postgresService.query(`
+      DO $$
+      BEGIN
+        IF to_regclass('public.app_meetings') IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_agendas_meeting'
+          ) THEN
+          ALTER TABLE app_agendas
+            ADD CONSTRAINT fk_app_agendas_meeting
+            FOREIGN KEY (meeting_id) REFERENCES app_meetings(id) ON DELETE CASCADE;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_agenda_items_agenda'
+        ) THEN
+          ALTER TABLE app_agenda_items
+            ADD CONSTRAINT fk_app_agenda_items_agenda
+            FOREIGN KEY (agenda_id) REFERENCES app_agendas(id) ON DELETE CASCADE;
+        END IF;
+      END $$;
+    `);
 
     this.schemaEnsured = true;
   }
@@ -451,8 +682,14 @@ interface DbAgendaItemRow {
   description: string | null;
   parent_item_id: string | null;
   is_in_camera: boolean;
+  is_public_visible: boolean;
+  publish_at: string | null;
+  redaction_note: string | null;
+  carry_forward_to_next: boolean;
   sort_order: number;
   status: AgendaStatus;
+  bylaw_id: string | null;
+  item_number: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -484,8 +721,14 @@ function toAgendaItemRecord(row: DbAgendaItemRow): AgendaItemRecord {
     description: row.description ?? undefined,
     parentItemId: row.parent_item_id ?? undefined,
     isInCamera: row.is_in_camera,
+    isPublicVisible: row.is_public_visible,
+    publishAt: row.publish_at ?? undefined,
+    redactionNote: row.redaction_note ?? undefined,
+    carryForwardToNext: row.carry_forward_to_next,
     sortOrder: row.sort_order,
     status: row.status,
+    bylawId: row.bylaw_id ?? undefined,
+    itemNumber: row.item_number ?? undefined,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

@@ -1,4 +1,4 @@
-import { IsObject, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
 import type { MinutesContent } from '../minutes-content';
 
 export class CreateMinutesDto {
@@ -8,4 +8,8 @@ export class CreateMinutesDto {
   @IsOptional()
   @IsObject()
   contentJson?: MinutesContent;
+
+  @IsOptional()
+  @IsBoolean()
+  isInCamera?: boolean;
 }

@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class UpdateAgendaItemDto {
   @IsOptional()
@@ -13,4 +13,28 @@ export class UpdateAgendaItemDto {
   @IsOptional()
   @IsBoolean()
   isInCamera?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isPublicVisible?: boolean;
+
+  @IsOptional()
+  @IsString()
+  publishAt?: string;
+
+  @IsOptional()
+  @IsString()
+  redactionNote?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  carryForwardToNext?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  bylawId?: string;
+
+  @IsOptional()
+  @IsString()
+  itemNumber?: string;
 }

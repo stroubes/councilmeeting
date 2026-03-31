@@ -6,6 +6,9 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import WorkflowHistoryPanel from '../../components/ui/WorkflowHistoryPanel';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useToast } from '../../hooks/useToast';
+import MetricTile from '../../components/ui/MetricTile';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString(undefined, {
@@ -98,106 +101,108 @@ export default function DirectorApprovalQueue(): JSX.Element {
       subtitle="Department-level review and recommendation stage before executive review."
     >
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">Director Review Lane</p>
-          <p className="metric-value">{queue.length}</p>
-          <p className="metric-foot">Reports currently in director queue</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Awaiting Decision</p>
-          <p className="metric-value">{urgentCount}</p>
-          <p className="metric-foot">Pending direct action this cycle</p>
-        </article>
+        <MetricTile
+          variant="primary"
+          label="Director Review Lane"
+          value={queue.length}
+          foot="Reports currently in director queue"
+        />
+        <MetricTile
+          label="Awaiting Decision"
+          value={urgentCount}
+          foot="Pending direct action this cycle"
+        />
       </section>
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">DIR</span>
-              Pending Director Actions
-            </h2>
-            <p>Approve to forward to CAO queue or reject for report revisions.</p>
-          </div>
-          <span className="pill">{filteredQueue.length} visible</span>
-        </header>
-        <div className="card-body">
+
+      <Card>
+        <CardHeader
+          title="Pending Director Actions"
+          description="Approve to forward to CAO queue or reject for report revisions."
+          actions={<span className="pill">{filteredQueue.length} visible</span>}
+        />
+        <CardBody>
           <div className="workspace-toolbar">
             <div className="workspace-toolbar-row">
-            <input
-              className="field"
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search report title, number, or department"
-              aria-label="Search director queue"
-            />
-            <span className="pill">Director lane</span>
+              <input
+                className="field"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search report title, number, or department"
+                aria-label="Search director queue"
+              />
+              <span className="pill">Director lane</span>
             </div>
           </div>
           {isLoading ? <p className="muted">Loading director review queue...</p> : null}
           {error ? <p className="inline-alert">{error}</p> : null}
-          {!isLoading && filteredQueue.length === 0 ? (
-            <div className="empty-state">Director queue is clear. No reports are awaiting departmental decision.</div>
-          ) : null}
-          {filteredQueue.length > 0 ? (
-            <div className="table-wrap">
-              <table className="data-table" aria-label="Director approval queue">
-                <thead>
-                  <tr>
-                    <th>Report</th>
-                    <th>Status</th>
-                    <th>Department</th>
-                    <th>Updated</th>
-                    <th>Decision</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredQueue.map((report) => (
-                    <tr key={report.id}>
-                      <td>
-                        <strong>{report.title}</strong>
-                        <div className="muted">{report.reportNumber ?? report.id.slice(0, 8)}</div>
-                      </td>
-                      <td>
-                        <StatusBadge status={report.workflowStatus} />
-                      </td>
-                      <td>{report.department ?? 'General Administration'}</td>
-                      <td>{formatDate(report.updatedAt)}</td>
-                      <td>
-                        <div className="page-actions">
-                          <button
-                            type="button"
-                            className="btn"
-                            onClick={() => void handleApprove(report.id)}
-                            disabled={pendingReportId === report.id}
-                          >
-                            {pendingReportId === report.id && pendingAction === 'approve' ? 'Advancing...' : 'Advance to CAO'}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-danger"
-                            onClick={() => void handleReject(report.id)}
-                            disabled={pendingReportId === report.id}
-                          >
-                            {pendingReportId === report.id && pendingAction === 'reject' ? 'Returning...' : 'Return for Revision'}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-quiet"
-                            onClick={() => setSelectedReport(report)}
-                          >
-                            History
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
-        </div>
-      </section>
+
+          <DataTable
+            columns={[
+              {
+                key: 'title',
+                header: 'Report',
+                render: (report: StaffReportRecord) => (
+                  <>
+                    <strong>{report.title}</strong>
+                    <div className="muted">{report.reportNumber ?? report.id.slice(0, 8)}</div>
+                  </>
+                ),
+              },
+              {
+                key: 'workflowStatus',
+                header: 'Status',
+                render: (report: StaffReportRecord) => <StatusBadge status={report.workflowStatus} />,
+              },
+              {
+                key: 'department',
+                header: 'Department',
+                render: (report: StaffReportRecord) => report.department ?? 'General Administration',
+              },
+              {
+                key: 'updatedAt',
+                header: 'Updated',
+                render: (report: StaffReportRecord) => formatDate(report.updatedAt),
+              },
+              {
+                key: 'actions',
+                header: 'Decision',
+                render: (report: StaffReportRecord) => (
+                  <div className="page-actions">
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={() => void handleApprove(report.id)}
+                      disabled={pendingReportId === report.id}
+                    >
+                      {pendingReportId === report.id && pendingAction === 'approve' ? 'Advancing...' : 'Advance to CAO'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      onClick={() => void handleReject(report.id)}
+                      disabled={pendingReportId === report.id}
+                    >
+                      {pendingReportId === report.id && pendingAction === 'reject' ? 'Returning...' : 'Return for Revision'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-quiet"
+                      onClick={() => setSelectedReport(report)}
+                    >
+                      History
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+            data={filteredQueue}
+            isLoading={isLoading}
+            emptyMessage="Director queue is clear. No reports are awaiting departmental decision."
+            rowKey={(report) => report.id}
+          />
+        </CardBody>
+      </Card>
 
       {selectedReport ? (
         <WorkflowHistoryPanel

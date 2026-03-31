@@ -7,9 +7,10 @@ import { AuditModule } from '../audit/audit.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { GovernanceModule } from '../governance/governance.module';
+import { MeetingTypesModule } from '../meeting-types/meeting-types.module';
 
 @Module({
-  imports: [MeetingsModule, AuditModule, TemplatesModule, NotificationsModule, GovernanceModule],
+  imports: [MeetingsModule, AuditModule, TemplatesModule, NotificationsModule, GovernanceModule, MeetingTypesModule],
   controllers: [AgendasController],
   providers: [AgendasService, AgendasRepository],
   exports: [AgendasService],

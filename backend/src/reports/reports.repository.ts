@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DatabaseUnavailableError, PostgresService } from '../database/postgres.service';
 import type { ReportQueryDto } from './dto/report-query.dto';
@@ -28,13 +28,17 @@ interface CreateReportInput {
   parsingVersion: string;
   parsingWarnings: string[];
   workflowStatus: ReportWorkflowStatus;
+  workflowConfigId?: string;
+  currentWorkflowStageIndex: number | null;
+  currentWorkflowStageKey: string | null;
+  currentWorkflowApproverRole: string | null;
   authorUserId: string;
   createdBy: string;
 }
 
 interface AppendApprovalInput {
   reportId: string;
-  stage: 'DIRECTOR' | 'CAO' | 'SYSTEM';
+  stage: string;
   action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RESUBMITTED' | 'PUBLISHED';
   actedByUserId: string;
   comments?: string;
@@ -51,6 +55,24 @@ interface CreateAttachmentInput {
   sourceSharePointItemId?: string;
   sourceSharePointWebUrl?: string;
   uploadedBy: string;
+}
+
+interface TransitionWorkflowInput {
+  reportId: string;
+  expectedUpdatedAt: string;
+  patch: {
+    workflowStatus: ReportWorkflowStatus;
+    workflowConfigId?: string;
+    currentWorkflowStageIndex?: number | null;
+    currentWorkflowStageKey?: string | null;
+    currentWorkflowApproverRole?: string | null;
+  };
+  approval: {
+    stage: string;
+    action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RESUBMITTED' | 'PUBLISHED';
+    actedByUserId: string;
+    comments?: string;
+  };
 }
 
 @Injectable()
@@ -74,15 +96,19 @@ export class ReportsRepository {
           executive_summary, recommendations, financial_impact, legal_impact,
           raw_docx_file_name, source_sharepoint_site_id, source_sharepoint_drive_id,
           source_sharepoint_item_id, source_sharepoint_web_url, parsed_content_json,
-          parsing_version, parsing_warnings_json, workflow_status, created_by,
+          parsing_version, parsing_warnings_json, workflow_status,
+          workflow_config_id, current_workflow_stage_index, current_workflow_stage_key, current_workflow_approver_role,
+          created_by,
           created_at, updated_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7,
           $8, $9, $10, $11,
           $12, $13, $14,
           $15, $16, $17,
-          $18, $19, $20, $21,
-          $22, $23
+          $18, $19, $20,
+          $21, $22, $23, $24,
+          $25,
+          $26, $27
         ) RETURNING *`,
         [
           id,
@@ -105,6 +131,10 @@ export class ReportsRepository {
           input.parsingVersion,
           input.parsingWarnings,
           input.workflowStatus,
+          input.workflowConfigId,
+          input.currentWorkflowStageIndex,
+          input.currentWorkflowStageKey,
+          input.currentWorkflowApproverRole,
           input.createdBy,
           now,
           now,
@@ -174,6 +204,7 @@ export class ReportsRepository {
         | 'recommendations'
         | 'financialImpact'
         | 'legalImpact'
+        | 'workflowConfigId'
       >
     >,
   ): Promise<StaffReportRecord> {
@@ -191,9 +222,10 @@ export class ReportsRepository {
              recommendations = $6,
              financial_impact = $7,
              legal_impact = $8,
-             updated_at = $9
-         WHERE id = $1
-         RETURNING *`,
+             workflow_config_id = $9,
+             updated_at = $10
+          WHERE id = $1
+          RETURNING *`,
         [
           id,
           patch.title ?? existing.title,
@@ -203,6 +235,7 @@ export class ReportsRepository {
           patch.recommendations ?? existing.recommendations,
           patch.financialImpact ?? existing.financialImpact,
           patch.legalImpact ?? existing.legalImpact,
+          patch.workflowConfigId ?? existing.workflowConfigId,
           updatedAt,
         ],
       );
@@ -221,11 +254,42 @@ export class ReportsRepository {
   }
 
   async updateWorkflowStatus(id: string, workflowStatus: ReportWorkflowStatus): Promise<StaffReportRecord> {
+    return this.updateWorkflowState(id, { workflowStatus });
+  }
+
+  async updateWorkflowState(
+    id: string,
+    patch: {
+      workflowStatus: ReportWorkflowStatus;
+      workflowConfigId?: string;
+      currentWorkflowStageIndex?: number | null;
+      currentWorkflowStageKey?: string | null;
+      currentWorkflowApproverRole?: string | null;
+    },
+  ): Promise<StaffReportRecord> {
     return this.withFallback(async () => {
       await this.ensureSchema();
+      const existing = await this.getById(id);
       const result = await this.postgresService.query<DbReportRow>(
-        `UPDATE app_staff_reports SET workflow_status = $2, updated_at = NOW() WHERE id = $1 RETURNING *`,
-        [id, workflowStatus],
+        `UPDATE app_staff_reports
+         SET workflow_status = $2,
+             workflow_config_id = $3,
+             current_workflow_stage_index = $4,
+             current_workflow_stage_key = $5,
+             current_workflow_approver_role = $6,
+             updated_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [
+          id,
+          patch.workflowStatus,
+          patch.workflowConfigId ?? existing.workflowConfigId,
+          patch.currentWorkflowStageIndex === undefined ? existing.currentWorkflowStageIndex : patch.currentWorkflowStageIndex,
+          patch.currentWorkflowStageKey === undefined ? existing.currentWorkflowStageKey : patch.currentWorkflowStageKey,
+          patch.currentWorkflowApproverRole === undefined
+            ? existing.currentWorkflowApproverRole
+            : patch.currentWorkflowApproverRole,
+        ],
       );
       if (result.rows.length === 0) {
         throw new NotFoundException('Staff report not found');
@@ -233,7 +297,24 @@ export class ReportsRepository {
       return toReportRecord(result.rows[0]);
     }, async () => {
       const existing = await this.getById(id);
-      const updated = { ...existing, workflowStatus, updatedAt: new Date().toISOString() };
+      const updated = {
+        ...existing,
+        workflowStatus: patch.workflowStatus,
+        workflowConfigId: patch.workflowConfigId ?? existing.workflowConfigId,
+        currentWorkflowStageIndex:
+          patch.currentWorkflowStageIndex === undefined
+            ? existing.currentWorkflowStageIndex
+            : patch.currentWorkflowStageIndex ?? undefined,
+        currentWorkflowStageKey:
+          patch.currentWorkflowStageKey === undefined
+            ? existing.currentWorkflowStageKey
+            : patch.currentWorkflowStageKey ?? undefined,
+        currentWorkflowApproverRole:
+          patch.currentWorkflowApproverRole === undefined
+            ? existing.currentWorkflowApproverRole
+            : patch.currentWorkflowApproverRole ?? undefined,
+        updatedAt: new Date().toISOString(),
+      };
       this.memoryReports.set(id, updated);
       return updated;
     });
@@ -245,6 +326,10 @@ export class ReportsRepository {
 
   async listPendingCao(): Promise<StaffReportRecord[]> {
     return this.list({ status: 'PENDING_CAO_APPROVAL' });
+  }
+
+  async listPendingWorkflow(): Promise<StaffReportRecord[]> {
+    return this.list({ status: 'PENDING_WORKFLOW_APPROVAL' });
   }
 
   async appendApproval(input: AppendApprovalInput): Promise<ReportApprovalEvent> {
@@ -263,6 +348,112 @@ export class ReportsRepository {
 
       return toApprovalEvent(result.rows[0]);
     }, () => this.appendApprovalInMemory(input));
+  }
+
+  async transitionWorkflow(input: TransitionWorkflowInput): Promise<StaffReportRecord> {
+    return this.withFallback(async () => {
+      await this.ensureSchema();
+
+      return this.postgresService.withTransaction(async (client) => {
+        const existingResult = await client.query<DbReportRow>(
+          `SELECT * FROM app_staff_reports WHERE id = $1 LIMIT 1 FOR UPDATE`,
+          [input.reportId],
+        );
+
+        if (existingResult.rows.length === 0) {
+          throw new NotFoundException('Staff report not found');
+        }
+
+        const existing = existingResult.rows[0];
+        if (existing.updated_at !== input.expectedUpdatedAt) {
+          throw new ConflictException('Staff report changed by another user. Refresh and try again.');
+        }
+
+        const updateResult = await client.query<DbReportRow>(
+          `UPDATE app_staff_reports
+           SET workflow_status = $2,
+               workflow_config_id = $3,
+               current_workflow_stage_index = $4,
+               current_workflow_stage_key = $5,
+               current_workflow_approver_role = $6,
+               updated_at = NOW()
+           WHERE id = $1
+           RETURNING *`,
+          [
+            input.reportId,
+            input.patch.workflowStatus,
+            input.patch.workflowConfigId ?? existing.workflow_config_id,
+            input.patch.currentWorkflowStageIndex === undefined
+              ? existing.current_workflow_stage_index
+              : input.patch.currentWorkflowStageIndex,
+            input.patch.currentWorkflowStageKey === undefined
+              ? existing.current_workflow_stage_key
+              : input.patch.currentWorkflowStageKey,
+            input.patch.currentWorkflowApproverRole === undefined
+              ? existing.current_workflow_approver_role
+              : input.patch.currentWorkflowApproverRole,
+          ],
+        );
+
+        const approvalId = randomUUID();
+        const actedAt = new Date().toISOString();
+        await client.query(
+          `INSERT INTO app_report_approvals (
+             id, staff_report_id, stage, action, acted_by_user_id, acted_at, comments, created_at
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            approvalId,
+            input.reportId,
+            input.approval.stage,
+            input.approval.action,
+            input.approval.actedByUserId,
+            actedAt,
+            input.approval.comments,
+            actedAt,
+          ],
+        );
+
+        return toReportRecord(updateResult.rows[0]);
+      });
+    }, async () => {
+      const existing = await this.getById(input.reportId);
+      if (existing.updatedAt !== input.expectedUpdatedAt) {
+        throw new ConflictException('Staff report changed by another user. Refresh and try again.');
+      }
+
+      const updated: StaffReportRecord = {
+        ...existing,
+        workflowStatus: input.patch.workflowStatus,
+        workflowConfigId: input.patch.workflowConfigId ?? existing.workflowConfigId,
+        currentWorkflowStageIndex:
+          input.patch.currentWorkflowStageIndex === undefined
+            ? existing.currentWorkflowStageIndex
+            : input.patch.currentWorkflowStageIndex ?? undefined,
+        currentWorkflowStageKey:
+          input.patch.currentWorkflowStageKey === undefined
+            ? existing.currentWorkflowStageKey
+            : input.patch.currentWorkflowStageKey ?? undefined,
+        currentWorkflowApproverRole:
+          input.patch.currentWorkflowApproverRole === undefined
+            ? existing.currentWorkflowApproverRole
+            : input.patch.currentWorkflowApproverRole ?? undefined,
+        updatedAt: new Date().toISOString(),
+      };
+
+      this.memoryReports.set(input.reportId, updated);
+      const history = this.memoryApprovals.get(input.reportId) ?? [];
+      history.push({
+        id: randomUUID(),
+        staffReportId: input.reportId,
+        stage: input.approval.stage,
+        action: input.approval.action,
+        actedByUserId: input.approval.actedByUserId,
+        actedAt: new Date().toISOString(),
+        comments: input.approval.comments,
+      });
+      this.memoryApprovals.set(input.reportId, history);
+      return updated;
+    });
   }
 
   async getApprovalHistory(reportId: string): Promise<ReportApprovalEvent[]> {
@@ -386,13 +577,30 @@ export class ReportsRepository {
         source_sharepoint_web_url TEXT,
         parsed_content_json JSONB NOT NULL,
         parsing_version VARCHAR(50) NOT NULL,
-        parsing_warnings_json JSONB,
-        workflow_status VARCHAR(50) NOT NULL,
-        created_by VARCHAR(255) NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL,
-        updated_at TIMESTAMPTZ NOT NULL
-      )
-    `);
+         parsing_warnings_json JSONB,
+         workflow_status VARCHAR(50) NOT NULL,
+         workflow_config_id UUID,
+         current_workflow_stage_index INTEGER,
+         current_workflow_stage_key VARCHAR(120),
+         current_workflow_approver_role VARCHAR(120),
+         created_by VARCHAR(255) NOT NULL,
+         created_at TIMESTAMPTZ NOT NULL,
+         updated_at TIMESTAMPTZ NOT NULL
+       )
+     `);
+
+    await this.postgresService.query(
+      `ALTER TABLE app_staff_reports ADD COLUMN IF NOT EXISTS workflow_config_id UUID`,
+    );
+    await this.postgresService.query(
+      `ALTER TABLE app_staff_reports ADD COLUMN IF NOT EXISTS current_workflow_stage_index INTEGER`,
+    );
+    await this.postgresService.query(
+      `ALTER TABLE app_staff_reports ADD COLUMN IF NOT EXISTS current_workflow_stage_key VARCHAR(120)`,
+    );
+    await this.postgresService.query(
+      `ALTER TABLE app_staff_reports ADD COLUMN IF NOT EXISTS current_workflow_approver_role VARCHAR(120)`,
+    );
 
     await this.postgresService.query(`
       CREATE TABLE IF NOT EXISTS app_report_approvals (
@@ -434,6 +642,52 @@ export class ReportsRepository {
       `CREATE INDEX IF NOT EXISTS idx_app_report_attachments_report_id ON app_report_attachments(report_id, created_at DESC)`,
     );
 
+    await this.postgresService.query(
+      `DELETE FROM app_staff_reports r WHERE NOT EXISTS (
+         SELECT 1 FROM app_agenda_items a WHERE a.id = r.agenda_item_id
+       )`,
+    );
+    await this.postgresService.query(
+      `DELETE FROM app_report_approvals h WHERE NOT EXISTS (
+         SELECT 1 FROM app_staff_reports r WHERE r.id = h.staff_report_id
+       )`,
+    );
+    await this.postgresService.query(
+      `DELETE FROM app_report_attachments a WHERE NOT EXISTS (
+         SELECT 1 FROM app_staff_reports r WHERE r.id = a.report_id
+       )`,
+    );
+
+    await this.postgresService.query(`
+      DO $$
+      BEGIN
+        IF to_regclass('public.app_agenda_items') IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_staff_reports_agenda_item'
+          ) THEN
+          ALTER TABLE app_staff_reports
+            ADD CONSTRAINT fk_app_staff_reports_agenda_item
+            FOREIGN KEY (agenda_item_id) REFERENCES app_agenda_items(id) ON DELETE CASCADE;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_report_approvals_report'
+        ) THEN
+          ALTER TABLE app_report_approvals
+            ADD CONSTRAINT fk_app_report_approvals_report
+            FOREIGN KEY (staff_report_id) REFERENCES app_staff_reports(id) ON DELETE CASCADE;
+        END IF;
+
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_report_attachments_report'
+        ) THEN
+          ALTER TABLE app_report_attachments
+            ADD CONSTRAINT fk_app_report_attachments_report
+            FOREIGN KEY (report_id) REFERENCES app_staff_reports(id) ON DELETE CASCADE;
+        END IF;
+      END $$;
+    `);
+
     this.schemaEnsured = true;
   }
 
@@ -474,6 +728,10 @@ export class ReportsRepository {
       parsingVersion: input.parsingVersion,
       parsingWarnings: input.parsingWarnings,
       workflowStatus: input.workflowStatus,
+      workflowConfigId: input.workflowConfigId,
+      currentWorkflowStageIndex: input.currentWorkflowStageIndex ?? undefined,
+      currentWorkflowStageKey: input.currentWorkflowStageKey ?? undefined,
+      currentWorkflowApproverRole: input.currentWorkflowApproverRole ?? undefined,
       authorUserId: input.authorUserId,
       createdBy: input.createdBy,
       createdAt: now,
@@ -549,6 +807,10 @@ interface DbReportRow {
   parsing_version: string;
   parsing_warnings_json: string[] | null;
   workflow_status: ReportWorkflowStatus;
+  workflow_config_id: string | null;
+  current_workflow_stage_index: number | null;
+  current_workflow_stage_key: string | null;
+  current_workflow_approver_role: string | null;
   author_user_id: string;
   created_by: string;
   created_at: string;
@@ -558,7 +820,7 @@ interface DbReportRow {
 interface DbApprovalRow {
   id: string;
   staff_report_id: string;
-  stage: 'DIRECTOR' | 'CAO' | 'SYSTEM';
+  stage: string;
   action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RESUBMITTED' | 'PUBLISHED';
   acted_by_user_id: string;
   acted_at: string;
@@ -601,6 +863,10 @@ function toReportRecord(row: DbReportRow): StaffReportRecord {
     parsingVersion: row.parsing_version,
     parsingWarnings: row.parsing_warnings_json ?? [],
     workflowStatus: row.workflow_status,
+    workflowConfigId: row.workflow_config_id ?? undefined,
+    currentWorkflowStageIndex: row.current_workflow_stage_index ?? undefined,
+    currentWorkflowStageKey: row.current_workflow_stage_key ?? undefined,
+    currentWorkflowApproverRole: row.current_workflow_approver_role ?? undefined,
     authorUserId: row.author_user_id,
     createdBy: row.created_by,
     createdAt: row.created_at,

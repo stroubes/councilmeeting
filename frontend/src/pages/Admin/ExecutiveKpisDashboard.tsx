@@ -3,6 +3,9 @@ import { getExecutiveKpis } from '../../api/analytics.api';
 import type { ExecutiveKpiSnapshot } from '../../api/types/analytics.types';
 import AppShell from '../../components/layout/AppShell';
 import { useToast } from '../../hooks/useToast';
+import MetricTile from '../../components/ui/MetricTile';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
 
 export default function ExecutiveKpisDashboard(): JSX.Element {
   const [kpis, setKpis] = useState<ExecutiveKpiSnapshot | null>(null);
@@ -43,36 +46,33 @@ export default function ExecutiveKpisDashboard(): JSX.Element {
       {error ? <p className="inline-alert">{error}</p> : null}
 
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">Total Approval Pressure</p>
-          <p className="metric-value">{kpis?.approvals.totalPending ?? 0}</p>
-          <p className="metric-foot">
-            Director {kpis?.approvals.directorPending ?? 0} / CAO {kpis?.approvals.caoPending ?? 0}
-          </p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Median Report Cycle</p>
-          <p className="metric-value">{kpis?.cycleTimeHours.reportMedian ?? 0}h</p>
-          <p className="metric-foot">Created to publication median for published reports</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Digest Delivery Rate</p>
-          <p className="metric-value">{kpis?.digest.deliveryRate ?? 0}%</p>
-          <p className="metric-foot">Public watchlist digest delivery success</p>
-        </article>
+        <MetricTile
+          label="Total Approval Pressure"
+          value={kpis?.approvals.totalPending ?? 0}
+          foot={`Director ${kpis?.approvals.directorPending ?? 0} / CAO ${kpis?.approvals.caoPending ?? 0}`}
+          icon="alert-triangle"
+          variant="primary"
+        />
+        <MetricTile
+          label="Median Report Cycle"
+          value={`${kpis?.cycleTimeHours.reportMedian ?? 0}h`}
+          foot="Created to publication median for published reports"
+          icon="clock"
+        />
+        <MetricTile
+          label="Digest Delivery Rate"
+          value={`${kpis?.digest.deliveryRate ?? 0}%`}
+          foot="Public watchlist digest delivery success"
+          icon="check-circle"
+        />
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">KPI</span>
-              Publication and Cycle Performance
-            </h2>
-            <p>Coverage and throughput indicators across agendas, reports, and minutes publication pipeline.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Publication and Cycle Performance"
+          description="Coverage and throughput indicators across agendas, reports, and minutes publication pipeline."
+        />
+        <CardBody>
           {kpis ? (
             <div className="table-wrap">
               <table className="data-table" aria-label="Publication KPI table">
@@ -128,48 +128,37 @@ export default function ExecutiveKpisDashboard(): JSX.Element {
               </table>
             </div>
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">TRN</span>
-              Publication Trend (Last 6 Months)
-            </h2>
-            <p>Monthly release momentum to benchmark consistency across councils and quarters.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Publication Trend (Last 6 Months)"
+          description="Monthly release momentum to benchmark consistency across councils and quarters."
+        />
+        <CardBody>
           {kpis ? (
-            <div className="table-wrap">
-              <table className="data-table" aria-label="Monthly publication trend">
-                <thead>
-                  <tr>
-                    <th>Month</th>
-                    <th>Agendas</th>
-                    <th>Reports</th>
-                    <th>Minutes</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {kpis.monthlyPublications.map((row) => (
-                    <tr key={row.month}>
-                      <td>{row.month}</td>
-                      <td>{row.agendas}</td>
-                      <td>{row.reports}</td>
-                      <td>{row.minutes}</td>
-                      <td>{row.agendas + row.reports + row.minutes}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              rowKey={(row) => (row as unknown as { month: string }).month}
+              data={kpis.monthlyPublications as unknown as { id: string | number }[]}
+              columns={[
+                { key: 'month', header: 'Month' },
+                { key: 'agendas', header: 'Agendas' },
+                { key: 'reports', header: 'Reports' },
+                { key: 'minutes', header: 'Minutes' },
+                {
+                  key: 'total',
+                  header: 'Total',
+                  render: (row) => (row as unknown as { agendas: number; reports: number; minutes: number }).agendas +
+                    (row as unknown as { agendas: number; reports: number; minutes: number }).reports +
+                    (row as unknown as { agendas: number; reports: number; minutes: number }).minutes,
+                },
+              ]}
+              emptyMessage="No publication trend data available."
+            />
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
     </AppShell>
   );
 }

@@ -23,5 +23,7 @@ VALUES
   ('minutes.write', 'Take minutes', 'minutes', 'Record live minutes and motions'),
   ('minutes.publish', 'Publish minutes', 'minutes', 'Publish finalized minutes'),
   ('vote.record', 'Record votes', 'minutes', 'Record council member votes'),
-  ('public.publish', 'Publish to public portal', 'public', 'Publish agenda/minutes to public portal')
+  ('public.publish', 'Publish to public portal', 'public', 'Publish agenda/minutes to public portal'),
+  ('resolution.manage', 'Manage resolutions', 'governance', 'Create and maintain resolutions and bylaw records'),
+  ('action.manage', 'Manage action items', 'governance', 'Create and manage follow-up action tracker items')
 ON CONFLICT (code) DO NOTHING;

@@ -4,6 +4,8 @@ import { assignManagedUserRole, listManagedUsers, upsertManagedUser } from '../.
 import type { ManagedUserRecord, SystemRoleRecord } from '../../api/types/admin.types';
 import AppShell from '../../components/layout/AppShell';
 import { useToast } from '../../hooks/useToast';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import MetricTile from '../../components/ui/MetricTile';
 
 export default function UsersAdmin(): JSX.Element {
   const [users, setUsers] = useState<ManagedUserRecord[]>([]);
@@ -63,29 +65,16 @@ export default function UsersAdmin(): JSX.Element {
   return (
     <AppShell title="Users" subtitle="Manage staff identities and role assignments." workspaceVariant="admin">
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">Managed Users</p>
-          <p className="metric-value">{users.length}</p>
-          <p className="metric-foot">Active records in governance access model</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Available Roles</p>
-          <p className="metric-value">{roles.length}</p>
-          <p className="metric-foot">Assignable permission bundles</p>
-        </article>
+        <MetricTile label="Managed Users" value={users.length} foot="Active records in governance access model" variant="primary" />
+        <MetricTile label="Available Roles" value={roles.length} foot="Assignable permission bundles" />
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>
-              <span className="panel-icon">ADM</span>
-              Add or Update Managed User
-            </h2>
-            <p>Provision user profile data and initial role assignment.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Add or Update Managed User"
+          description="Provision user profile data and initial role assignment."
+        />
+        <CardBody>
           <form onSubmit={(event) => void handleCreate(event)}>
             <div className="form-grid">
               <div className="form-field">
@@ -141,17 +130,12 @@ export default function UsersAdmin(): JSX.Element {
               </button>
             </div>
           </form>
-        </div>
-      </section>
+        </CardBody>
+      </Card>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>Managed Users</h2>
-            <p>Current local role assignments used for operational governance.</p>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader title="Managed Users" description="Current local role assignments used for operational governance." />
+        <CardBody>
           {isLoading ? <p className="muted">Loading access records...</p> : null}
           {error ? <p className="inline-alert">{error}</p> : null}
           {!isLoading && users.length === 0 ? (
@@ -196,8 +180,8 @@ export default function UsersAdmin(): JSX.Element {
               </table>
             </div>
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
     </AppShell>
   );
 }

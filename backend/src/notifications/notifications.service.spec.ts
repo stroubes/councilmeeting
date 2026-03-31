@@ -15,7 +15,7 @@ describe('NotificationsService', () => {
   });
 
   it('emits and marks in-app event delivered', async () => {
-    const create = jest.fn().mockResolvedValue({
+    const createdRecord = {
       id: 'n1',
       eventType: 'REPORT_SUBMITTED',
       entityType: 'report',
@@ -27,6 +27,12 @@ describe('NotificationsService', () => {
       deliveryAttempts: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+    };
+    const create = jest.fn().mockResolvedValue(createdRecord);
+    const getById = jest.fn().mockResolvedValue({
+      ...createdRecord,
+      status: 'DELIVERED',
+      deliveryAttempts: 1,
     });
     const updateDelivery = jest.fn().mockResolvedValue({
       id: 'n1',
@@ -37,6 +43,7 @@ describe('NotificationsService', () => {
     const service = new NotificationsService(
       {
         create,
+        getById,
         updateDelivery,
       } as never,
       createConfig({ notificationChannels: 'IN_APP', notificationRetryMaxAttempts: 1 }),
@@ -50,12 +57,11 @@ describe('NotificationsService', () => {
     });
 
     expect(create).toHaveBeenCalled();
-    expect(updateDelivery).toHaveBeenCalledTimes(1);
     expect(result.status).toBe('DELIVERED');
   });
 
   it('marks event failed after retry budget exhaustion', async () => {
-    const create = jest.fn().mockResolvedValue({
+    const createdRecord = {
       id: 'n1',
       eventType: 'AGENDA_PUBLISHED',
       entityType: 'agenda',
@@ -67,15 +73,23 @@ describe('NotificationsService', () => {
       deliveryAttempts: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    });
+    };
+    const create = jest.fn().mockResolvedValue(createdRecord);
     const updateDelivery = jest
       .fn()
       .mockResolvedValueOnce({ id: 'n1', status: 'PENDING', deliveryAttempts: 1 })
+      .mockResolvedValueOnce({ id: 'n1', status: 'FAILED', deliveryAttempts: 2 });
+    const getById = jest
+      .fn()
+      .mockResolvedValueOnce({ ...createdRecord, status: 'PENDING', deliveryAttempts: 0 })
+      .mockResolvedValueOnce({ id: 'n1', status: 'PENDING', deliveryAttempts: 1 })
+      .mockResolvedValueOnce({ id: 'n1', status: 'FAILED', deliveryAttempts: 2 })
       .mockResolvedValueOnce({ id: 'n1', status: 'FAILED', deliveryAttempts: 2 });
 
     const service = new NotificationsService(
       {
         create,
+        getById,
         updateDelivery,
       } as never,
       createConfig({
@@ -147,7 +161,7 @@ describe('NotificationsService', () => {
     const fetchMock = jest.fn().mockResolvedValue({ ok: true, status: 200 });
     global.fetch = fetchMock as unknown as typeof fetch;
 
-    const create = jest.fn().mockResolvedValue({
+    const createdRecord = {
       id: 'n1',
       eventType: 'PUBLIC_DIGEST_DAILY_DIGEST',
       entityType: 'public_subscription',
@@ -165,11 +179,17 @@ describe('NotificationsService', () => {
       deliveryAttempts: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    });
+    };
+    const create = jest.fn().mockResolvedValue(createdRecord);
     const updateDelivery = jest.fn().mockResolvedValue({ id: 'n1', status: 'DELIVERED', deliveryAttempts: 1 });
+    const getById = jest
+      .fn()
+      .mockResolvedValueOnce({ ...createdRecord, status: 'PENDING', deliveryAttempts: 0 })
+      .mockResolvedValueOnce({ id: 'n1', status: 'DELIVERED', deliveryAttempts: 1 })
+      .mockResolvedValueOnce({ id: 'n1', status: 'DELIVERED', deliveryAttempts: 1 });
 
     const service = new NotificationsService(
-      { create, updateDelivery } as never,
+      { create, getById, updateDelivery } as never,
       createConfig({
         notificationChannels: 'EMAIL',
         notificationEmailWebhookUrl: 'https://example.com/email-webhook',

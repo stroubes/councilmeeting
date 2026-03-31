@@ -38,14 +38,12 @@ export class MicrosoftSsoGuard implements CanActivate {
       }>();
 
     const authorizationHeader = request.headers.authorization;
-    const isNonProduction = this.configService.get<string>('nodeEnv') !== 'production';
-    const bypassTokenUsed = authorizationHeader === 'Bearer dev-bypass-token';
+    const nodeEnv = (this.configService.get<string>('nodeEnv') ?? 'development').toLowerCase();
+    const bypassAllowedEnvs = this.configService.get<string[]>('authBypassAllowedEnvs') ?? ['development', 'test', 'local'];
+    const bypassEnabled = this.configService.get<boolean>('authBypassEnabled') === true;
+    const bypassRequested = request.headers['x-dev-bypass'] === 'true';
 
-    const bypassEnabled =
-      this.configService.get<boolean>('authBypassEnabled') === true ||
-      process.env.AUTH_BYPASS_ENABLED === 'true';
-
-    if ((bypassEnabled || bypassTokenUsed) && isNonProduction) {
+    if (bypassEnabled && bypassRequested && bypassAllowedEnvs.includes(nodeEnv)) {
       request.user = this.authService.buildBypassUser({
         oid: request.headers['x-dev-user-oid'],
         email: request.headers['x-dev-user-email'],

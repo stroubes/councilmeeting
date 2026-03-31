@@ -7,35 +7,16 @@ import {
   type ReactNode,
 } from 'react';
 import { fetchCurrentUser } from '../api/auth.api';
-import { clearAccessToken, getAccessToken, setAccessToken } from '../auth/tokenStorage';
+import {
+  clearAccessToken,
+  disableDevBypass,
+  enableDevBypass,
+  getAccessToken,
+  isDevBypassEnabled,
+  setAccessToken,
+} from '../auth/tokenStorage';
 import { loginWithMicrosoft, logoutMicrosoft } from '../auth/msalClient';
 import type { AuthenticatedUser } from '../types/auth.types';
-
-const DEV_BYPASS_TOKEN = 'dev-bypass-token';
-
-const DEV_BYPASS_USER: AuthenticatedUser = {
-  id: 'dev-bypass-user',
-  microsoftOid: 'dev-bypass-user',
-  email: 'dev.user@municipality.local',
-  displayName: 'Local Dev User',
-  roles: ['ADMIN'],
-  permissions: [
-    'meeting.read',
-    'meeting.read.in_camera',
-    'meeting.write',
-    'agenda.write',
-    'agenda.publish',
-    'report.submit',
-    'report.approve.director',
-    'report.approve.cao',
-    'users.manage',
-    'roles.manage',
-    'minutes.write',
-    'minutes.publish',
-    'vote.record',
-    'public.publish',
-  ],
-};
 
 interface AuthContextValue {
   user: AuthenticatedUser | null;
@@ -59,14 +40,10 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
 
   const refreshUser = useCallback(async (): Promise<void> => {
     const token = getAccessToken();
-    if (!token) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
+    const bypassEnabled = authBypassEnabled && isDevBypassEnabled();
 
-    if (authBypassEnabled && token === DEV_BYPASS_TOKEN) {
-      setUser(DEV_BYPASS_USER);
+    if (!token && !bypassEnabled) {
+      setUser(null);
       setIsLoading(false);
       return;
     }
@@ -76,6 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       setUser(me);
     } catch {
       clearAccessToken();
+      disableDevBypass();
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -90,6 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     setIsLoading(true);
     const token = await loginWithMicrosoft();
     setAccessToken(token);
+    disableDevBypass();
     await refreshUser();
   }, [refreshUser]);
 
@@ -98,17 +77,18 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       throw new Error('Auth bypass is disabled');
     }
     setIsLoading(true);
-    setAccessToken(DEV_BYPASS_TOKEN);
-    setUser(DEV_BYPASS_USER);
-    setIsLoading(false);
-  }, [authBypassEnabled]);
+    clearAccessToken();
+    enableDevBypass();
+    await refreshUser();
+  }, [authBypassEnabled, refreshUser]);
 
   const logout = useCallback(async (): Promise<void> => {
     const token = getAccessToken();
-    if (token && token !== DEV_BYPASS_TOKEN) {
+    if (token) {
       await logoutMicrosoft();
     }
     clearAccessToken();
+    disableDevBypass();
     setUser(null);
   }, []);
 

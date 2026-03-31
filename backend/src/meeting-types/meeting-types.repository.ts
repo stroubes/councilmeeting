@@ -10,6 +10,19 @@ export interface MeetingTypeRecord {
   isInCamera: boolean;
   isActive: boolean;
   createdBy: string;
+  wizardConfig?: {
+    defaultAgendaTemplateId?: string;
+    defaultWorkflowCode?: string;
+    publishWindowHours?: number;
+    carryForwardEnabled?: boolean;
+  };
+  standingItems?: Array<{
+    itemType: string;
+    title: string;
+    description?: string;
+    isInCamera?: boolean;
+    carryForwardToNext?: boolean;
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +34,8 @@ interface CreateMeetingTypeInput {
   isInCamera: boolean;
   isActive: boolean;
   createdBy: string;
+  wizardConfig?: MeetingTypeRecord['wizardConfig'];
+  standingItems?: MeetingTypeRecord['standingItems'];
 }
 
 const DEFAULT_MEETING_TYPES: Array<Pick<MeetingTypeRecord, 'code' | 'name' | 'description' | 'isInCamera'>> = [
@@ -64,8 +79,9 @@ export class MeetingTypesRepository {
       const now = new Date().toISOString();
       const created = await this.postgresService.query<DbMeetingTypeRow>(
         `INSERT INTO app_meeting_types (
-          id, code, name, description, is_in_camera, is_active, created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          id, code, name, description, is_in_camera, is_active, created_by,
+          wizard_config_json, standing_items_json, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *`,
         [
           id,
@@ -75,6 +91,8 @@ export class MeetingTypesRepository {
           input.isInCamera,
           input.isActive,
           input.createdBy,
+          input.wizardConfig ?? null,
+          input.standingItems ?? null,
           now,
           now,
         ],
@@ -128,6 +146,62 @@ export class MeetingTypesRepository {
     });
   }
 
+  async update(
+    id: string,
+    patch: Partial<
+      Pick<MeetingTypeRecord, 'name' | 'description' | 'isInCamera' | 'isActive' | 'wizardConfig' | 'standingItems'>
+    >,
+  ): Promise<MeetingTypeRecord> {
+    return this.withFallback(async () => {
+      await this.ensureSchema();
+      const existingResult = await this.postgresService.query<DbMeetingTypeRow>(
+        `SELECT * FROM app_meeting_types WHERE id = $1 LIMIT 1`,
+        [id],
+      );
+      if (existingResult.rows.length === 0) {
+        throw new NotFoundException('Meeting type not found');
+      }
+      const existing = toMeetingTypeRecord(existingResult.rows[0]);
+      const updatedAt = new Date().toISOString();
+      const result = await this.postgresService.query<DbMeetingTypeRow>(
+        `UPDATE app_meeting_types
+         SET name = $2,
+             description = $3,
+             is_in_camera = $4,
+             is_active = $5,
+             wizard_config_json = $6,
+             standing_items_json = $7,
+             updated_at = $8
+         WHERE id = $1
+         RETURNING *`,
+        [
+          id,
+          patch.name ?? existing.name,
+          patch.description ?? existing.description ?? null,
+          patch.isInCamera ?? existing.isInCamera,
+          patch.isActive ?? existing.isActive,
+          patch.wizardConfig ?? existing.wizardConfig ?? null,
+          patch.standingItems ?? existing.standingItems ?? null,
+          updatedAt,
+        ],
+      );
+      return toMeetingTypeRecord(result.rows[0]);
+    }, async () => {
+      this.seedMemoryDefaults();
+      const existing = this.memoryMeetingTypes.get(id);
+      if (!existing) {
+        throw new NotFoundException('Meeting type not found');
+      }
+      const updated: MeetingTypeRecord = {
+        ...existing,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      this.memoryMeetingTypes.set(id, updated);
+      return updated;
+    });
+  }
+
   private async ensureSchema(): Promise<void> {
     if (this.schemaEnsured || !this.postgresService.isEnabled) {
       return;
@@ -141,6 +215,8 @@ export class MeetingTypesRepository {
         description TEXT,
         is_in_camera BOOLEAN NOT NULL DEFAULT FALSE,
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        wizard_config_json JSONB,
+        standing_items_json JSONB,
         created_by VARCHAR(255) NOT NULL,
         created_at TIMESTAMPTZ NOT NULL,
         updated_at TIMESTAMPTZ NOT NULL
@@ -151,6 +227,9 @@ export class MeetingTypesRepository {
       `CREATE INDEX IF NOT EXISTS idx_app_meeting_types_active ON app_meeting_types(is_active, name)`,
     );
 
+    await this.postgresService.query(`ALTER TABLE app_meeting_types ADD COLUMN IF NOT EXISTS wizard_config_json JSONB`);
+    await this.postgresService.query(`ALTER TABLE app_meeting_types ADD COLUMN IF NOT EXISTS standing_items_json JSONB`);
+
     const result = await this.postgresService.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM app_meeting_types`);
     const count = Number.parseInt(result.rows[0]?.count ?? '0', 10);
 
@@ -159,8 +238,9 @@ export class MeetingTypesRepository {
       for (const meetingType of DEFAULT_MEETING_TYPES) {
         await this.postgresService.query(
           `INSERT INTO app_meeting_types (
-            id, code, name, description, is_in_camera, is_active, created_by, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, TRUE, 'system', $6, $7)`,
+            id, code, name, description, is_in_camera, is_active, created_by,
+            wizard_config_json, standing_items_json, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, TRUE, 'system', NULL, NULL, $6, $7)`,
           [randomUUID(), meetingType.code, meetingType.name, meetingType.description, meetingType.isInCamera, now, now],
         );
       }
@@ -195,6 +275,8 @@ export class MeetingTypesRepository {
       isInCamera: input.isInCamera,
       isActive: input.isActive,
       createdBy: input.createdBy,
+      wizardConfig: input.wizardConfig,
+      standingItems: input.standingItems,
       createdAt: now,
       updatedAt: now,
     };
@@ -225,6 +307,8 @@ export class MeetingTypesRepository {
         isInCamera: meetingType.isInCamera,
         isActive: true,
         createdBy: 'system',
+        wizardConfig: undefined,
+        standingItems: undefined,
         createdAt: now,
         updatedAt: now,
       });
@@ -239,6 +323,8 @@ interface DbMeetingTypeRow {
   description: string | null;
   is_in_camera: boolean;
   is_active: boolean;
+  wizard_config_json: unknown | null;
+  standing_items_json: unknown | null;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -252,6 +338,8 @@ function toMeetingTypeRecord(row: DbMeetingTypeRow): MeetingTypeRecord {
     description: row.description ?? undefined,
     isInCamera: row.is_in_camera,
     isActive: row.is_active,
+    wizardConfig: (row.wizard_config_json as MeetingTypeRecord['wizardConfig']) ?? undefined,
+    standingItems: (row.standing_items_json as MeetingTypeRecord['standingItems']) ?? undefined,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { PERMISSIONS } from '../core/constants/permissions.constants';
 import { CurrentUser } from '../core/decorators/current-user.decorator';
 import { Permissions } from '../core/decorators/permissions.decorator';
 import { Public } from '../core/decorators/public.decorator';
 import { CreateMeetingTypeDto } from './dto/create-meeting-type.dto';
+import { UpdateMeetingTypeDto } from './dto/update-meeting-type.dto';
 import { MeetingTypesService } from './meeting-types.service';
 
 @Controller('meeting-types')
@@ -27,6 +28,18 @@ export class MeetingTypesController {
   @Post()
   create(@Body() dto: CreateMeetingTypeDto, @CurrentUser() user: AuthenticatedUser) {
     return this.meetingTypesService.create(dto, user);
+  }
+
+  @Permissions(PERMISSIONS.TEMPLATES_MANAGE)
+  @Get(':id')
+  getById(@Param('id') id: string) {
+    return this.meetingTypesService.getById(id);
+  }
+
+  @Permissions(PERMISSIONS.TEMPLATES_MANAGE)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateMeetingTypeDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.meetingTypesService.update(id, dto, user);
   }
 
   @Permissions(PERMISSIONS.TEMPLATES_MANAGE)

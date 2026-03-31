@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   NotificationsRepository,
@@ -7,11 +7,24 @@ import {
 } from './notifications.repository';
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnModuleInit {
+  private readonly logger = new Logger(NotificationsService.name);
+  private readonly deliveryQueue: string[] = [];
+  private isProcessing = false;
+  private processingInterval: ReturnType<typeof setInterval> | null = null;
+
   constructor(
     private readonly notificationsRepository: NotificationsRepository,
     private readonly configService: ConfigService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    this.processingInterval = setInterval(() => {
+      this.processQueue().catch((err) => {
+        this.logger.error(`Queue processor error: ${err instanceof Error ? err.message : String(err)}`);
+      });
+    }, 2000);
+  }
 
   health(): { status: string } {
     return { status: 'ok' };
@@ -36,7 +49,58 @@ export class NotificationsService {
       deliveryAttempts: 0,
     });
 
-    return this.dispatch(created);
+    this.enqueue(created.id);
+    await this.drainQueueForId(created.id);
+    return (await this.notificationsRepository.getById(created.id))!;
+  }
+
+  private async drainQueueForId(id: string): Promise<void> {
+    const maxDrainCycles = 10;
+    this.isProcessing = true;
+    try {
+      for (let i = 0; i < maxDrainCycles; i++) {
+        const record = await this.notificationsRepository.getById(id);
+        if (!record || record.status !== 'PENDING') {
+          return;
+        }
+        await this.dispatch(record);
+      }
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  private enqueue(id: string): void {
+    this.deliveryQueue.push(id);
+  }
+
+  async flush(): Promise<void> {
+    await this.processQueue();
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.isProcessing || this.deliveryQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessing = true;
+
+    try {
+      while (this.deliveryQueue.length > 0) {
+        const id = this.deliveryQueue.shift()!;
+        try {
+          const record = await this.notificationsRepository.getById(id);
+          if (!record || record.status !== 'PENDING') {
+            continue;
+          }
+          await this.dispatch(record);
+        } catch (err) {
+          this.logger.warn(`Failed to process notification ${id}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+    } finally {
+      this.isProcessing = false;
+    }
   }
 
   list(query?: { status?: NotificationDeliveryStatus; eventType?: string; limit?: number }) {
@@ -154,45 +218,39 @@ export class NotificationsService {
   }
 
   private async dispatch(record: NotificationEventRecord): Promise<NotificationEventRecord> {
-    const maxAttempts = this.resolveMaxAttempts();
-    let attempt = Math.max(0, record.deliveryAttempts);
+    const attempt = record.deliveryAttempts + 1;
 
-    while (attempt < maxAttempts) {
-      attempt += 1;
+    try {
+      await this.deliverThroughChannels(record);
+      return await this.notificationsRepository.updateDelivery(record.id, {
+        status: 'DELIVERED',
+        deliveryAttempts: attempt,
+        deliveredAt: new Date().toISOString(),
+        lastError: undefined,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown notification dispatch error';
+      const maxAttempts = this.resolveMaxAttempts();
 
-      try {
-        await this.deliverThroughChannels(record);
+      if (attempt >= maxAttempts) {
         return await this.notificationsRepository.updateDelivery(record.id, {
-          status: 'DELIVERED',
-          deliveryAttempts: attempt,
-          deliveredAt: new Date().toISOString(),
-          lastError: undefined,
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown notification dispatch error';
-        const isFinalAttempt = attempt >= maxAttempts;
-
-        const updated = await this.notificationsRepository.updateDelivery(record.id, {
-          status: isFinalAttempt ? 'FAILED' : 'PENDING',
+          status: 'FAILED',
           deliveryAttempts: attempt,
           deliveredAt: undefined,
           lastError: message,
         });
-
-        if (isFinalAttempt) {
-          return updated;
-        }
-
-        await sleep(this.resolveRetryDelayMs(attempt));
       }
-    }
 
-    return this.notificationsRepository.updateDelivery(record.id, {
-      status: 'FAILED',
-      deliveryAttempts: attempt,
-      deliveredAt: undefined,
-      lastError: 'Notification dispatch exhausted retry attempts.',
-    });
+      const updated = await this.notificationsRepository.updateDelivery(record.id, {
+        status: 'PENDING',
+        deliveryAttempts: attempt,
+        deliveredAt: undefined,
+        lastError: message,
+      });
+
+      this.enqueue(updated.id);
+      return updated;
+    }
   }
 
   private resolveChannels(): string[] {
@@ -215,14 +273,6 @@ export class NotificationsService {
       return 3;
     }
     return Math.max(1, Math.min(10, Number(raw)));
-  }
-
-  private resolveRetryDelayMs(attempt: number): number {
-    const base =
-      this.configService.get<number>('notificationRetryBaseDelayMs') ??
-      Number(process.env.NOTIFICATION_RETRY_BASE_DELAY_MS ?? 400);
-    const safeBase = Number.isFinite(base) ? Math.max(50, Number(base)) : 400;
-    return Math.min(5000, safeBase * 2 ** Math.max(0, attempt - 1));
   }
 
   private async deliverThroughChannels(record: NotificationEventRecord): Promise<void> {
@@ -450,14 +500,4 @@ interface DigestNotificationView {
   topics: string[];
   watchKeywords: string[];
   matches: Array<{ topic: string; title: string; id: string; source: string }>;
-}
-
-async function sleep(durationMs: number): Promise<void> {
-  if (!Number.isFinite(durationMs) || durationMs <= 0) {
-    return;
-  }
-
-  await new Promise<void>((resolve) => {
-    setTimeout(() => resolve(), durationMs);
-  });
 }

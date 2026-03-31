@@ -23,6 +23,10 @@ describe('MinutesService finalize readiness', () => {
       } as never,
       { log: jest.fn().mockResolvedValue(undefined) } as never,
       { emit: jest.fn().mockResolvedValue(undefined) } as never,
+      { listByMeeting: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
+      { getTally: jest.fn().mockResolvedValue({ totalVotes: 0 } as never) } as never,
+      { getUserDisplayName: jest.fn().mockResolvedValue('User') } as never,
     );
 
     await expect(
@@ -60,6 +64,10 @@ describe('MinutesService finalize readiness', () => {
       } as never,
       { log: jest.fn().mockResolvedValue(undefined) } as never,
       { emit: jest.fn().mockResolvedValue(undefined) } as never,
+      { listByMeeting: jest.fn().mockResolvedValue([]) } as never,
+      { list: jest.fn().mockResolvedValue([]) } as never,
+      { getTally: jest.fn().mockResolvedValue({ totalVotes: 0 } as never) } as never,
+      { getUserDisplayName: jest.fn().mockResolvedValue('User') } as never,
     );
 
     const result = await service.finalize('m1', {

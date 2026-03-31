@@ -109,6 +109,24 @@ This release delivers a unified live meeting display experience so clerks can ru
   - stronger month/week range header
   - aligned control groups
   - clearer day-cell hierarchy for readability.
+- Improved recurring meeting selection clarity across operational dropdowns:
+  - `/minutes`, `/agendas`, and `/motions` meeting selectors now include title, scheduled date/time, and short id suffix
+  - minutes register meeting column now includes scheduled date/time to reduce ambiguity for same-title series.
+- Hardened agenda template selection in `/agendas` create flow:
+  - active agenda templates now auto-select by default
+  - when active templates exist, agenda creation requires a template selection
+  - explicit guidance now appears when templates are missing or currently disabled.
+- Added database persistence degradation visibility:
+  - `/api/health` now reports explicit database status (`up`, `down`, `disabled`)
+  - workspace header now shows a persistent warning banner when backend reports degraded persistence mode.
+- Expanded create workflow workspace sizing:
+  - shared create/edit drawer now renders as a large centered modal by default
+  - improved mobile responsive behavior for modal-based forms.
+- Improved minutes creation ergonomics:
+  - `/minutes` now opens a dedicated create modal instead of using only a compact header form.
+- Added public meetings calendar in `/public`:
+  - new list/calendar toggle for published meetings
+  - month grid with previous/today/next navigation controls.
 
 ## Impacted Routes
 
@@ -124,6 +142,16 @@ This release delivers a unified live meeting display experience so clerks can ru
 - If SSE is blocked by intermediary infrastructure, client automatically falls back to 2-second polling.
 - PPT/PPTX conversion requires LibreOffice (`soffice` or `libreoffice`) available on backend host.
 - If logo appearance seems stale on a display device, perform a hard refresh to clear cached assets.
+
+## Governance Expansion Follow-On
+
+- Added configurable workflow administration with stage-level routing controls.
+- Added per-report workflow instance metadata and generic role-based approval queue (`/approvals/my`).
+- Added resolutions register (`/resolutions`) with bylaw linkage and export sheet generation.
+- Added action tracker (`/actions`) with dashboard metrics and resolution-triggered follow-up automation.
+- Added meeting-type wizard defaults and standing agenda item seeding.
+- Added advanced agenda publish controls (public visibility, publish windows, redaction, carry-forward) and carry-forward endpoint.
+- Expanded public portal package discovery with motions/resolutions/actions visibility and package detail drill-down.
 
 ## Documentation Maintenance Rule
 

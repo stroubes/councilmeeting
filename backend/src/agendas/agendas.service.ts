@@ -14,6 +14,7 @@ import { TemplatesService } from '../templates/templates.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GovernanceService } from '../governance/governance.service';
 import { inferAgendaTemplateProfile } from '../governance/municipal-profile.constants';
+import { MeetingTypesService } from '../meeting-types/meeting-types.service';
 
 export type AgendaStatus =
   | 'DRAFT'
@@ -39,8 +40,14 @@ export interface AgendaItemRecord {
   description?: string;
   parentItemId?: string;
   isInCamera: boolean;
+  isPublicVisible: boolean;
+  publishAt?: string;
+  redactionNote?: string;
+  carryForwardToNext: boolean;
   sortOrder: number;
   status: AgendaItemStatus;
+  bylawId?: string;
+  itemNumber?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -70,6 +77,7 @@ export class AgendasService {
     private readonly templatesService: TemplatesService,
     private readonly notificationsService: NotificationsService,
     private readonly governanceService: GovernanceService,
+    private readonly meetingTypesService: MeetingTypesService,
   ) {}
 
   health(): { status: string } {
@@ -82,14 +90,18 @@ export class AgendasService {
       throw new BadRequestException('Meeting does not exist for this agenda');
     }
 
-    const template = dto.templateId ? await this.templatesService.getById(dto.templateId) : null;
+    const meeting = await this.meetingsService.getById(dto.meetingId, user);
+    const meetingType = await this.meetingTypesService.getByCode(meeting.meetingTypeCode);
+    const resolvedTemplateId = dto.templateId ?? meetingType.wizardConfig?.defaultAgendaTemplateId;
+
+    const template = resolvedTemplateId ? await this.templatesService.getById(resolvedTemplateId) : null;
     if (template && template.type !== 'AGENDA') {
       throw new BadRequestException('Selected template must be an agenda template');
     }
 
     const created = await this.agendasRepository.create({
       meetingId: dto.meetingId,
-      templateId: dto.templateId,
+      templateId: resolvedTemplateId,
       title: dto.title,
       createdBy: user.id,
     });
@@ -105,12 +117,38 @@ export class AgendasService {
           description: section.description,
           parentItemId: undefined,
           isInCamera: false,
+          isPublicVisible: true,
+          publishAt: undefined,
+          redactionNote: undefined,
+          carryForwardToNext: false,
           sortOrder: index + 1,
           status: 'DRAFT',
           createdBy: user.id,
         });
       }
       await this.agendasRepository.update(created.id, { version: created.version + 1 });
+    }
+
+    if (meetingType.standingItems?.length) {
+      let sortOrder = (await this.getById(created.id)).items.length + 1;
+      for (const standingItem of meetingType.standingItems) {
+        await this.agendasRepository.addItem({
+          agendaId: created.id,
+          itemType: standingItem.itemType,
+          title: standingItem.title,
+          description: standingItem.description,
+          parentItemId: undefined,
+          isInCamera: standingItem.isInCamera ?? false,
+          isPublicVisible: !(standingItem.isInCamera ?? false),
+          publishAt: undefined,
+          redactionNote: undefined,
+          carryForwardToNext: standingItem.carryForwardToNext ?? false,
+          sortOrder,
+          status: 'DRAFT',
+          createdBy: user.id,
+        });
+        sortOrder += 1;
+      }
     }
 
     await this.auditService.log({
@@ -165,14 +203,24 @@ export class AgendasService {
       description: dto.description,
       parentItemId: dto.parentItemId,
       isInCamera: dto.isInCamera ?? false,
+      isPublicVisible: dto.isPublicVisible ?? !(dto.isInCamera ?? false),
+      publishAt: dto.publishAt,
+      redactionNote: dto.redactionNote,
+      carryForwardToNext: dto.carryForwardToNext ?? false,
       sortOrder: agenda.items.length + 1,
       status: 'DRAFT',
+      bylawId: dto.bylawId,
       createdBy: user.id,
     });
 
-    return this.agendasRepository.update(agenda.id, {
+    const updated = await this.agendasRepository.update(agenda.id, {
       version: agenda.version + 1,
-    }).then(() => this.getById(agenda.id));
+    });
+
+    await this.saveAgendaSnapshot(agenda.id, updated.version, `Added item: ${dto.title}`, user.id);
+    await this.recomputeItemNumbers(agenda.id);
+
+    return this.getById(agenda.id);
   }
 
   async updateItem(agendaId: string, itemId: string, dto: UpdateAgendaItemDto): Promise<AgendaRecord> {
@@ -190,15 +238,25 @@ export class AgendasService {
       title: dto.title,
       description: dto.description,
       isInCamera: dto.isInCamera,
+      isPublicVisible: dto.isPublicVisible,
+      publishAt: dto.publishAt,
+      redactionNote: dto.redactionNote,
+      carryForwardToNext: dto.carryForwardToNext,
+      bylawId: dto.bylawId,
+      itemNumber: dto.itemNumber,
     });
 
-    await this.agendasRepository.update(agenda.id, { version: agenda.version + 1 });
+    const updated = await this.agendasRepository.update(agenda.id, { version: agenda.version + 1 });
     await this.auditService.log({
       action: 'agenda.item.update',
       entityType: 'agenda',
       entityId: agenda.id,
       changesJson: { itemId },
     });
+    await this.saveAgendaSnapshot(agenda.id, updated.version, `Updated item: ${item.title}`, undefined);
+    if (dto.itemNumber === undefined) {
+      await this.recomputeItemNumbers(agenda.id);
+    }
     return this.getById(agenda.id);
   }
 
@@ -224,12 +282,13 @@ export class AgendasService {
     });
 
     await this.agendasRepository.replaceItems(agenda.id, reordered);
-    await this.agendasRepository.update(agenda.id, { version: agenda.version + 1 });
+    const updated = await this.agendasRepository.update(agenda.id, { version: agenda.version + 1 });
     await this.auditService.log({
       action: 'agenda.items.reorder',
       entityType: 'agenda',
       entityId: agenda.id,
     });
+    await this.recomputeItemNumbers(agenda.id);
     return this.getById(agenda.id);
   }
 
@@ -239,6 +298,7 @@ export class AgendasService {
       throw new BadRequestException('Cannot remove items from published agenda');
     }
 
+    const removedItem = agenda.items.find((item) => item.id === itemId);
     const remainingItems = agenda.items.filter((item) => item.id !== itemId);
     if (remainingItems.length === agenda.items.length) {
       throw new NotFoundException('Agenda item not found');
@@ -254,14 +314,15 @@ export class AgendasService {
       }));
 
     await this.agendasRepository.replaceItems(agenda.id, reordered);
-    await this.agendasRepository.update(agenda.id, { version: agenda.version + 1 });
+    const updated = await this.agendasRepository.update(agenda.id, { version: agenda.version + 1 });
     await this.auditService.log({
       action: 'agenda.item.delete',
       entityType: 'agenda',
       entityId: agenda.id,
       changesJson: { itemId },
     });
-
+    await this.saveAgendaSnapshot(agenda.id, updated.version, `Removed item: ${removedItem?.title ?? itemId}`, undefined);
+    await this.recomputeItemNumbers(agenda.id);
     return this.getById(agenda.id);
   }
 
@@ -284,11 +345,15 @@ export class AgendasService {
       status: 'PENDING_DIRECTOR_APPROVAL' as AgendaStatus,
       updatedAt: new Date().toISOString(),
     }));
-    await this.agendasRepository.replaceItems(agenda.id, items);
-    await this.agendasRepository.update(agenda.id, {
-      status: 'PENDING_DIRECTOR_APPROVAL',
-      version: agenda.version + 1,
-      rejectionReason: undefined,
+    const updated = await this.agendasRepository.transitionWorkflowState({
+      agendaId: agenda.id,
+      expectedUpdatedAt: agenda.updatedAt,
+      agendaPatch: {
+        status: 'PENDING_DIRECTOR_APPROVAL',
+        version: agenda.version + 1,
+        rejectionReason: undefined,
+      },
+      items,
     });
     await this.auditService.log({
       action: 'agenda.submit_director',
@@ -299,9 +364,9 @@ export class AgendasService {
       eventType: 'AGENDA_SUBMITTED',
       entityType: 'agenda',
       entityId: agenda.id,
-      payloadJson: { status: 'PENDING_DIRECTOR_APPROVAL' },
+      payloadJson: { status: updated.status },
     });
-    return this.getById(agenda.id);
+    return updated;
   }
 
   async approveByDirector(agendaId: string, user: AuthenticatedUser): Promise<AgendaRecord> {
@@ -316,10 +381,14 @@ export class AgendasService {
       status: 'PENDING_CAO_APPROVAL' as AgendaStatus,
       updatedAt: new Date().toISOString(),
     }));
-    await this.agendasRepository.replaceItems(agenda.id, items);
-    await this.agendasRepository.update(agenda.id, {
-      status: 'PENDING_CAO_APPROVAL',
-      version: agenda.version + 1,
+    const updated = await this.agendasRepository.transitionWorkflowState({
+      agendaId: agenda.id,
+      expectedUpdatedAt: agenda.updatedAt,
+      agendaPatch: {
+        status: 'PENDING_CAO_APPROVAL',
+        version: agenda.version + 1,
+      },
+      items,
     });
     await this.auditService.log({
       actorUserId: user.id,
@@ -332,9 +401,9 @@ export class AgendasService {
       entityType: 'agenda',
       entityId: agenda.id,
       actorUserId: user.id,
-      payloadJson: { status: 'PENDING_CAO_APPROVAL' },
+      payloadJson: { status: updated.status },
     });
-    return this.getById(agenda.id);
+    return updated;
   }
 
   async approveByCao(agendaId: string, user: AuthenticatedUser): Promise<AgendaRecord> {
@@ -349,10 +418,14 @@ export class AgendasService {
       status: 'APPROVED' as AgendaStatus,
       updatedAt: new Date().toISOString(),
     }));
-    await this.agendasRepository.replaceItems(agenda.id, items);
-    await this.agendasRepository.update(agenda.id, {
-      status: 'APPROVED',
-      version: agenda.version + 1,
+    const updated = await this.agendasRepository.transitionWorkflowState({
+      agendaId: agenda.id,
+      expectedUpdatedAt: agenda.updatedAt,
+      agendaPatch: {
+        status: 'APPROVED',
+        version: agenda.version + 1,
+      },
+      items,
     });
     await this.auditService.log({
       actorUserId: user.id,
@@ -365,9 +438,9 @@ export class AgendasService {
       entityType: 'agenda',
       entityId: agenda.id,
       actorUserId: user.id,
-      payloadJson: { status: 'APPROVED' },
+      payloadJson: { status: updated.status },
     });
-    return this.getById(agenda.id);
+    return updated;
   }
 
   async reject(agendaId: string, user: AuthenticatedUser, dto: RejectAgendaDto): Promise<AgendaRecord> {
@@ -386,11 +459,15 @@ export class AgendasService {
       status: 'REJECTED' as AgendaStatus,
       updatedAt: new Date().toISOString(),
     }));
-    await this.agendasRepository.replaceItems(agenda.id, items);
-    await this.agendasRepository.update(agenda.id, {
-      status: 'REJECTED',
-      version: agenda.version + 1,
-      rejectionReason: dto.reason,
+    const updated = await this.agendasRepository.transitionWorkflowState({
+      agendaId: agenda.id,
+      expectedUpdatedAt: agenda.updatedAt,
+      agendaPatch: {
+        status: 'REJECTED',
+        version: agenda.version + 1,
+        rejectionReason: dto.reason,
+      },
+      items,
     });
     await this.auditService.log({
       actorUserId: user.id,
@@ -404,9 +481,9 @@ export class AgendasService {
       entityType: 'agenda',
       entityId: agenda.id,
       actorUserId: user.id,
-      payloadJson: { status: 'REJECTED', reason: dto.reason },
+      payloadJson: { status: updated.status, reason: dto.reason },
     });
-    return this.getById(agenda.id);
+    return updated;
   }
 
   async publish(agendaId: string): Promise<AgendaRecord> {
@@ -424,12 +501,24 @@ export class AgendasService {
     }
 
     const now = new Date().toISOString();
-    const items = agenda.items.map((item) => ({ ...item, status: 'PUBLISHED' as AgendaStatus, updatedAt: now }));
-    await this.agendasRepository.replaceItems(agenda.id, items);
-    await this.agendasRepository.update(agenda.id, {
-      status: 'PUBLISHED',
-      version: agenda.version + 1,
-      publishedAt: now,
+    const items = agenda.items.map((item) => {
+      const canPublishNow = item.isPublicVisible && (!item.publishAt || new Date(item.publishAt).getTime() <= Date.now());
+      return {
+        ...item,
+        status: canPublishNow ? ('PUBLISHED' as AgendaStatus) : ('APPROVED' as AgendaStatus),
+        description: item.redactionNote ? undefined : item.description,
+        updatedAt: now,
+      };
+    });
+    const updated = await this.agendasRepository.transitionWorkflowState({
+      agendaId: agenda.id,
+      expectedUpdatedAt: agenda.updatedAt,
+      agendaPatch: {
+        status: 'PUBLISHED',
+        version: agenda.version + 1,
+        publishedAt: now,
+      },
+      items,
     });
     await this.auditService.log({
       action: 'agenda.publish',
@@ -440,9 +529,35 @@ export class AgendasService {
       eventType: 'AGENDA_PUBLISHED',
       entityType: 'agenda',
       entityId: agenda.id,
-      payloadJson: { status: 'PUBLISHED', publishedAt: now },
+      payloadJson: { status: updated.status, publishedAt: now },
     });
-    return this.getById(agenda.id);
+    await this.saveAgendaSnapshot(agenda.id, updated.version, 'Agenda published', undefined);
+    return updated;
+  }
+
+  async carryForwardItems(sourceAgendaId: string, targetAgendaId: string, user: AuthenticatedUser): Promise<AgendaRecord> {
+    const [source, target] = await Promise.all([this.getById(sourceAgendaId), this.getById(targetAgendaId)]);
+    let sortOrder = target.items.length + 1;
+    for (const item of source.items.filter((entry) => entry.carryForwardToNext)) {
+      await this.agendasRepository.addItem({
+        agendaId: target.id,
+        itemType: item.itemType,
+        title: item.title,
+        description: item.description,
+        parentItemId: undefined,
+        isInCamera: item.isInCamera,
+        isPublicVisible: item.isPublicVisible,
+        publishAt: item.publishAt,
+        redactionNote: item.redactionNote,
+        carryForwardToNext: item.carryForwardToNext,
+        sortOrder,
+        status: 'DRAFT',
+        createdBy: user.id,
+      });
+      sortOrder += 1;
+    }
+    await this.agendasRepository.update(target.id, { version: target.version + 1 });
+    return this.getById(target.id);
   }
 
   hasAgendaItem(itemId: string): Promise<boolean> {
@@ -525,6 +640,43 @@ export class AgendasService {
       await this.notificationsService.emit(input);
     } catch {
       // notification failures should not block governance workflow transitions
+    }
+  }
+
+  private async saveAgendaSnapshot(agendaId: string, version: number, changeSummary: string, changedBy?: string): Promise<void> {
+    try {
+      const agenda = await this.agendasRepository.getById(agendaId);
+      await this.agendasRepository.saveVersionSnapshot({
+        agendaId,
+        version,
+        title: agenda.title,
+        status: agenda.status,
+        snapshotJson: {
+          items: agenda.items,
+          changeSummary,
+          savedAt: new Date().toISOString(),
+        },
+        changedBy,
+      });
+    } catch {
+      // snapshot failures must not block agenda operations
+    }
+  }
+
+  private async recomputeItemNumbers(agendaId: string): Promise<void> {
+    try {
+      const agenda = await this.agendasRepository.getById(agendaId);
+      const sorted = [...agenda.items].sort((a, b) => a.sortOrder - b.sortOrder);
+      let counter = 0;
+      for (const item of sorted) {
+        counter += 1;
+        const itemNumber = `${counter}.`;
+        if (item.itemNumber !== itemNumber) {
+          await this.agendasRepository.updateItem(agendaId, item.id, { itemNumber });
+        }
+      }
+    } catch {
+      // numbering failures must not block agenda operations
     }
   }
 }

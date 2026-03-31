@@ -4,8 +4,11 @@
 
 - [ ] Backend and frontend build cleanly.
 - [ ] Database migrations applied (including `app_*` tables).
+- [ ] Data integrity migration `1700000009000-app-integrity-constraints.sql` applied successfully.
 - [ ] Auth bypass disabled in target environment.
+- [ ] `AUTH_BYPASS_ALLOWED_ENVS` excludes production values.
 - [ ] Microsoft identity values configured and validated.
+- [ ] Rate limit values (`RATE_LIMIT_*`) reviewed and tuned for target load.
 
 ## Workflow Readiness
 
@@ -40,5 +43,8 @@
 
 - [ ] Backup and restore procedure validated.
 - [ ] Audit log query and retention policy validated.
+- [ ] State-changing API requests reject missing `X-CMMS-CSRF` with HTTP `403`.
+- [ ] Concurrent report approval test returns conflict for stale write attempts (optimistic locking).
+- [ ] Concurrent agenda workflow transition test returns conflict for stale write attempts (optimistic locking).
 - [ ] Incident response contacts/runbooks confirmed.
 - [ ] LibreOffice installed on backend host if PPT/PPTX auto-conversion is required.

@@ -32,6 +32,7 @@ Initial scaffold for a municipal Council Meeting Management System.
   - `backend/src/database/migrations/1700000003000-governance-operations.sql`
   - `backend/src/database/migrations/1700000004000-templates-and-attachments.sql`
   - `backend/src/database/migrations/1700000005000-report-template-linking.sql`
+  - `backend/src/database/migrations/1700000009000-app-integrity-constraints.sql`
 - Seed script is in:
   - `backend/src/database/seeds/1700000001000-seed-roles-permissions.sql`
 
@@ -54,8 +55,12 @@ For local testing without Microsoft Identity setup:
 - Frontend: set `VITE_AUTH_BYPASS=true` in `frontend/.env`.
 - Use the **Use Local Dev Login** button on `/login`.
 
-By default in non-production mode, backend accepts `Bearer dev-bypass-token` and creates a local dev user context (default role: `ADMIN`).
-You can also force bypass with `AUTH_BYPASS_ENABLED=true` in `backend/.env`.
+Backend bypass is now header-gated and environment-gated:
+
+- Set `AUTH_BYPASS_ENABLED=true` only for local development.
+- Ensure `NODE_ENV` is included in `AUTH_BYPASS_ALLOWED_ENVS` (default: `development,test,local`).
+- Frontend sends `X-Dev-Bypass: true` only when both `VITE_AUTH_BYPASS=true` and Local Dev Login is active.
+- No hardcoded bypass credential/token is used.
 
 ## Meetings + Agendas (Implemented Foundation)
 
@@ -269,6 +274,9 @@ You can also force bypass with `AUTH_BYPASS_ENABLED=true` in `backend/.env`.
   - Meeting details route with linked agenda visibility
   - Public portal and in-camera portal data views
   - Minutes register lifecycle
+  - Minutes auto-populate from attendance, motions, and votes (clerk acceleration path)
+  - Minutes structured editor for attendance, motions, votes, action items, and clerk notes
+  - Meeting-level conflict declaration management for governance traceability
   - Users and roles administration views
   - separate Admin Portal area with dedicated login route (`/admin/login`) and admin workspace routes (`/admin-portal/*`)
 - Operational UX enhancements:
@@ -300,6 +308,7 @@ You can also force bypass with `AUTH_BYPASS_ENABLED=true` in `backend/.env`.
   - `/admin-portal/meeting-types`
   - `/admin-portal/templates`
   - `/admin-portal/notifications`
+  - `/admin-portal/audit-logs`
   - `/admin-portal/api-settings`
 - Admin portal pages now render with a distinct admin-themed shell variant while preserving shared UX conventions.
 - Admin workspace pages now display a `Restricted Admin Workspace` badge in the page header for clear context separation.
@@ -309,6 +318,14 @@ You can also force bypass with `AUTH_BYPASS_ENABLED=true` in `backend/.env`.
 - Meetings, agendas, reports, and report workflow approvals now use repository-backed persistence.
 - If `DATABASE_URL` is reachable, data persists to PostgreSQL app tables (`app_*`).
 - If DB is unavailable, backend automatically falls back to in-memory mode so development remains unblocked.
+
+## Data Integrity Controls
+
+- Report workflow transitions now use transactional write semantics for status + approval history insertion.
+- Agenda workflow transitions now use transactional write semantics for item state replacement + agenda status/version updates.
+- Report workflow transitions use optimistic concurrency checks on `updated_at` to prevent silent last-write-wins on concurrent approvals.
+- Agenda workflow transitions use optimistic concurrency checks on `updated_at` to prevent silent last-write-wins on concurrent approvals.
+- App persistence tables include referential integrity constraints and meeting-driven cascades for core meeting artifacts (agendas, agenda items, reports, report approvals, report attachments, minutes).
 
 ## Local Reliability Notes
 
@@ -320,6 +337,16 @@ You can also force bypass with `AUTH_BYPASS_ENABLED=true` in `backend/.env`.
   - frontend API base URL points to running backend (`VITE_API_BASE_URL=http://localhost:3000/api`)
   - dev bypass login is active when not using Microsoft auth (`VITE_AUTH_BYPASS=true`)
   - PostgreSQL connectivity with current `DATABASE_URL`
+
+## API Security Controls
+
+- Global in-memory rate limiting is enabled by default:
+  - `RATE_LIMIT_WINDOW_MS`
+  - `RATE_LIMIT_GENERAL_MAX`
+  - `RATE_LIMIT_PUBLIC_MAX`
+  - `RATE_LIMIT_AUTH_MAX`
+- State-changing API requests (`POST`, `PATCH`, `DELETE`) require `X-CMMS-CSRF`.
+- Frontend sends `X-CMMS-CSRF` automatically from `frontend/src/api/httpClient.ts`.
 
 ## Notification Delivery Channels
 

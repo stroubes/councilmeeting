@@ -8,9 +8,21 @@ import { AgendasModule } from '../agendas/agendas.module';
 import { ReportsModule } from '../reports/reports.module';
 import { MinutesModule } from '../minutes/minutes.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { MotionsModule } from '../motions/motions.module';
+import { ResolutionsModule } from '../resolutions/resolutions.module';
+import { ActionsModule } from '../actions/actions.module';
 
 @Module({
-  imports: [MeetingsModule, AgendasModule, ReportsModule, MinutesModule, NotificationsModule],
+  imports: [
+    MeetingsModule,
+    AgendasModule,
+    ReportsModule,
+    MinutesModule,
+    NotificationsModule,
+    MotionsModule,
+    ResolutionsModule,
+    ActionsModule,
+  ],
   controllers: [PublicPortalController],
   providers: [PublicPortalService, PublicSubscriptionsRepository, PublicDigestScheduler],
   exports: [PublicPortalService],

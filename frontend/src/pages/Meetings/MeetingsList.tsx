@@ -9,6 +9,10 @@ import Drawer from '../../components/ui/Drawer';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useToast } from '../../hooks/useToast';
+import MetricTile from '../../components/ui/MetricTile';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
+import Pagination from '../../components/ui/Pagination';
 
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString(undefined, {
@@ -577,35 +581,39 @@ export default function MeetingsList(): JSX.Element {
       }
     >
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">Total Meetings</p>
-          <p className="metric-value">{meetings.length}</p>
-          <p className="metric-foot">Current governance cycle</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">In Progress</p>
-          <p className="metric-value">{inProgressCount}</p>
-          <p className="metric-foot">Sessions currently underway</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Public Sessions</p>
-          <p className="metric-value">{publicCount}</p>
-          <p className="metric-foot">Visible to community portal</p>
-        </article>
+        <MetricTile
+          variant="primary"
+          label="Total Meetings"
+          value={meetings.length}
+          foot="Current governance cycle"
+          icon="calendar"
+        />
+        <MetricTile
+          label="In Progress"
+          value={inProgressCount}
+          foot="Sessions currently underway"
+          icon="clock"
+        />
+        <MetricTile
+          label="Public Sessions"
+          value={publicCount}
+          foot="Visible to community portal"
+          icon="globe"
+        />
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>Meeting Register</h2>
-            <p>Operational view of timing, location, privacy setting, and publication status.</p>
-          </div>
-          <div className="card-header-meta">
-            <span className="pill">{viewMode === 'list' ? listTotalMeetings : filteredCalendarMeetings.length} visible</span>
-            {viewMode === 'list' ? <span className="pill">Page {currentPage}</span> : null}
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Meeting Register"
+          description="Operational view of timing, location, privacy setting, and publication status."
+          actions={
+            <>
+              <span className="pill">{viewMode === 'list' ? listTotalMeetings : filteredCalendarMeetings.length} visible</span>
+              {viewMode === 'list' ? <span className="pill">Page {currentPage}</span> : null}
+            </>
+          }
+        />
+        <CardBody>
           <div className="workspace-toolbar">
             <div className="workspace-toolbar-row">
               <input
@@ -761,67 +769,78 @@ export default function MeetingsList(): JSX.Element {
             <div className="empty-state">No meetings match the current filters.</div>
           ) : null}
           {viewMode === 'list' && listMeetingsPage.length > 0 ? (
-            <div className="table-wrap">
-              <table className="data-table" aria-label="Meetings list">
-                <thead>
-                  <tr>
-                    <th>Meeting</th>
-                    <th>Status</th>
-                    <th>Start</th>
-                    <th>Location</th>
-                    <th>Visibility</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listMeetingsPage.map((meeting) => (
-                    <tr key={meeting.id}>
-                      <td>
-                        <Link to={`/meetings/${meeting.id}`}>
-                          <strong>{meeting.title}</strong>
-                        </Link>
+            <DataTable
+              columns={[
+                {
+                  key: 'title',
+                  header: 'Meeting',
+                  render: (meeting: MeetingRecord) => (
+                    <>
+                      <Link to={`/meetings/${meeting.id}`}>
+                        <strong>{meeting.title}</strong>
+                      </Link>
+                      <div className="muted">
+                        {meetingTypeNameByCode.get(meeting.meetingTypeCode) ?? meeting.meetingTypeCode}
+                      </div>
+                      {meeting.recurrenceGroupId ? (
                         <div className="muted">
-                          {meetingTypeNameByCode.get(meeting.meetingTypeCode) ?? meeting.meetingTypeCode}
+                          Recurring series
+                          {meeting.recurrenceIndex ? ` #${meeting.recurrenceIndex}` : ''}
+                          {recurrenceSeriesCountByGroup.get(meeting.recurrenceGroupId)
+                            ? ` of ${recurrenceSeriesCountByGroup.get(meeting.recurrenceGroupId)}`
+                            : ''}
                         </div>
-                        {meeting.recurrenceGroupId ? (
-                          <div className="muted">
-                            Recurring series
-                            {meeting.recurrenceIndex ? ` #${meeting.recurrenceIndex}` : ''}
-                            {recurrenceSeriesCountByGroup.get(meeting.recurrenceGroupId)
-                              ? ` of ${recurrenceSeriesCountByGroup.get(meeting.recurrenceGroupId)}`
-                              : ''}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td>
-                        <StatusBadge status={meeting.status} />
-                      </td>
-                      <td>{formatDateTime(meeting.startsAt)}</td>
-                      <td>{meeting.location ?? 'Not specified'}</td>
-                      <td>{meeting.isPublic ? 'Public' : 'Internal'}</td>
-                      <td>
-                        <div className="page-actions">
-                          <Link className="btn btn-quiet" to={`/meetings/${meeting.id}`}>
-                            Details
-                          </Link>
-                          <button type="button" className="btn btn-quiet" onClick={() => openEditDrawer(meeting)}>
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn-danger"
-                            disabled={isSubmitting}
-                            onClick={() => void handleDeleteMeeting(meeting)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      ) : null}
+                    </>
+                  ),
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (meeting: MeetingRecord) => <StatusBadge status={meeting.status} />,
+                },
+                {
+                  key: 'startsAt',
+                  header: 'Start',
+                  render: (meeting: MeetingRecord) => formatDateTime(meeting.startsAt),
+                },
+                {
+                  key: 'location',
+                  header: 'Location',
+                  render: (meeting: MeetingRecord) => meeting.location ?? 'Not specified',
+                },
+                {
+                  key: 'isPublic',
+                  header: 'Visibility',
+                  render: (meeting: MeetingRecord) => (meeting.isPublic ? 'Public' : 'Internal'),
+                },
+                {
+                  key: 'actions',
+                  header: 'Actions',
+                  render: (meeting: MeetingRecord) => (
+                    <div className="page-actions">
+                      <Link className="btn btn-quiet" to={`/meetings/${meeting.id}`}>
+                        Details
+                      </Link>
+                      <button type="button" className="btn btn-quiet" onClick={() => openEditDrawer(meeting)}>
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        disabled={isSubmitting}
+                        onClick={() => void handleDeleteMeeting(meeting)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ),
+                },
+              ]}
+              data={listMeetingsPage}
+              rowKey={(meeting: MeetingRecord) => meeting.id}
+              emptyMessage="No meetings match the current filters."
+            />
           ) : null}
           {viewMode === 'calendar' && calendarLayout === 'month' ? (
             <div className="table-wrap">
@@ -929,31 +948,15 @@ export default function MeetingsList(): JSX.Element {
                 Showing {listTotalMeetings === 0 ? 0 : (currentPage - 1) * pageSize + 1}-
                 {Math.min(currentPage * pageSize, listTotalMeetings)} of {listTotalMeetings}
               </span>
-              <div className="pagination">
-                <button
-                  type="button"
-                  className="btn btn-quiet"
-                  disabled={currentPage <= 1}
-                  onClick={() => setPage((value) => Math.max(1, value - 1))}
-                >
-                  Previous
-                </button>
-                <span className="pill">
-                  Page {currentPage} / {listTotalPages}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn-quiet"
-                  disabled={currentPage >= listTotalPages}
-                  onClick={() => setPage((value) => Math.min(listTotalPages, value + 1))}
-                >
-                  Next
-                </button>
-              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={listTotalPages}
+                onPageChange={setPage}
+              />
             </div>
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
 
       <Drawer
         isOpen={isCreateOpen}

@@ -8,7 +8,7 @@ export class HealthController {
 
   @Public()
   @Get()
-  check(): { status: string } {
+  check() {
     return this.healthService.check();
   }
 }

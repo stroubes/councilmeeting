@@ -12,11 +12,13 @@ import {
   submitReport,
   updateReport,
 } from '../../api/reports.api';
+import { listWorkflowConfigurations } from '../../api/workflows.api';
 import { listAgendas } from '../../api/agendas.api';
 import { listTemplates } from '../../api/templates.api';
 import type { AgendaRecord } from '../../api/types/agenda.types';
 import type { ReportAttachmentRecord, StaffReportRecord } from '../../api/types/report.types';
 import type { TemplateRecord } from '../../api/types/template.types';
+import type { WorkflowRecord } from '../../api/types/workflow.types';
 import { MUNICIPAL_PROFILE } from '../../config/municipalProfile';
 import AppShell from '../../components/layout/AppShell';
 import Drawer from '../../components/ui/Drawer';
@@ -24,6 +26,10 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import WorkflowHistoryPanel from '../../components/ui/WorkflowHistoryPanel';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useToast } from '../../hooks/useToast';
+import MetricTile from '../../components/ui/MetricTile';
+import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
+import Pagination from '../../components/ui/Pagination';
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString(undefined, {
@@ -150,6 +156,7 @@ export default function ReportList(): JSX.Element {
   const [reports, setReports] = useState<StaffReportRecord[]>([]);
   const [agendas, setAgendas] = useState<AgendaRecord[]>([]);
   const [reportTemplates, setReportTemplates] = useState<TemplateRecord[]>([]);
+  const [reportWorkflows, setReportWorkflows] = useState<WorkflowRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = usePersistentState('reports.query', '');
@@ -180,6 +187,7 @@ export default function ReportList(): JSX.Element {
   const [createForm, setCreateForm] = useState({
     title: '',
     agendaItemId: '',
+    workflowConfigId: '',
     templateId: '',
     department: '',
     executiveSummary: '',
@@ -189,6 +197,7 @@ export default function ReportList(): JSX.Element {
 
   const [importForm, setImportForm] = useState({
     agendaItemId: '',
+    workflowConfigId: '',
     fileName: '',
     contentBase64: '',
     sharePointDriveId: '',
@@ -198,6 +207,7 @@ export default function ReportList(): JSX.Element {
 
   const [editForm, setEditForm] = useState({
     title: '',
+    workflowConfigId: '',
     templateId: '',
     department: '',
     executiveSummary: '',
@@ -219,14 +229,16 @@ export default function ReportList(): JSX.Element {
     setIsLoading(true);
     setError(null);
     try {
-      const [reportData, agendaData, templateData] = await Promise.all([
+      const [reportData, agendaData, templateData, workflowData] = await Promise.all([
         listReports(),
         listAgendas(),
         listTemplates({ type: 'STAFF_REPORT' }),
+        listWorkflowConfigurations({ domain: 'REPORT' }),
       ]);
       setReports(reportData);
       setAgendas(agendaData);
       setReportTemplates(templateData);
+      setReportWorkflows(workflowData);
     } catch {
       setError('Could not load reports.');
       addToast('Could not load reports.', 'error');
@@ -294,6 +306,11 @@ export default function ReportList(): JSX.Element {
     [agendas],
   );
 
+  const defaultWorkflowId = useMemo(
+    () => reportWorkflows.find((workflow) => workflow.isDefault)?.id ?? reportWorkflows[0]?.id ?? '',
+    [reportWorkflows],
+  );
+
   useEffect(() => {
     if (!createForm.agendaItemId && agendaItems.length > 0) {
       setCreateForm((current) => ({ ...current, agendaItemId: agendaItems[0].id }));
@@ -302,6 +319,14 @@ export default function ReportList(): JSX.Element {
       setImportForm((current) => ({ ...current, agendaItemId: agendaItems[0].id }));
     }
   }, [agendaItems]);
+
+  useEffect(() => {
+    if (!defaultWorkflowId) {
+      return;
+    }
+    setCreateForm((current) => (current.workflowConfigId ? current : { ...current, workflowConfigId: defaultWorkflowId }));
+    setImportForm((current) => (current.workflowConfigId ? current : { ...current, workflowConfigId: defaultWorkflowId }));
+  }, [defaultWorkflowId]);
 
   const openAttachmentsDrawer = async (report: StaffReportRecord): Promise<void> => {
     setAttachmentReport(report);
@@ -340,6 +365,7 @@ export default function ReportList(): JSX.Element {
     try {
       const created = await createReport({
         agendaItemId: agendaItems[0].id,
+        workflowConfigId: defaultWorkflowId || undefined,
         title: `Demo Report ${new Date().toLocaleTimeString()}`,
         executiveSummary: 'Auto-generated report for workflow testing.',
       });
@@ -420,6 +446,7 @@ export default function ReportList(): JSX.Element {
     try {
       const created = await importDocxReport({
         agendaItemId: importForm.agendaItemId,
+        workflowConfigId: importForm.workflowConfigId || undefined,
         fileName:
           importForm.fileName ||
           (importForm.sharePointItemId ? `sharepoint-${importForm.sharePointItemId}.docx` : 'imported.docx'),
@@ -431,6 +458,7 @@ export default function ReportList(): JSX.Element {
       setReports((current) => [created, ...current]);
       setImportForm({
         agendaItemId: importForm.agendaItemId,
+        workflowConfigId: importForm.workflowConfigId,
         fileName: '',
         contentBase64: '',
         sharePointDriveId: '',
@@ -569,6 +597,7 @@ export default function ReportList(): JSX.Element {
     try {
       const created = await createReport({
         agendaItemId: createForm.agendaItemId,
+        workflowConfigId: createForm.workflowConfigId || undefined,
         templateId: createForm.templateId || undefined,
         title: createForm.title,
         department: createForm.department || undefined,
@@ -580,6 +609,7 @@ export default function ReportList(): JSX.Element {
       setCreateForm({
         title: '',
         agendaItemId: '',
+        workflowConfigId: defaultWorkflowId,
         templateId: '',
         department: '',
         executiveSummary: '',
@@ -600,6 +630,7 @@ export default function ReportList(): JSX.Element {
     setEditingReport(report);
     setEditForm({
       title: report.title,
+      workflowConfigId: report.workflowConfigId ?? defaultWorkflowId,
       templateId: report.templateId ?? '',
       department: report.department ?? '',
       executiveSummary: report.executiveSummary ?? '',
@@ -620,6 +651,7 @@ export default function ReportList(): JSX.Element {
     try {
       const updated = await updateReport(editingReport.id, {
         title: editForm.title,
+        workflowConfigId: editForm.workflowConfigId || undefined,
         templateId: editForm.templateId || undefined,
         department: editForm.department || undefined,
         executiveSummary: editForm.executiveSummary || undefined,
@@ -692,40 +724,45 @@ export default function ReportList(): JSX.Element {
       }
     >
       <section className="module-overview">
-        <article className="metric-tile metric-tile-primary">
-          <p className="metric-label">Total Reports</p>
-          <p className="metric-value">{reports.length}</p>
-          <p className="metric-foot">Workflow inventory</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Draft / Revision</p>
-          <p className="metric-value">{draftCount}</p>
-          <p className="metric-foot">Authoring and updates required</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Pending Review</p>
-          <p className="metric-value">{pendingCount}</p>
-          <p className="metric-foot">Director + CAO queue load</p>
-        </article>
-        <article className="metric-tile">
-          <p className="metric-label">Published</p>
-          <p className="metric-value">{publishedCount}</p>
-          <p className="metric-foot">Available on public portal</p>
-        </article>
+        <MetricTile
+          variant="primary"
+          label="Total Reports"
+          value={reports.length}
+          foot="Workflow inventory"
+          icon="file-text"
+        />
+        <MetricTile
+          label="Draft / Revision"
+          value={draftCount}
+          foot="Authoring and updates required"
+          icon="edit"
+        />
+        <MetricTile
+          label="Pending Review"
+          value={pendingCount}
+          foot="Director + CAO queue load"
+          icon="clock"
+        />
+        <MetricTile
+          label="Published"
+          value={publishedCount}
+          foot="Available on public portal"
+          icon="check-circle"
+        />
       </section>
 
-      <section className="card">
-        <header className="card-header">
-          <div>
-            <h2>Report Register</h2>
-            <p>Visibility into report ownership, status, and submission readiness.</p>
-          </div>
-          <div className="card-header-meta">
-            <span className="pill">{filteredReports.length} visible</span>
-            <span className="pill">Page {currentPage}</span>
-          </div>
-        </header>
-        <div className="card-body">
+      <Card>
+        <CardHeader
+          title="Report Register"
+          description="Visibility into report ownership, status, and submission readiness."
+          actions={
+            <>
+              <span className="pill">{filteredReports.length} visible</span>
+              <span className="pill">Page {currentPage}</span>
+            </>
+          }
+        />
+        <CardBody>
           <div className="workspace-toolbar">
             <div className="workspace-toolbar-row">
               <input
@@ -749,6 +786,7 @@ export default function ReportList(): JSX.Element {
                 <option value="DRAFT">Draft</option>
                 <option value="PENDING_DIRECTOR_APPROVAL">Pending Director Approval</option>
                 <option value="PENDING_CAO_APPROVAL">Pending CAO Approval</option>
+                <option value="PENDING_WORKFLOW_APPROVAL">Pending Workflow Approval</option>
                 <option value="APPROVED">Approved</option>
                 <option value="REJECTED">Rejected</option>
                 <option value="PUBLISHED">Published</option>
@@ -779,130 +817,137 @@ export default function ReportList(): JSX.Element {
           </div>
           {isLoading ? <p className="muted">Loading reports...</p> : null}
           {error ? <p className="inline-alert">{error}</p> : null}
-          {!isLoading && filteredReports.length === 0 ? (
-            <div className="empty-state">No staff reports match the current filters.</div>
-          ) : null}
 
-          {pagedReports.length > 0 ? (
-            <div className="table-wrap">
-              <table className="data-table" aria-label="Reports list">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Department</th>
-                    <th>Updated</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pagedReports.map((report) => {
-                    const canSubmit = report.workflowStatus === 'DRAFT' || report.workflowStatus === 'REJECTED';
-                    const canPublish = report.workflowStatus === 'APPROVED';
-                    const readinessIssues = getReportSubmissionIssues(report, reportTemplates);
+          <DataTable
+            columns={[
+              {
+                key: 'title',
+                header: 'Title',
+                render: (report: StaffReportRecord) => {
+                  const canSubmit = report.workflowStatus === 'DRAFT' || report.workflowStatus === 'REJECTED';
+                  const readinessIssues = getReportSubmissionIssues(report, reportTemplates);
+                  return (
+                    <>
+                      <strong>{report.title}</strong>
+                      <div className="muted">
+                        {report.reportNumber ? `Report #: ${report.reportNumber}` : 'No report number yet'}
+                      </div>
+                      {report.currentWorkflowStageKey ? (
+                        <div className="muted">Current stage: {report.currentWorkflowStageKey}</div>
+                      ) : null}
+                      {canSubmit ? (
+                        <div className="muted">
+                          Readiness:{' '}
+                          {readinessIssues.length === 0
+                            ? 'Ready to submit'
+                            : `Needs updates (${readinessIssues.length})`}
+                        </div>
+                      ) : null}
+                      {canSubmit && readinessIssues.length > 0 ? (
+                        <div className="muted">Checklist: {readinessIssues.join(' ')}</div>
+                      ) : null}
+                    </>
+                  );
+                },
+              },
+              {
+                key: 'workflowStatus',
+                header: 'Status',
+                render: (report: StaffReportRecord) => <StatusBadge status={report.workflowStatus} />,
+              },
+              {
+                key: 'department',
+                header: 'Department',
+                render: (report: StaffReportRecord) => report.department ?? 'General Administration',
+              },
+              {
+                key: 'updatedAt',
+                header: 'Updated',
+                render: (report: StaffReportRecord) => formatDate(report.updatedAt),
+              },
+              {
+                key: 'actions',
+                header: 'Actions',
+                render: (report: StaffReportRecord) => {
+                  const canSubmit = report.workflowStatus === 'DRAFT' || report.workflowStatus === 'REJECTED';
+                  const canPublish = report.workflowStatus === 'APPROVED';
+                  return (
+                    <div className="page-actions">
+                      {canSubmit ? (
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() => void handleSubmit(report.id)}
+                          disabled={submittingReportId === report.id}
+                        >
+                          {submittingReportId === report.id ? 'Submitting...' : 'Submit'}
+                        </button>
+                      ) : null}
+                      {canPublish ? (
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => void handlePublish(report.id)}
+                          disabled={publishingReportId === report.id}
+                        >
+                          {publishingReportId === report.id ? 'Publishing...' : 'Publish'}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="btn btn-quiet"
+                        onClick={() => setSelectedReport(report)}
+                      >
+                        History
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-quiet"
+                        onClick={() => void openAttachmentsDrawer(report)}
+                      >
+                        Attachments
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-quiet"
+                        onClick={() => openEditDrawer(report)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        disabled={isSubmitting}
+                        onClick={() => void handleDeleteReport(report)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  );
+                },
+              },
+            ]}
+            data={pagedReports}
+            isLoading={isLoading}
+            emptyMessage="No staff reports match the current filters."
+            rowKey={(report) => report.id}
+          />
 
-                    return (
-                      <tr key={report.id}>
-                        <td>
-                          <strong>{report.title}</strong>
-                          <div className="muted">{report.reportNumber ? `Report #: ${report.reportNumber}` : 'No report number yet'}</div>
-                          {canSubmit ? (
-                            <div className="muted">
-                              Readiness: {readinessIssues.length === 0 ? 'Ready to submit' : `Needs updates (${readinessIssues.length})`}
-                            </div>
-                          ) : null}
-                          {canSubmit && readinessIssues.length > 0 ? (
-                            <div className="muted">Checklist: {readinessIssues.join(' ')}</div>
-                          ) : null}
-                        </td>
-                        <td>
-                          <StatusBadge status={report.workflowStatus} />
-                        </td>
-                        <td>{report.department ?? 'General Administration'}</td>
-                        <td>{formatDate(report.updatedAt)}</td>
-                        <td>
-                          <div className="page-actions">
-                            {canSubmit ? (
-                              <button
-                                type="button"
-                                className="btn"
-                                onClick={() => void handleSubmit(report.id)}
-                                disabled={submittingReportId === report.id}
-                              >
-                                {submittingReportId === report.id ? 'Submitting...' : 'Submit'}
-                              </button>
-                            ) : null}
-                            {canPublish ? (
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={() => void handlePublish(report.id)}
-                                disabled={publishingReportId === report.id}
-                              >
-                                {publishingReportId === report.id ? 'Publishing...' : 'Publish'}
-                              </button>
-                            ) : null}
-                            <button type="button" className="btn btn-quiet" onClick={() => setSelectedReport(report)}>
-                              History
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-quiet"
-                              onClick={() => void openAttachmentsDrawer(report)}
-                            >
-                              Attachments
-                            </button>
-                            <button type="button" className="btn btn-quiet" onClick={() => openEditDrawer(report)}>
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-danger"
-                              disabled={isSubmitting}
-                              onClick={() => void handleDeleteReport(report)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
           {filteredReports.length > 0 ? (
             <div className="page-controls">
               <span className="muted">
                 Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredReports.length)} of{' '}
                 {filteredReports.length}
               </span>
-              <div className="pagination">
-                <button
-                  type="button"
-                  className="btn btn-quiet"
-                  disabled={currentPage <= 1}
-                  onClick={() => setPage((value) => Math.max(1, value - 1))}
-                >
-                  Previous
-                </button>
-                <span className="pill">
-                  Page {currentPage} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn-quiet"
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-                >
-                  Next
-                </button>
-              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(newPage) => setPage(newPage)}
+              />
             </div>
           ) : null}
-        </div>
-      </section>
+        </CardBody>
+      </Card>
 
       <Drawer
         isOpen={isCreateOpen}
@@ -935,6 +980,23 @@ export default function ReportList(): JSX.Element {
                 {agendaItems.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.title} ({item.agendaTitle})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
+              <label htmlFor="create-report-workflow">Approval Workflow</label>
+              <select
+                id="create-report-workflow"
+                className="field"
+                value={createForm.workflowConfigId}
+                onChange={(event) => setCreateForm((current) => ({ ...current, workflowConfigId: event.target.value }))}
+              >
+                {reportWorkflows.length === 0 ? <option value="">No active workflows found</option> : null}
+                {reportWorkflows.map((workflow) => (
+                  <option key={workflow.id} value={workflow.id}>
+                    {workflow.name}
+                    {workflow.isDefault ? ' (Default)' : ''}
                   </option>
                 ))}
               </select>
@@ -1059,6 +1121,23 @@ export default function ReportList(): JSX.Element {
               />
             </div>
             <div className="form-field">
+              <label htmlFor="edit-report-workflow">Approval Workflow</label>
+              <select
+                id="edit-report-workflow"
+                className="field"
+                value={editForm.workflowConfigId}
+                onChange={(event) => setEditForm((current) => ({ ...current, workflowConfigId: event.target.value }))}
+              >
+                {reportWorkflows.length === 0 ? <option value="">No active workflows found</option> : null}
+                {reportWorkflows.map((workflow) => (
+                  <option key={workflow.id} value={workflow.id}>
+                    {workflow.name}
+                    {workflow.isDefault ? ' (Default)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
               <label htmlFor="edit-report-template">Staff Report Template (optional)</label>
               <select
                 id="edit-report-template"
@@ -1145,6 +1224,24 @@ export default function ReportList(): JSX.Element {
                 {agendaItems.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.title} ({item.agendaTitle})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field span-all">
+              <label htmlFor="import-report-workflow">Approval Workflow</label>
+              <select
+                id="import-report-workflow"
+                className="field"
+                value={importForm.workflowConfigId}
+                onChange={(event) => setImportForm((current) => ({ ...current, workflowConfigId: event.target.value }))}
+              >
+                {reportWorkflows.length === 0 ? <option value="">No active workflows found</option> : null}
+                {reportWorkflows.map((workflow) => (
+                  <option key={workflow.id} value={workflow.id}>
+                    {workflow.name}
+                    {workflow.isDefault ? ' (Default)' : ''}
                   </option>
                 ))}
               </select>

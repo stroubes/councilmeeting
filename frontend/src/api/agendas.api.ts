@@ -13,6 +13,11 @@ interface CreateAgendaItemPayload {
   description?: string;
   parentItemId?: string;
   isInCamera?: boolean;
+  isPublicVisible?: boolean;
+  publishAt?: string;
+  redactionNote?: string;
+  carryForwardToNext?: boolean;
+  bylawId?: string;
 }
 
 interface RejectAgendaPayload {
@@ -61,6 +66,16 @@ export function deleteAgendaItem(agendaId: string, itemId: string): Promise<Agen
 
 export function deleteAgenda(agendaId: string): Promise<{ ok: true }> {
   return httpDelete<{ ok: true }>(`/agendas/${agendaId}`);
+}
+
+export function carryForwardAgendaItems(sourceAgendaId: string, targetAgendaId: string): Promise<AgendaRecord> {
+  return httpPost<AgendaRecord>(`/agendas/${sourceAgendaId}/carry-forward/${targetAgendaId}`);
+}
+
+export function reorderAgendaItems(agendaId: string, itemIdsInOrder: string[]): Promise<AgendaRecord> {
+  return httpPost<AgendaRecord, { itemIdsInOrder: string[] }>(`/agendas/${agendaId}/items/reorder`, {
+    itemIdsInOrder,
+  });
 }
 
 export type { CreateAgendaItemPayload, AgendaItemRecord };
