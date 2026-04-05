@@ -5,6 +5,7 @@
 - [ ] Backend and frontend build cleanly.
 - [ ] Database migrations applied (including `app_*` tables).
 - [ ] Data integrity migration `1700000009000-app-integrity-constraints.sql` applied successfully.
+- [ ] Agenda item publish migration `1700000018000-agenda-item-publish-status.sql` applied successfully.
 - [ ] Auth bypass disabled in target environment.
 - [ ] `AUTH_BYPASS_ALLOWED_ENVS` excludes production values.
 - [ ] Microsoft identity values configured and validated.
@@ -16,6 +17,10 @@
 - [ ] Director/CAO approvals validated.
 - [ ] Report publish flow validated.
 - [ ] Minutes create/start/finalize/publish validated.
+- [ ] Minutes structured editor validated (attendance, motions, votes, action items, clerk notes sections).
+- [ ] Minutes auto-populate action validated (`POST /api/minutes/:id/auto-populate`).
+- [ ] Agenda item publish/unpublish validated (individual item `publishStatus` transitions).
+- [ ] Conflict of interest declaration workflow validated (create/update/delete in Meeting Details).
 - [ ] Unified live display console validated (`/motions`) for agenda slides, motions, and presentations (PDF/PPT/PPTX).
 - [ ] Live mode button highlight in `/motions` verified against actual on-screen mode.
 - [ ] Collapsible operator sections in `/motions` verified for reduced scrolling.
@@ -25,6 +30,18 @@
 - [ ] Role matrix reviewed in `/admin/roles`.
 - [ ] Managed users and initial role assignments loaded in `/admin/users`.
 - [ ] In-camera access tested against restricted users.
+- [ ] Audit log access validated at `/admin-portal/audit-logs` (search/filter).
+- [ ] Conflict declarations require `conflict.declare` permission (COUNCIL_MEMBER role assigned).
+
+## Reporting
+
+- [ ] Report Generators validated:
+  - `/reports/attendance` — attendance by date range
+  - `/reports/motions` — motion activity and outcomes
+  - `/reports/voting` — voting record breakdown
+  - `/reports/conflicts` — conflict of interest declarations
+  - `/reports/forecast` — upcoming meeting forecast
+- [ ] Report Generators accessible via Reports nav section (prefix `/reports`).
 
 ## Public Transparency
 

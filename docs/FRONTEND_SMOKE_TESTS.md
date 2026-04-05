@@ -85,3 +85,4 @@ Run this smoke suite after each backend/frontend build.
 16. Verify calendar toolbar controls in `/meetings` are aligned and the active month/week range is clearly visible.
 17. Verify `/public/live-meeting/:meetingId` receives updates continuously via SSE; disconnect backend briefly and confirm fallback polling message appears, then clear once stream reconnects.
 18. Verify lazy route loading fallback appears briefly on first navigation to major modules (e.g., `/reports`, `/agendas`, `/public`) and route resolves without blank screen.
+19. Verify meeting type labels render as styled badge pills (not raw muted text) in MeetingsList, MeetingDetails, PublicPortal, InCameraPortal, and Dashboard.

@@ -1314,3 +1314,170 @@ Then open `http://127.0.0.1:4173/login` and click **Use Local Dev Login**.
 
 **Files Modified**:
 - `backend/src/meeting-display/meeting-display.service.ts`: Added `computeStateSignature()` method and updated `streamPublicState()` to use it
+
+## 2026-04-02 Public Presentation Screen Initialization Fix
+
+**Bug**: The public live meeting screen could stay in its default agenda view even while the backend already reported `displayMode: 'PRESENTATION'` and served the PDF correctly.
+
+**Root Cause**: `frontend/src/pages/Public/PublicLiveMeetingScreen.tsx` treated SSE as the only initialization path. When the page's `EventSource` remained stuck in `CONNECTING`, the component never called `loadState()` and never started polling, so `displayState` stayed `null` and the screen fell back to agenda mode.
+
+**Fix**:
+- Load the current meeting-display state immediately on mount.
+- Start 2-second polling immediately as a safety net.
+- Keep polling active until the SSE connection actually fires `onopen`, then stop polling.
+
+**Verification**:
+- Confirmed the live public route renders the existing uploaded PDF with a non-zero canvas and no console errors.
+- Added a Playwright regression that creates a meeting, uploads a one-page PDF, enables presentation mode, and asserts the public screen renders presentation mode.
+
+**Files Modified**:
+- `frontend/src/pages/Public/PublicLiveMeetingScreen.tsx`
+- `frontend/tests/e2e/meeting-lifecycle.spec.ts`
+
+## 2026-04-02 Public Presentation Screen Real-Time Update Fix
+
+**Bug**: Advancing a slide in the clerk console did not update the public screen in real-time. The public screen required a manual page refresh to see the new slide. Polling also failed to pick up the change.
+
+**Root Cause**: The backend SSE stream sent events with `type: 'meeting-display-state'` (named event). The frontend used `stream.onmessage` which only handles events with type `message` (or no type). Named SSE events are silently ignored by the `onmessage` handler — the event never fires, so `applyIncomingState` is never called.
+
+The EventSource API specifies that `onmessage` only fires for events with type `message` or no type. Events with a named type (e.g., `event: meeting-display-state`) require `addEventListener('meeting-display-state', handler)` to receive them.
+
+**Fix**: Changed `stream.onmessage` to `stream.addEventListener('meeting-display-state', handler)` in `PublicLiveMeetingScreen.tsx`. The handler signature and body are identical; only the registration method changed.
+
+**Files Modified**:
+- `frontend/src/pages/Public/PublicLiveMeetingScreen.tsx`
+- `frontend/tests/e2e/meeting-lifecycle.spec.ts` (regression test)
+
+## 2026-04-02 Meeting Type Badge Styling Fix
+
+**Bug**: Meeting type in the meeting register was rendered as plain gray muted text (`<div className="muted">Regular Council Meeting</div>`), looking like unstyled metadata rather than a proper visual tag. Right next to it, the Status column used a polished pill-shaped badge — the contrast made the meeting type look sloppy.
+
+**Fix**:
+- Created `frontend/src/components/ui/MeetingTypeBadge.tsx` — a new badge component that renders meeting types as compact, neutral-colored pill tags. Uses the display `name` when available, falls back to humanized `code`.
+- Added CSS tokens (`--meeting-type-text`, `--meeting-type-bg`, `--meeting-type-border`) and `.meeting-type-badge` class — neutral slate/blue-gray palette, smaller and lighter than `StatusBadge` (not uppercase, normal weight).
+- Updated 4 views that displayed raw `meetingTypeCode` as muted text:
+  - `MeetingsList.tsx` — meeting register table (with name lookup via `meetingTypeNameByCode`)
+  - `MeetingDetails.tsx` — meeting detail page timeline
+  - `PublicPortal.tsx` — public meeting list table
+  - `InCameraPortal.tsx` — in-camera meeting list table
+  - `Dashboard.tsx` — upcoming meetings widget
+
+**Files Modified**:
+- `frontend/src/components/ui/MeetingTypeBadge.tsx` (new)
+- `frontend/src/styles/globals.css`
+- `frontend/src/pages/Meetings/MeetingsList.tsx`
+- `frontend/src/pages/Meetings/MeetingDetails.tsx`
+- `frontend/src/pages/Public/PublicPortal.tsx`
+- `frontend/src/pages/Meetings/InCameraPortal.tsx`
+- `frontend/src/pages/Dashboard.tsx`
+
+## 2026-04-04 Session — Epic 3 Fixes, Epic 6 Publishing Pipeline, Epic 9 Report Generators
+
+### Epic 3: Participant Portal — Bug Fixes
+
+**Bug 1**: `ConflictDeclarationsController` used `PERMISSIONS.MEETING_WRITE` for declaring conflicts, but COI declaration should be its own permission.
+
+**Fix**:
+- Added `CONFLICT_DECLARE: 'conflict.declare'` to `permissions.constants.ts`
+- Assigned `CONFLICT_DECLARE` to `COUNCIL_MEMBER` role in `rbac-map.constants.ts`
+- Updated `ConflictDeclarationsController` to use `PERMISSIONS.CONFLICT_DECLARE` instead of `PERMISSIONS.MEETING_WRITE`
+
+**Bug 2**: `ParticipantMeetingView.tsx` and `ParticipantAgendaView.tsx` passed `breadcrumbs` prop to `AppShell`, which does not support that prop (breadcrumbs are built internally via `buildBreadcrumbs()`).
+
+**Fix**: Removed `breadcrumbs` prop from `AppShell` in both views.
+
+**Files Modified**:
+- `backend/src/core/constants/permissions.constants.ts`
+- `backend/src/core/constants/rbac-map.constants.ts`
+- `backend/src/conflict-declarations/conflict-declarations.controller.ts`
+- `frontend/src/pages/Participant/ParticipantMeetingView.tsx`
+- `frontend/src/pages/Participant/ParticipantAgendaView.tsx`
+
+### Epic 6: Publishing Pipeline
+
+**Goal**: Allow staff to publish/unpublish individual agenda items (separate from meeting-level status).
+
+**Changes**:
+- Migration `1700000018000-agenda-item-publish-status.sql` — adds `publish_status` column (`DRAFT`, `PUBLISHED`, `ARCHIVED`) to `app_agenda_items`
+- `AgendasRepository` — updated schema/INSERT/UPDATE statements to include `publish_status`, added `publishedAt` timestamp
+- `AgendasService` — `publishItem()` and `unpublishItem()` methods
+- `AgendasController` — `PATCH /agendas/:id/publish` and `PATCH /agendas/:id/unpublish` endpoints with `AGENDA_PUBLISH` permission
+- `AgendaItemRecord` and `MeetingRecord` frontend types — added `publishStatus` field
+
+**Files Modified**:
+- `backend/src/database/migrations/1700000018000-agenda-item-publish-status.sql` (new)
+- `backend/src/agendas/agendas.repository.ts`
+- `backend/src/agendas/agendas.service.ts`
+- `backend/src/agendas/agendas.controller.ts`
+- `frontend/src/api/types/agenda.types.ts`
+- `frontend/src/api/types/meeting.types.ts`
+
+### Epic 9: Reporting Center
+
+**Goal**: Provide department-head and CAO-level reporting on meeting activity.
+
+**Backend module** (`backend/src/report-generators/`):
+- `report-generators.module.ts` — imports Meetings, Motions, Votes, ConflictDeclarations, Users
+- `report-generators.service.ts` — 5 generators: `generateAttendanceReport()`, `generateMotionReport()`, `generateVotingReport()`, `generateConflictOfInterestReport()`, `generateForecastReport()`
+- `report-generators.controller.ts` — 5 GET endpoints: `/attendance`, `/motions`, `/voting`, `/conflicts`, `/forecast` (all `MEETING_READ` permission)
+
+**Bug fixed**: `report-generators.service.ts` imported `MotionRecord` from `motions.service` and `VoteRecord` from `votes.service` — these are actually exported from `.repository` files. Fixed imports.
+
+**Frontend**:
+- `reportGenerators.api.ts` — API functions for all 5 reports
+- `report-generator.types.ts` — TypeScript interfaces for all report entry types
+- `AttendanceReport.tsx`, `MotionReport.tsx`, `VotingReport.tsx`, `ConflictReport.tsx`, `ForecastReport.tsx` — 5 report views using DataTable
+- `App.tsx` — added 5 routes: `/reports/attendance`, `/reports/motions`, `/reports/voting`, `/reports/conflicts`, `/reports/forecast`
+
+**Bug fixed**: `DataTable<T>` requires `T extends { id: string | number }`. Added `id?: string` to report types and used `as` casts with `rowKey` prop in each view.
+
+**Note**: `ReportGeneratorsModule` was imported into `app.module.ts`.
+
+**Files Created**:
+- `backend/src/report-generators/report-generators.module.ts`
+- `backend/src/report-generators/report-generators.service.ts`
+- `backend/src/report-generators/report-generators.controller.ts`
+- `frontend/src/api/reportGenerators.api.ts`
+- `frontend/src/api/types/report-generator.types.ts`
+- `frontend/src/pages/Reports/AttendanceReport.tsx`
+- `frontend/src/pages/Reports/MotionReport.tsx`
+- `frontend/src/pages/Reports/VotingReport.tsx`
+- `frontend/src/pages/Reports/ConflictReport.tsx`
+- `frontend/src/pages/Reports/ForecastReport.tsx`
+
+**Files Modified**:
+- `backend/src/app.module.ts`
+- `frontend/src/App.tsx`
+- `frontend/src/api/types/meeting.types.ts`
+- `frontend/src/api/types/agenda.types.ts`
+
+### NestJS Module Dependency Fixes
+
+**Bug 1**: `ConflictDeclarationsModule` did not export `ConflictDeclarationsRepository`, causing DI errors when `VotesService` (which imports `ConflictDeclarationsRepository`) was used.
+
+**Fix**: Added `ConflictDeclarationsRepository` to `exports: [ConflictDeclarationsService, ConflictDeclarationsRepository]` in `ConflictDeclarationsModule`.
+
+**Bug 2**: `VotesModule` imports `ConflictDeclarationsRepository` but did not import `ConflictDeclarationsModule`, causing DI errors.
+
+**Fix**: Added `ConflictDeclarationsModule` to `imports` in `VotesModule`.
+
+**Files Modified**:
+- `backend/src/conflict-declarations/conflict-declarations.module.ts`
+- `backend/src/votes/votes.module.ts`
+
+### Dev Server Fixes
+
+**Bug**: Port 5173 was occupied by a stale Vite process (PID 95340). Killed stale process and restarted frontend cleanly.
+
+**Env verification**: `VITE_AUTH_BYPASS=true` (frontend) and `AUTH_BYPASS_ENABLED=true` (backend) were already set in `.env` files.
+
+### Sidebar Navigation
+
+The sidebar (`AppShell.tsx`) already has a `Reports` nav item at `/reports` with prefix matching (`p.startsWith('/reports')`), which covers all 5 new report routes (`/reports/attendance`, `/reports/motions`, `/reports/voting`, `/reports/conflicts`, `/reports/forecast`). No additional nav changes were needed.
+
+### Verification
+
+- `cd backend && npx tsc --noEmit` — **PASS**
+- `cd frontend && npx tsc --noEmit` — **PASS**
+- Backend running on `http://localhost:3000`
+- Frontend running on `http://localhost:5173`

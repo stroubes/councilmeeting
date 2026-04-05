@@ -75,3 +75,38 @@ Run this check on desktop and tablet widths:
 17. Rapidly navigate next/previous slides and confirm orientation remains stable (no intermittent upside-down frame).
 18. Delete an uploaded presentation and confirm it no longer appears in selection table.
 19. Simulate temporary stream interruption (backend restart or network interruption) and confirm public screen shows fallback polling behavior, then resumes SSE updates when connection recovers.
+
+## Scenario E - Report Generators
+
+1. Navigate to `/reports/attendance`, set a date range overlapping existing meetings, and confirm attendance records appear in the table.
+2. Navigate to `/reports/motions` and confirm motion records with outcomes (carried/defeated/withdrawn) are displayed.
+3. Navigate to `/reports/voting` and confirm vote breakdown records are displayed.
+4. Navigate to `/reports/conflicts` and confirm conflict of interest declarations are displayed.
+5. Navigate to `/reports/forecast` and confirm upcoming meetings forecast is displayed.
+6. Confirm all 5 report routes are accessible from the Reports nav section.
+
+## Scenario F - Conflict of Interest Declarations
+
+1. Open Meeting Details for a scheduled meeting.
+2. In the Conflict Declarations panel, create a declaration (select a person, optionally link an agenda item, provide a reason).
+3. Verify the declaration appears in the panel list.
+4. Update the reason on the declaration and verify the change persists.
+5. Delete the declaration and verify it is removed from the panel.
+6. Verify user without `conflict.declare` permission cannot create declarations (403 response).
+
+## Scenario G - Agenda Item Publish Control
+
+1. Open `/agendas` and select an agenda with multiple items.
+2. Click publish on one agenda item; verify `publishStatus` changes to `PUBLISHED` in the item row.
+3. Click unpublish on the same item; verify `publishStatus` reverts to `DRAFT`.
+4. Verify `AGENDA_PUBLISH` permission is required (user without permission receives 403).
+
+## Scenario H - Minutes Structured Editor and Auto-Populate
+
+1. Create minutes for a meeting that has recorded attendance, motions, and votes.
+2. Open the minutes drawer and click `Auto-Populate`; confirm attendance, motions, and votes sections are populated.
+3. Manually edit the attendance section (add/remove attendees) and save; verify changes persist.
+4. Manually add a motion record and save; verify it appears in the motions section.
+5. Record a vote for the motion (mover, seconder, votes for/against/abstained) and save; verify it appears in the votes section.
+6. Add an action item and save; verify it appears in the action items section.
+7. Finalize and publish the minutes; verify it appears in `/public`.
