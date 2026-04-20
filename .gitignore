@@ -5,3 +5,17 @@
 
 # Keep only example env
 !.env.example
+
+# Node / build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# OS cruft
+.DS_Store
+Thumbs.db

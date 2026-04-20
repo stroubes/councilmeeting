@@ -7,7 +7,9 @@
     "start:dev": "nest start --watch",
     "build": "nest build",
     "lint": "eslint \"src/**/*.ts\"",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "db:migrate": "ts-node src/database/migrator.ts",
+    "db:seed": "ts-node src/database/migrator.ts --seed"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.2",

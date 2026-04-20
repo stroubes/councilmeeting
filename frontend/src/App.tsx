@@ -40,11 +40,13 @@ const ForecastReport = lazy(() => import('./pages/Reports/ForecastReport'));
 import ProtectedRoute from './guards/ProtectedRoute';
 import PermissionRoute from './guards/PermissionRoute';
 import AdminAccessRoute from './guards/AdminAccessRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App(): JSX.Element {
   return (
-    <Suspense fallback={<div style={{ padding: '1rem' }}>Loading...</div>}>
-      <Routes>
+    <ErrorBoundary>
+      <Suspense fallback={<div style={{ padding: '1rem' }}>Loading...</div>}>
+        <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route
@@ -360,7 +362,8 @@ export default function App(): JSX.Element {
         }
       />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </ErrorBoundary>
   );
 }

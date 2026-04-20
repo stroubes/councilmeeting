@@ -29,8 +29,12 @@ async function bootstrap(): Promise<void> {
   app.use(csrfHeaderMiddleware);
   app.use(json({ limit: '80mb' }));
   app.use(urlencoded({ limit: '80mb', extended: true }));
+  const corsOrigins = configService.get<string[]>('corsOrigins') ?? [];
+  if (corsOrigins.length === 0) {
+    throw new Error('FATAL: CORS_ORIGINS is empty. Configure allowed frontend origins (comma-separated).');
+  }
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://127.0.0.1:4173'],
+    origin: corsOrigins,
     credentials: true,
   });
   app.setGlobalPrefix('api');

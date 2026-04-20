@@ -60,6 +60,10 @@ export default function PublicLiveMeetingScreen(): JSX.Element {
     let isDisposed = false;
     let pollingInterval: number | null = null;
     let stream: EventSource | null = null;
+    let reconnectTimer: number | null = null;
+    let reconnectAttempts = 0;
+    const INITIAL_RECONNECT_DELAY_MS = 1000;
+    const MAX_RECONNECT_DELAY_MS = 30_000;
 
     const loadState = async (): Promise<void> => {
       try {
@@ -93,11 +97,30 @@ export default function PublicLiveMeetingScreen(): JSX.Element {
       }, 2000);
     };
 
+    const scheduleReconnect = (): void => {
+      if (isDisposed || reconnectTimer !== null) {
+        return;
+      }
+      const exponent = Math.min(reconnectAttempts, 5);
+      const base = INITIAL_RECONNECT_DELAY_MS * Math.pow(2, exponent);
+      const jitter = Math.random() * 500;
+      const delay = Math.min(base + jitter, MAX_RECONNECT_DELAY_MS);
+      reconnectAttempts += 1;
+      reconnectTimer = window.setTimeout(() => {
+        reconnectTimer = null;
+        connectStream();
+      }, delay);
+    };
+
     const connectStream = (): void => {
+      if (isDisposed) {
+        return;
+      }
       try {
         stream = new EventSource(getPublicMeetingDisplayStreamUrl(meetingId));
       } catch {
         startPolling();
+        scheduleReconnect();
         return;
       }
 
@@ -105,6 +128,7 @@ export default function PublicLiveMeetingScreen(): JSX.Element {
         if (isDisposed) {
           return;
         }
+        reconnectAttempts = 0;
         stopPolling();
         setError(null);
       };
@@ -130,8 +154,9 @@ export default function PublicLiveMeetingScreen(): JSX.Element {
         if (isDisposed) {
           return;
         }
-        setError('Live stream unavailable. Falling back to 2-second refresh.');
+        setError('Live stream unavailable. Falling back to 2-second refresh while reconnecting.');
         startPolling();
+        scheduleReconnect();
       };
     };
 
@@ -142,6 +167,10 @@ export default function PublicLiveMeetingScreen(): JSX.Element {
     return () => {
       isDisposed = true;
       stopPolling();
+      if (reconnectTimer !== null) {
+        window.clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
       if (stream) {
         stream.close();
       }

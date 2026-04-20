@@ -41,6 +41,21 @@ Initial scaffold for a municipal Council Meeting Management System.
 - Seed script is in:
   - `backend/src/database/seeds/1700000001000-seed-roles-permissions.sql`
 
+### Applying Migrations
+
+SQL files under `backend/src/database/migrations/` and `backend/src/database/seeds/` are
+applied by the built-in migrator, which tracks applied files in a `schema_migrations` table.
+
+```bash
+# From backend/
+npm run db:migrate   # applies all pending migrations in name order
+npm run db:seed      # applies all pending seed files in name order
+```
+
+The migrator is idempotent — already-applied files are skipped. Each file is applied inside
+a transaction. Name new migrations with a sortable timestamp prefix
+(e.g. `1700000020000-my-change.sql`).
+
 ## Auth + RBAC (Implemented Foundation)
 
 - Frontend uses Microsoft login via `@azure/msal-browser`.

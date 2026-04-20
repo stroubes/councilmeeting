@@ -19,6 +19,10 @@ export default () => ({
   rateLimitGeneralMax: Number(process.env.RATE_LIMIT_GENERAL_MAX ?? 120),
   rateLimitPublicMax: Number(process.env.RATE_LIMIT_PUBLIC_MAX ?? 90),
   rateLimitAuthMax: Number(process.env.RATE_LIMIT_AUTH_MAX ?? 30),
+  corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:4173')
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0),
   databaseUrl: process.env.DATABASE_URL,
   microsoft: {
     tenantId: process.env.MS_TENANT_ID,
