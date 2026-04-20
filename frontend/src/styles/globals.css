@@ -1,6 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Public+Sans:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Public+Sans:wght@500;600;700&display=swap');
 
 :root {
+  /* === Civic design tokens (from District of Sooke design) === */
+  --civic-primary: #1e3a5f;
+  --civic-accent: #c8922a;
+  --civic-bg: #dce8f2;
+  --civic-muted: #7a8da8;
+  --civic-sidebar: rgba(255, 255, 255, 0.78);
+  --civic-success: #3dac87;
+  --civic-danger: #d95050;
+  --civic-ink: #1a2535;
+  --civic-subtle-surface: #f7f9fc;
+  --civic-card-shadow: 0 2px 16px rgba(0, 0, 0, 0.055);
+
   /* === Typography scale — 1.25 ratio, base 1rem === */
   --text-xs: 0.64rem;
   --text-sm: 0.8rem;
@@ -21,26 +33,26 @@
   --space-12: 3rem;
   --space-16: 4rem;
 
-  /* === Surface & background === */
-  --bg-canvas: #e5e8ee;
-  --bg-app: #f2f4f8;
+  /* === Surface & background (aligned to civic palette) === */
+  --bg-canvas: var(--civic-bg);
+  --bg-app: var(--civic-bg);
   --surface: #ffffff;
-  --surface-muted: #f5f7fb;
-  --surface-strong: #102238;
+  --surface-muted: var(--civic-subtle-surface);
+  --surface-strong: var(--civic-primary);
 
   /* === Text === */
-  --text: #1b2738;
-  --text-soft: #5f6f86;
+  --text: var(--civic-ink);
+  --text-soft: var(--civic-muted);
   --text-inverse: #f3f7fd;
 
   /* === Borders === */
-  --border: #d2dbe8;
-  --border-strong: #aebbd0;
+  --border: #d6e0ed;
+  --border-strong: #b6c5da;
 
-  /* === Accent (operations — blue) === */
-  --accent: #1f4f89;
-  --accent-strong: #153864;
-  --accent-soft: #e8eff9;
+  /* === Accent (civic navy) === */
+  --accent: var(--civic-primary);
+  --accent-strong: #15294a;
+  --accent-soft: #e3ecf5;
 
   /* === Semantic status === */
   --success: #0f7668;
@@ -77,9 +89,9 @@
   /* === Button tokens === */
   --btn-bg-top: #ffffff;
   --btn-bg-bottom: #f6f8fc;
-  --btn-text: #23344a;
-  --btn-primary-bg-top: #215fa7;
-  --btn-primary-bg-bottom: #184a85;
+  --btn-text: var(--civic-primary);
+  --btn-primary-bg-top: #274c7a;
+  --btn-primary-bg-bottom: var(--civic-primary);
   --btn-primary-text: #f5f8ff;
   --btn-quiet-bg: rgba(255, 255, 255, 0.7);
   --btn-quiet-border: #ccd8e9;
@@ -136,6 +148,19 @@
   animation: icon-spin 0.8s linear infinite;
 }
 
+@keyframes civic-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes civic-live-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+@keyframes civic-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes icon-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -160,7 +185,7 @@ body {
     radial-gradient(circle at 10% -2%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 42%),
     radial-gradient(circle at 90% 8%, rgba(208, 221, 240, 0.4) 0%, rgba(208, 221, 240, 0) 45%),
     linear-gradient(145deg, var(--bg-canvas) 0%, var(--bg-app) 58%);
-  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  font-family: 'Poppins', 'IBM Plex Sans', 'Segoe UI', sans-serif;
   line-height: 1.45;
   overflow-x: clip;
 }
@@ -855,7 +880,7 @@ a:focus-visible {
 .card-header h2,
 .card-header h3 {
   margin: 0;
-  font-family: 'Public Sans', 'IBM Plex Sans', sans-serif;
+  font-family: 'Poppins', 'Public Sans', 'IBM Plex Sans', sans-serif;
 }
 
 .card-header p {
@@ -1470,7 +1495,7 @@ a:focus-visible {
 .auth-panel h1 {
   margin-top: 0;
   margin-bottom: 0.4rem;
-  font-family: 'Public Sans', 'IBM Plex Sans', sans-serif;
+  font-family: 'Poppins', 'Public Sans', 'IBM Plex Sans', sans-serif;
 }
 
 .auth-panel p {
@@ -1510,7 +1535,7 @@ a:focus-visible {
 .link-card h3 {
   margin: 0 0 0.3rem;
   font-size: 1rem;
-  font-family: 'Public Sans', 'IBM Plex Sans', sans-serif;
+  font-family: 'Poppins', 'Public Sans', 'IBM Plex Sans', sans-serif;
 }
 
 .link-card p {
@@ -1536,7 +1561,7 @@ a:focus-visible {
 
 .timeline-item h4 {
   margin: 0;
-  font-family: 'Public Sans', 'IBM Plex Sans', sans-serif;
+  font-family: 'Poppins', 'Public Sans', 'IBM Plex Sans', sans-serif;
   font-size: 0.92rem;
 }
 
@@ -1646,7 +1671,7 @@ a:focus-visible {
 
 .drawer-header h3 {
   margin: 0;
-  font-family: 'Public Sans', 'IBM Plex Sans', sans-serif;
+  font-family: 'Poppins', 'Public Sans', 'IBM Plex Sans', sans-serif;
 }
 
 .drawer-header p {

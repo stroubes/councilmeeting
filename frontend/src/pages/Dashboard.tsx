@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell';
+import Icon from '../components/ui/Icon';
+import type { IconName } from '../components/ui/types';
+import { useAuth } from '../hooks/useAuth';
 import { listAgendas } from '../api/agendas.api';
 import { listMeetings } from '../api/meetings.api';
 import { listReports } from '../api/reports.api';
@@ -11,54 +13,76 @@ import { getPublicSummary } from '../api/public.api';
 import type { AgendaRecord } from '../api/types/agenda.types';
 import type { MeetingRecord } from '../api/types/meeting.types';
 import type { StaffReportRecord } from '../api/types/report.types';
-import MeetingTypeBadge from '../components/ui/MeetingTypeBadge';
-import StatusBadge from '../components/ui/StatusBadge';
-import MetricTile from '../components/ui/MetricTile';
-import { Card, CardHeader, CardBody } from '../components/ui/Card';
-import DataTable from '../components/ui/DataTable';
 
-interface MeetingColumn {
-  key: string;
-  header: string;
-  render?: (meeting: MeetingRecord) => React.ReactNode;
+const CIVIC = {
+  primary: '#1e3a5f',
+  accent: '#c8922a',
+  muted: '#7a8da8',
+  success: '#3dac87',
+  danger: '#d95050',
+  ink: '#1a2535',
+  subtle: '#f7f9fc',
+  purple: '#7b6fc5',
+};
+
+const MONTH_SHORT = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+interface StatConfig {
+  label: string;
+  value: string | number;
+  sub: string;
+  color: string;
+  icon: IconName;
 }
 
-const meetingsColumns: MeetingColumn[] = [
-  {
-    key: 'title',
-    header: 'Meeting',
-    render: (meeting) => (
-      <>
-        <strong>{meeting.title}</strong>
-        <MeetingTypeBadge code={meeting.meetingTypeCode} />
-      </>
-    ),
-  },
-  {
-    key: 'status',
-    header: 'Status',
-    render: (meeting) => <StatusBadge status={meeting.status} />,
-  },
-  {
-    key: 'startsAt',
-    header: 'Start',
-    render: (meeting) => new Date(meeting.startsAt).toLocaleString(),
-  },
-  {
-    key: 'location',
-    header: 'Location',
-    render: (meeting) => meeting.location ?? 'Not specified',
-  },
-  {
-    key: 'actions',
-    header: 'Open',
-    render: (meeting) => (
-      <Link className="btn" to={`/meetings/${meeting.id}`}>
-        Details
-      </Link>
-    ),
-  },
-];
+function Card({
+  children,
+  padding = 24,
+  style,
+}: {
+  children: React.ReactNode;
+  padding?: number;
+  style?: React.CSSProperties;
+}): JSX.Element {
+  return (
+    <div
+      style={{
+        background: '#fff',
+        borderRadius: 20,
+        boxShadow: '0 2px 16px rgba(0,0,0,0.055)',
+        padding,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function userGreeting(name: string): string {
+  return `${greeting()}, ${name}`;
+}
+
+function formatMeetingTime(iso: string): string {
+  const date = new Date(iso);
+  return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+function toDayMonth(iso: string): { day: number; month: string } {
+  const date = new Date(iso);
+  return { day: date.getDate(), month: MONTH_SHORT[date.getMonth()] };
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
 
 export default function Dashboard(): JSX.Element {
   const { user } = useAuth();
@@ -67,8 +91,8 @@ export default function Dashboard(): JSX.Element {
   const [reports, setReports] = useState<StaffReportRecord[]>([]);
   const [directorQueueCount, setDirectorQueueCount] = useState(0);
   const [caoQueueCount, setCaoQueueCount] = useState(0);
-  const [minutesCount, setMinutesCount] = useState(0);
-  const [publishedMinutesCount, setPublishedMinutesCount] = useState(0);
+  const [minutesPublishedCount, setMinutesPublishedCount] = useState(0);
+  const [minutesTotalCount, setMinutesTotalCount] = useState(0);
   const [publicReleaseCount, setPublicReleaseCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +101,6 @@ export default function Dashboard(): JSX.Element {
     const load = async (): Promise<void> => {
       setIsLoading(true);
       setError(null);
-
       try {
         const [meetingData, agendaData, reportData, directorQueue, caoQueue, minutesData, publicSummary] = await Promise.all([
           listMeetings(),
@@ -88,14 +111,13 @@ export default function Dashboard(): JSX.Element {
           listMinutes(),
           getPublicSummary(),
         ]);
-
         setMeetings(meetingData);
         setAgendas(agendaData);
         setReports(reportData);
         setDirectorQueueCount(directorQueue.length);
         setCaoQueueCount(caoQueue.length);
-        setMinutesCount(minutesData.length);
-        setPublishedMinutesCount(minutesData.filter((record) => record.status === 'PUBLISHED').length);
+        setMinutesTotalCount(minutesData.length);
+        setMinutesPublishedCount(minutesData.filter((m) => m.status === 'PUBLISHED').length);
         setPublicReleaseCount(
           publicSummary.counts.meetings +
             publicSummary.counts.agendas +
@@ -108,244 +130,405 @@ export default function Dashboard(): JSX.Element {
         setIsLoading(false);
       }
     };
-
     void load();
   }, []);
 
-  const publishedAgendas = agendas.filter((agenda) => agenda.status === 'PUBLISHED').length;
-  const publishedReports = reports.filter((report) => report.workflowStatus === 'PUBLISHED').length;
-  const publicationTotal = publishedAgendas + publishedReports + publishedMinutesCount;
-  const publicationCoverage =
-    meetings.length > 0 ? Math.min(100, Math.round((publicationTotal / Math.max(1, meetings.length)) * 100)) : 0;
-  const approvalPressure = directorQueueCount + caoQueueCount;
-  const upcomingMeetings = useMemo(
-    () =>
-      [...meetings]
-        .sort((left, right) => new Date(left.startsAt).getTime() - new Date(right.startsAt).getTime())
-        .slice(0, 5),
+  const now = useMemo(() => new Date(), []);
+  const sortedMeetings = useMemo(
+    () => [...meetings].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()),
     [meetings],
   );
+  const liveMeeting = useMemo(
+    () => sortedMeetings.find((m) => m.status === 'IN_PROGRESS') ?? null,
+    [sortedMeetings],
+  );
+  const todayMeeting = useMemo(
+    () => sortedMeetings.find((m) => isSameDay(new Date(m.startsAt), now)) ?? null,
+    [sortedMeetings, now],
+  );
+  const upcomingMeetings = useMemo(
+    () => sortedMeetings.filter((m) => new Date(m.startsAt).getTime() >= now.getTime() - 2 * 60 * 60 * 1000).slice(0, 3),
+    [sortedMeetings, now],
+  );
+  const featuredMeeting = liveMeeting ?? todayMeeting ?? upcomingMeetings[0] ?? null;
 
-  const today = new Date().toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
+  const publishedAgendas = agendas.filter((a) => a.status === 'PUBLISHED').length;
+  const publishedReports = reports.filter((r) => r.workflowStatus === 'PUBLISHED').length;
+  const approvalPressure = directorQueueCount + caoQueueCount;
+
+  const todayLabel = now.toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
 
+  const featuredStatusLabel = liveMeeting
+    ? `${liveMeeting.title} currently in session`
+    : featuredMeeting
+      ? `Next: ${featuredMeeting.title}`
+      : 'No meetings scheduled';
+
+  const displayName = user?.displayName ?? user?.email?.split('@')[0] ?? 'there';
+
+  const stats: StatConfig[] = [
+    {
+      label: "Today's Meeting",
+      value: featuredMeeting ? formatMeetingTime(featuredMeeting.startsAt) : '—',
+      sub: featuredMeeting?.title ?? 'No meeting today',
+      color: CIVIC.primary,
+      icon: 'calendar',
+    },
+    {
+      label: 'Agenda Packages',
+      value: agendas.length,
+      sub: `${publishedAgendas} published`,
+      color: CIVIC.accent,
+      icon: 'file-text',
+    },
+    {
+      label: 'Reports in Workflow',
+      value: reports.length,
+      sub: `${publishedReports} published`,
+      color: CIVIC.success,
+      icon: 'file-text',
+    },
+    {
+      label: 'Pending Approvals',
+      value: approvalPressure,
+      sub: `Director ${directorQueueCount} · CAO ${caoQueueCount}`,
+      color: CIVIC.purple,
+      icon: 'check-circle',
+    },
+  ];
+
+  const progressPercent = 28;
+
   return (
-    <AppShell
-      title="Municipal Operations Dashboard"
-      subtitle="Workflow visibility across meetings, agendas, and report approvals."
-    >
-      {isLoading ? <p className="muted">Loading dashboard metrics...</p> : null}
-      {error ? <p className="inline-alert">{error}</p> : null}
+    <AppShell title={userGreeting(displayName)} subtitle={`${todayLabel}  ·  ${featuredStatusLabel}`}>
+      {isLoading ? (
+        <p style={{ color: CIVIC.muted, fontSize: 13, marginBottom: 14 }}>Loading dashboard metrics…</p>
+      ) : null}
+      {error ? (
+        <div
+          role="alert"
+          style={{
+            padding: '10px 14px',
+            background: '#fff1f0',
+            color: CIVIC.danger,
+            borderRadius: 12,
+            marginBottom: 14,
+            fontSize: 13,
+          }}
+        >
+          {error}
+        </div>
+      ) : null}
 
-      <section className="executive-grid">
-        <MetricTile
-          variant="primary"
-          label="Executive Session"
-          value={user?.displayName ?? user?.email ?? 'Unknown'}
-          foot={`Operational brief for ${today}`}
-          icon="user"
-        />
-        <MetricTile
-          label="Approval Pressure"
-          value={approvalPressure}
-          foot={`Director ${directorQueueCount} / CAO ${caoQueueCount}`}
-          icon="alert-triangle"
-        />
-        <MetricTile
-          label="Publication Coverage"
-          value={`${publicationCoverage}%`}
-          foot={`${publicationTotal} records released across agendas, reports, and minutes`}
-          icon="file-text"
-        />
-        <MetricTile
-          label="Public Releases"
-          value={publicReleaseCount}
-          foot="Meeting, agenda, report, and minutes visibility"
-          icon="globe"
-        />
-      </section>
-
-      <section className="split-grid">
-        <Card>
-          <CardHeader title="Cycle Health Signals" description="Priority operating indicators for the current council cycle." />
-          <CardBody>
-            <div className="signal-list">
-              <div className="signal-row">
-                <div>
-                  <p className="signal-title">Meeting Cadence</p>
-                  <p className="signal-meta">{meetings.length} sessions tracked in register</p>
-                </div>
-                <span className="pill">{meetings.length > 0 ? 'Active' : 'Setup needed'}</span>
-              </div>
-              <div className="signal-row">
-                <div>
-                  <p className="signal-title">Agenda Readiness</p>
-                  <p className="signal-meta">{publishedAgendas} published / {agendas.length} total packages</p>
-                </div>
-                <div
-                  className="health-meter"
-                  role="progressbar"
-                  aria-valuenow={agendas.length > 0 ? Math.round((publishedAgendas / agendas.length) * 100) : 0}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label={`Agenda readiness: ${agendas.length > 0 ? Math.round((publishedAgendas / agendas.length) * 100) : 0}%`}
-                >
-                  <span
-                    className="health-meter-fill"
-                    style={{ width: `${agendas.length > 0 ? (publishedAgendas / agendas.length) * 100 : 0}%` }}
-                  />
-                </div>
-              </div>
-              <div className="signal-row">
-                <div>
-                  <p className="signal-title">Report Throughput</p>
-                  <p className="signal-meta">{publishedReports} published / {reports.length} total reports</p>
-                </div>
-                <div
-                  className="health-meter"
-                  role="progressbar"
-                  aria-valuenow={reports.length > 0 ? Math.round((publishedReports / reports.length) * 100) : 0}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label={`Report throughput: ${reports.length > 0 ? Math.round((publishedReports / reports.length) * 100) : 0}%`}
-                >
-                  <span
-                    className="health-meter-fill"
-                    style={{ width: `${reports.length > 0 ? (publishedReports / reports.length) * 100 : 0}%` }}
-                  />
-                </div>
-              </div>
-              <div className="signal-row">
-                <div>
-                  <p className="signal-title">Minutes Completion</p>
-                  <p className="signal-meta">{publishedMinutesCount} published / {minutesCount} total minutes records</p>
-                </div>
-                <div
-                  className="health-meter"
-                  role="progressbar"
-                  aria-valuenow={minutesCount > 0 ? Math.round((publishedMinutesCount / minutesCount) * 100) : 0}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label={`Minutes completion: ${minutesCount > 0 ? Math.round((publishedMinutesCount / minutesCount) * 100) : 0}%`}
-                >
-                  <span
-                    className="health-meter-fill"
-                    style={{ width: `${minutesCount > 0 ? (publishedMinutesCount / minutesCount) * 100 : 0}%` }}
-                  />
-                </div>
-              </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+          gap: 14,
+          marginBottom: 16,
+        }}
+      >
+        {stats.map((stat) => (
+          <Card key={stat.label} padding={20}>
+            <div
+              aria-hidden="true"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: `${stat.color}18`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 14,
+              }}
+            >
+              <Icon name={stat.icon} size={19} color={stat.color} />
             </div>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title="Priority Actions" description="Fast paths for high-impact operational decisions." />
-          <CardBody>
-            <div className="priority-grid">
-              <Link className="priority-card" to="/approvals/director">
-                <p className="priority-kicker">Director Queue</p>
-                <h4>{directorQueueCount} items awaiting review</h4>
-                <p>Process director-level approvals and rejections.</p>
-              </Link>
-              <Link className="priority-card" to="/approvals/cao">
-                <p className="priority-kicker">CAO Queue</p>
-                <h4>{caoQueueCount} items awaiting review</h4>
-                <p>Complete executive approvals for publication readiness.</p>
-              </Link>
-              <Link className="priority-card" to="/public">
-                <p className="priority-kicker">Public Transparency</p>
-                <h4>{publicReleaseCount} records published</h4>
-                <p>Verify what citizens can currently view.</p>
-              </Link>
-              <Link className="priority-card" to="/admin/login">
-                <p className="priority-kicker">Access Governance</p>
-                <h4>{(user?.roles ?? []).length} active role(s)</h4>
-                <p>Manage permissions for operational resilience.</p>
-              </Link>
-              <div className="priority-card priority-card-static">
-                <p className="priority-kicker">Assigned User</p>
-                <h4>{user?.displayName ?? user?.email ?? 'Unknown user'}</h4>
-                <div className="pill-list">
-                  {(user?.roles ?? []).map((role) => (
-                    <span className="pill" key={role}>
-                      {role}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <Link className="priority-card" to="/reports">
-                <p className="priority-kicker">Report Operations</p>
-                <h4>{reports.length} reports in workflow</h4>
-                <p>Move draft and pending reports to published status.</p>
-              </Link>
+            <div style={{ fontSize: 26, fontWeight: 700, color: CIVIC.ink, lineHeight: 1 }}>
+              {stat.value}
             </div>
-          </CardBody>
-        </Card>
-      </section>
+            <div style={{ fontSize: 12, color: CIVIC.muted, marginTop: 5 }}>{stat.label}</div>
+            <div style={{ fontSize: 11.5, color: stat.color, marginTop: 3, fontWeight: 600 }}>
+              {stat.sub}
+            </div>
+          </Card>
+        ))}
+      </div>
 
-      <Card>
-        <CardHeader title="Workflow Workspace" description="Open operational modules and continue active review work." />
-        <CardBody>
-          <div className="link-card-grid">
-            <Link className="link-card" to="/meetings">
-              <h3>Meetings</h3>
-              <p>Track meeting schedule, status, and agenda alignment.</p>
-            </Link>
-            <Link className="link-card" to="/agendas">
-              <h3>Agendas</h3>
-              <p>Review agenda progress and publication readiness.</p>
-            </Link>
-            <Link className="link-card" to="/reports">
-              <h3>Reports</h3>
-              <p>Manage report drafting, submission, and final publication.</p>
-            </Link>
-            <Link className="link-card" to="/minutes">
-              <h3>Minutes</h3>
-              <p>Capture live minutes and publish finalized records.</p>
-            </Link>
-            <Link className="link-card" to="/approvals/director">
-              <h3>Director Queue</h3>
-              <p>Process departmental report approvals and rejections.</p>
-            </Link>
-            <Link className="link-card" to="/approvals/cao">
-              <h3>CAO Queue</h3>
-              <p>Complete executive review and final governance approvals.</p>
-            </Link>
-            <Link className="link-card" to="/public">
-              <h3>Public Portal</h3>
-              <p>Validate externally published meeting content.</p>
-            </Link>
-            <Link className="link-card" to="/admin/login">
-              <h3>Admin Portal</h3>
-              <p>Open governance settings for users, roles, templates, and integrations.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: 14 }}>
+        <Card>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 18,
+            }}
+          >
+            <div style={{ fontSize: 15, fontWeight: 600, color: CIVIC.primary }}>Upcoming Meetings</div>
+            <Link
+              to="/meetings"
+              style={{ fontSize: 12, fontWeight: 600, color: CIVIC.primary, textDecoration: 'none' }}
+            >
+              View all →
             </Link>
           </div>
-        </CardBody>
-      </Card>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {upcomingMeetings.length === 0 ? (
+              <div
+                style={{
+                  padding: '28px 16px',
+                  textAlign: 'center',
+                  color: CIVIC.muted,
+                  fontSize: 13,
+                  background: CIVIC.subtle,
+                  borderRadius: 14,
+                }}
+              >
+                No upcoming meetings scheduled.
+              </div>
+            ) : (
+              upcomingMeetings.map((meeting) => {
+                const isLive = meeting.status === 'IN_PROGRESS';
+                const { day, month } = toDayMonth(meeting.startsAt);
+                return (
+                  <Link
+                    key={meeting.id}
+                    to={`/meetings/${meeting.id}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 14,
+                      padding: '14px 16px',
+                      borderRadius: 14,
+                      background: isLive ? CIVIC.primary : CIVIC.subtle,
+                      textDecoration: 'none',
+                      border: isLive ? 'none' : '1px solid #eef0f4',
+                      transition: 'all 0.13s',
+                    }}
+                  >
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        width: 46,
+                        height: 46,
+                        borderRadius: 12,
+                        flexShrink: 0,
+                        background: isLive ? 'rgba(255,255,255,0.14)' : `${CIVIC.primary}12`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 17,
+                          fontWeight: 700,
+                          color: isLive ? '#fff' : CIVIC.primary,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {day}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: 600,
+                          color: isLive ? 'rgba(255,255,255,0.65)' : CIVIC.muted,
+                          marginTop: 2,
+                        }}
+                      >
+                        {month}
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                          color: isLive ? '#fff' : CIVIC.primary,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {meeting.title}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: isLive ? 'rgba(255,255,255,0.6)' : CIVIC.muted,
+                          marginTop: 2,
+                        }}
+                      >
+                        {formatMeetingTime(meeting.startsAt)}
+                        {meeting.location ? ` · ${meeting.location}` : ''}
+                      </div>
+                    </div>
+                    {isLive ? (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          padding: '3px 9px',
+                          borderRadius: 20,
+                          background: CIVIC.danger,
+                          color: '#fff',
+                          animation: 'civic-pulse 2s infinite',
+                        }}
+                      >
+                        LIVE
+                      </span>
+                    ) : null}
+                    <Icon
+                      name="chevron-right"
+                      size={16}
+                      color={isLive ? 'rgba(255,255,255,0.5)' : CIVIC.muted}
+                    />
+                  </Link>
+                );
+              })
+            )}
+          </div>
+        </Card>
 
-      <Card>
-        <CardHeader
-          title="Upcoming Meetings"
-          description="Earliest five meetings from the current register."
-          actions={<span className="pill">{upcomingMeetings.length} in upcoming view</span>}
-        />
-        <CardBody>
-          {upcomingMeetings.length === 0 ? (
-            <div className="empty-state">No meeting records available.</div>
-          ) : (
-            <DataTable
-              columns={meetingsColumns}
-              data={upcomingMeetings}
-              rowKey={(meeting) => meeting.id}
-              emptyMessage="No meeting records available."
-            />
-          )}
-        </CardBody>
-      </Card>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Card padding={20}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: liveMeeting ? CIVIC.danger : CIVIC.muted,
+                  animation: liveMeeting ? 'civic-live-dot 1.5s infinite' : 'none',
+                }}
+              />
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: CIVIC.primary }}>
+                {liveMeeting ? 'Session in Progress' : 'No Live Session'}
+              </div>
+            </div>
+            {liveMeeting ? (
+              <>
+                <div style={{ fontSize: 11.5, color: CIVIC.muted, marginBottom: 5 }}>Current meeting</div>
+                <div
+                  style={{
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    color: CIVIC.primary,
+                    marginBottom: 14,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {liveMeeting.title}
+                </div>
+                <div style={{ height: 5, borderRadius: 4, background: '#f0f2f6', marginBottom: 6 }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${progressPercent}%`,
+                      borderRadius: 4,
+                      background: CIVIC.accent,
+                      transition: 'width 1s',
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 11.5, color: CIVIC.muted }}>
+                    Started {formatMeetingTime(liveMeeting.startsAt)}
+                  </span>
+                  <span style={{ fontSize: 11.5, color: CIVIC.muted }}>
+                    {progressPercent}% estimated
+                  </span>
+                </div>
+                <Link
+                  to="/motions"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    marginTop: 14,
+                    padding: 10,
+                    borderRadius: 12,
+                    background: CIVIC.primary,
+                    color: '#fff',
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >
+                  Join Live Session →
+                </Link>
+              </>
+            ) : (
+              <div style={{ fontSize: 12.5, color: CIVIC.muted, lineHeight: 1.5 }}>
+                No meeting is currently in session. When a meeting starts, its live controls will appear
+                here.
+              </div>
+            )}
+          </Card>
+
+          <Card padding={20}>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: CIVIC.primary, marginBottom: 14 }}>
+              Workflow at a Glance
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <WorkflowRow label="Public Releases" value={publicReleaseCount} href="/public" />
+              <WorkflowRow
+                label="Minutes Published"
+                value={`${minutesPublishedCount} / ${minutesTotalCount}`}
+                href="/minutes"
+              />
+              <WorkflowRow label="My Approvals" value={null} href="/approvals/my" isLink />
+            </div>
+          </Card>
+        </div>
+      </div>
     </AppShell>
+  );
+}
+
+function WorkflowRow({
+  label,
+  value,
+  href,
+  isLink = false,
+}: {
+  label: string;
+  value: string | number | null;
+  href: string;
+  isLink?: boolean;
+}): JSX.Element {
+  return (
+    <Link
+      to={href}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 12px',
+        borderRadius: 10,
+        background: CIVIC.subtle,
+        textDecoration: 'none',
+        color: CIVIC.primary,
+        fontSize: 12.5,
+        fontWeight: 600,
+      }}
+    >
+      <span>{label}</span>
+      {isLink ? (
+        <span style={{ color: CIVIC.accent, fontSize: 12 }}>Open →</span>
+      ) : (
+        <span style={{ color: CIVIC.ink, fontWeight: 700 }}>{value}</span>
+      )}
+    </Link>
   );
 }
