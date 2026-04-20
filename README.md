@@ -9,6 +9,11 @@ Initial scaffold for a municipal Council Meeting Management System.
 - `docs/` implementation and operational documentation.
 - `.github/workflows/` CI automation (backend build/test + frontend build).
 
+## eScribe Parity Wave Artifacts
+
+- Delivery plan and checklist: `docs/ESCRIBE_PARITY_WAVE_PLAN.md`
+- Final parity briefing: `docs/ESCRIBE_PARITY_BRIEFING.md`
+
 ## Quick Start
 
 ### Backend

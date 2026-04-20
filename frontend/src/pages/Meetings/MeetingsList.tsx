@@ -6,6 +6,7 @@ import type { MeetingTypeRecord } from '../../api/types/meeting-type.types';
 import type { MeetingRecord } from '../../api/types/meeting.types';
 import AppShell from '../../components/layout/AppShell';
 import Drawer from '../../components/ui/Drawer';
+import MeetingTypeBadge from '../../components/ui/MeetingTypeBadge';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useToast } from '../../hooks/useToast';
@@ -779,9 +780,7 @@ export default function MeetingsList(): JSX.Element {
                       <Link to={`/meetings/${meeting.id}`}>
                         <strong>{meeting.title}</strong>
                       </Link>
-                      <div className="muted">
-                        {meetingTypeNameByCode.get(meeting.meetingTypeCode) ?? meeting.meetingTypeCode}
-                      </div>
+                      <MeetingTypeBadge code={meeting.meetingTypeCode} name={meetingTypeNameByCode.get(meeting.meetingTypeCode)} />
                       {meeting.recurrenceGroupId ? (
                         <div className="muted">
                           Recurring series

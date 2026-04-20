@@ -32,6 +32,8 @@ import { AttendeesModule } from './attendees/attendees.module';
 import { VotesModule } from './votes/votes.module';
 import { ConflictDeclarationsModule } from './conflict-declarations/conflict-declarations.module';
 import { BylawsModule } from './bylaws/bylaws.module';
+import { ReportGeneratorsModule } from './report-generators/report-generators.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -63,6 +65,8 @@ import { BylawsModule } from './bylaws/bylaws.module';
     VotesModule,
     ConflictDeclarationsModule,
     BylawsModule,
+    ReportGeneratorsModule,
+    SearchModule,
   ],
   providers: [
     {

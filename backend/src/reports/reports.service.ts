@@ -8,6 +8,7 @@ import type { CreateReportAttachmentDto } from './dto/create-report-attachment.d
 import type { ImportDocxReportDto } from './dto/import-docx-report.dto';
 import type { ReportQueryDto } from './dto/report-query.dto';
 import type { UpdateStaffReportDto } from './dto/update-staff-report.dto';
+import type { BulkReportActionDto } from './dto/bulk-report-action.dto';
 import { DocxParserService } from './parsers/docx-parser.service';
 import { SharePointDocxService } from './parsers/sharepoint-docx.service';
 import { ReportsRepository } from './reports.repository';
@@ -16,6 +17,8 @@ import { TemplatesService } from '../templates/templates.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { GovernanceService } from '../governance/governance.service';
 import { WorkflowConfigRepository, type WorkflowRecord } from '../workflows/workflow-config.repository';
+import type { PaginatedResult } from '../types/pagination';
+import { ReportsQueryService } from './reports-query.service';
 
 export type ReportWorkflowStatus =
   | 'DRAFT'
@@ -72,7 +75,7 @@ export interface ReportAttachmentRecord {
   fileName: string;
   mimeType?: string;
   sizeBytes?: number;
-  sourceType: 'SHAREPOINT';
+  sourceType: 'SHAREPOINT' | 'LOCAL';
   sourceSharePointSiteId?: string;
   sourceSharePointDriveId?: string;
   sourceSharePointItemId?: string;
@@ -93,6 +96,7 @@ export class ReportsService {
     private readonly notificationsService: NotificationsService,
     private readonly governanceService: GovernanceService,
     private readonly workflowConfigRepository: WorkflowConfigRepository,
+    private readonly reportsQueryService: ReportsQueryService,
   ) {}
 
   health(): { status: string } {
@@ -212,11 +216,17 @@ export class ReportsService {
   }
 
   list(query: ReportQueryDto): Promise<StaffReportRecord[]> {
-    return this.reportsRepository.list(query);
+    return this.reportsQueryService.list(query);
+  }
+
+  async listPaged(
+    query: ReportQueryDto & { page?: number; limit?: number },
+  ): Promise<PaginatedResult<StaffReportRecord>> {
+    return this.reportsQueryService.listPaged(query);
   }
 
   getById(id: string): Promise<StaffReportRecord> {
-    return this.reportsRepository.getById(id);
+    return this.reportsQueryService.getById(id);
   }
 
   async update(id: string, dto: UpdateStaffReportDto, user: AuthenticatedUser): Promise<StaffReportRecord> {
@@ -651,6 +661,51 @@ export class ReportsService {
     return updated;
   }
 
+  async runBulkAction(
+    dto: BulkReportActionDto,
+    user: AuthenticatedUser,
+  ): Promise<{ requested: number; succeeded: number; failed: Array<{ reportId: string; reason: string }> }> {
+    const failures: Array<{ reportId: string; reason: string }> = [];
+    let succeeded = 0;
+
+    for (const reportId of dto.reportIds) {
+      try {
+        if (dto.action === 'SUBMIT') {
+          await this.submitForDirector(reportId, user, dto.comments);
+        } else if (dto.action === 'RESUBMIT') {
+          await this.resubmit(reportId, user, dto.comments);
+        } else {
+          await this.publish(reportId, user);
+        }
+        succeeded += 1;
+      } catch (caughtError) {
+        failures.push({
+          reportId,
+          reason: caughtError instanceof Error ? caughtError.message : 'Report bulk action failed',
+        });
+      }
+    }
+
+    await this.auditService.log({
+      actorUserId: user.id,
+      action: 'report.bulk_action',
+      entityType: 'report',
+      entityId: dto.reportIds.join(','),
+      changesJson: {
+        action: dto.action,
+        requested: dto.reportIds.length,
+        succeeded,
+        failed: failures.length,
+      },
+    });
+
+    return {
+      requested: dto.reportIds.length,
+      succeeded,
+      failed: failures,
+    };
+  }
+
   async addAttachment(
     reportId: string,
     dto: CreateReportAttachmentDto,
@@ -662,19 +717,26 @@ export class ReportsService {
     let sharePointWebUrl = dto.sharePointWebUrl;
     let sizeBytes = dto.sizeBytes;
 
+    let sourceType: ReportAttachmentRecord['sourceType'] = 'SHAREPOINT';
+
     if (dto.contentBase64?.trim()) {
-      if (!dto.sharePointDriveId) {
-        throw new BadRequestException('sharePointDriveId is required when uploading a file attachment.');
-      }
-      const uploaded = await this.sharePointDocxService.uploadBase64File({
-        sharePointDriveId: dto.sharePointDriveId,
-        fileName: dto.fileName,
-        contentBase64: dto.contentBase64,
-        mimeType: dto.mimeType,
-      });
+      const uploaded = dto.sharePointDriveId && this.sharePointDocxService.hasGraphCredentials()
+        ? await this.sharePointDocxService.uploadBase64File({
+            sharePointDriveId: dto.sharePointDriveId,
+            fileName: dto.fileName,
+            contentBase64: dto.contentBase64,
+            mimeType: dto.mimeType,
+          })
+        : await this.sharePointDocxService.storeLocalBase64File({
+            fileName: dto.fileName,
+            contentBase64: dto.contentBase64,
+            mimeType: dto.mimeType,
+          });
+
       sharePointItemId = uploaded.itemId;
       sharePointWebUrl = uploaded.webUrl ?? sharePointWebUrl;
       sizeBytes = uploaded.sizeBytes ?? sizeBytes;
+      sourceType = dto.sharePointDriveId && this.sharePointDocxService.hasGraphCredentials() ? 'SHAREPOINT' : 'LOCAL';
     } else if (!dto.sharePointDriveId || !dto.sharePointItemId) {
       throw new BadRequestException(
         'Provide contentBase64 with sharePointDriveId, or provide existing sharePointDriveId and sharePointItemId.',
@@ -686,7 +748,7 @@ export class ReportsService {
       fileName: dto.fileName,
       mimeType: dto.mimeType,
       sizeBytes,
-      sourceType: 'SHAREPOINT',
+      sourceType,
       sourceSharePointSiteId: dto.sharePointSiteId,
       sourceSharePointDriveId: dto.sharePointDriveId,
       sourceSharePointItemId: sharePointItemId,
@@ -735,11 +797,11 @@ export class ReportsService {
   }
 
   listPendingDirector(): Promise<StaffReportRecord[]> {
-    return this.reportsRepository.listPendingDirector();
+    return this.reportsQueryService.listPendingDirector();
   }
 
   listPendingCao(): Promise<StaffReportRecord[]> {
-    return this.reportsRepository.listPendingCao();
+    return this.reportsQueryService.listPendingCao();
   }
 
   listPendingWorkflow(): Promise<StaffReportRecord[]> {
@@ -747,8 +809,12 @@ export class ReportsService {
   }
 
   async getApprovalHistory(reportId: string): Promise<ReportApprovalEvent[]> {
-    await this.reportsRepository.getById(reportId);
-    return this.reportsRepository.getApprovalHistory(reportId);
+    await this.reportsQueryService.getById(reportId);
+    return this.reportsQueryService.getApprovalHistory(reportId);
+  }
+
+  getLatestPublishedAtByReportIds(reportIds: string[]): Promise<Map<string, string>> {
+    return this.reportsRepository.getLatestPublishedAtByReportIds(reportIds);
   }
 
   private ensureStatus(current: ReportWorkflowStatus, allowed: ReportWorkflowStatus[]): void {
@@ -856,6 +922,12 @@ export class ReportsService {
     const normalizedRole = approverRole.trim().toUpperCase();
     if (!normalizedRole) {
       throw new BadRequestException('Workflow stage approver role is required');
+    }
+    if (normalizedRole === SYSTEM_ROLES.DIRECTOR) {
+      return 'PENDING_DIRECTOR_APPROVAL';
+    }
+    if (normalizedRole === SYSTEM_ROLES.CAO) {
+      return 'PENDING_CAO_APPROVAL';
     }
     return 'PENDING_WORKFLOW_APPROVAL';
   }

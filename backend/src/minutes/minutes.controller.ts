@@ -7,6 +7,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 import { CreateMinutesDto } from './dto/create-minutes.dto';
 import { UpdateMinutesDto } from './dto/update-minutes.dto';
 import { Public } from '../core/decorators/public.decorator';
+import { PaginationQueryDto } from '../types/pagination-query.dto';
 
 @Controller('minutes')
 export class MinutesController {
@@ -28,6 +29,19 @@ export class MinutesController {
   @Get()
   list(@Query('meetingId') meetingId?: string, @Query('isInCamera') isInCamera?: string) {
     return this.minutesService.list(meetingId, isInCamera === 'true' ? true : isInCamera === 'false' ? false : undefined);
+  }
+
+  @Permissions(PERMISSIONS.MEETING_READ)
+  @Get('paged')
+  listPaged(
+    @Query() query: PaginationQueryDto & { meetingId?: string; isInCamera?: string },
+  ) {
+    return this.minutesService.listPaged({
+      meetingId: query.meetingId,
+      isInCamera: query.isInCamera === 'true' ? true : query.isInCamera === 'false' ? false : undefined,
+      page: query.page,
+      limit: query.limit,
+    });
   }
 
   @Permissions(PERMISSIONS.MEETING_READ)

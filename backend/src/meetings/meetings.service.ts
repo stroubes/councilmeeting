@@ -9,6 +9,7 @@ import { MeetingsRepository } from './meetings.repository';
 import { MeetingTypesService } from '../meeting-types/meeting-types.service';
 
 export type MeetingStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'ADJOURNED' | 'CANCELLED' | 'COMPLETED';
+export type PublishStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
 export interface MeetingRecord {
   id: string;
@@ -19,6 +20,8 @@ export interface MeetingRecord {
   endsAt?: string;
   location?: string;
   status: MeetingStatus;
+  publishStatus: PublishStatus;
+  publishedAt?: string;
   isPublic: boolean;
   isInCamera: boolean;
   videoUrl?: string;
@@ -60,6 +63,7 @@ export class MeetingsService {
       endsAt: dto.endsAt,
       location: dto.location,
       status: 'SCHEDULED',
+      publishStatus: 'DRAFT',
       isPublic: dto.isPublic ?? !meetingType.isInCamera,
       isInCamera: meetingType.isInCamera,
       videoUrl: dto.videoUrl,
@@ -130,6 +134,77 @@ export class MeetingsService {
   async remove(id: string): Promise<{ ok: true }> {
     await this.meetingsRepository.remove(id);
     return { ok: true };
+  }
+
+  async startMeeting(id: string, user: AuthenticatedUser): Promise<MeetingRecord> {
+    if (!user.permissions.includes(PERMISSIONS.MEETING_START)) {
+      throw new ForbiddenException('Missing meeting.start permission');
+    }
+
+    const meeting = await this.getById(id, user);
+
+    if (meeting.status !== 'SCHEDULED') {
+      throw new ForbiddenException(`Cannot start meeting with status ${meeting.status}. Only SCHEDULED meetings can be started.`);
+    }
+
+    return this.meetingsRepository.update(id, {
+      status: 'IN_PROGRESS',
+    });
+  }
+
+  async endMeeting(id: string, user: AuthenticatedUser, endStatus: 'ADJOURNED' | 'COMPLETED' = 'ADJOURNED'): Promise<MeetingRecord> {
+    if (!user.permissions.includes(PERMISSIONS.MEETING_END)) {
+      throw new ForbiddenException('Missing meeting.end permission');
+    }
+
+    const meeting = await this.getById(id, user);
+
+    if (meeting.status !== 'IN_PROGRESS') {
+      throw new ForbiddenException(`Cannot end meeting with status ${meeting.status}. Only IN_PROGRESS meetings can be ended.`);
+    }
+
+    return this.meetingsRepository.update(id, {
+      status: endStatus,
+      endsAt: new Date().toISOString(),
+    });
+  }
+
+  async publishMeeting(id: string, user: AuthenticatedUser): Promise<MeetingRecord> {
+    if (!user.permissions.includes(PERMISSIONS.MEETING_PUBLISH)) {
+      throw new ForbiddenException('Missing meeting.publish permission');
+    }
+
+    const meeting = await this.getById(id, user);
+
+    if (meeting.publishStatus === 'PUBLISHED') {
+      throw new ForbiddenException('Meeting is already published');
+    }
+
+    if (meeting.publishStatus === 'ARCHIVED') {
+      throw new ForbiddenException('Archived meetings cannot be published');
+    }
+
+    const now = new Date().toISOString();
+    return this.meetingsRepository.update(id, {
+      publishStatus: 'PUBLISHED',
+      publishedAt: now,
+    });
+  }
+
+  async archiveMeeting(id: string, user: AuthenticatedUser): Promise<MeetingRecord> {
+    if (!user.permissions.includes(PERMISSIONS.MEETING_PUBLISH)) {
+      throw new ForbiddenException('Missing meeting.publish permission');
+    }
+
+    const meeting = await this.getById(id, user);
+
+    if (meeting.publishStatus !== 'PUBLISHED' && meeting.publishStatus !== 'DRAFT') {
+      throw new ForbiddenException(`Cannot archive meeting with status ${meeting.publishStatus}`);
+    }
+
+    return this.meetingsRepository.update(id, {
+      publishStatus: 'ARCHIVED',
+    });
   }
 
   private applyInCameraAccess<T extends MeetingQueryDto>(query: T, user: AuthenticatedUser): T {

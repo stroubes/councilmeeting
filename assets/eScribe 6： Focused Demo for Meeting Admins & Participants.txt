@@ -1,0 +1,481 @@
+Hello, everyone. Thank you for joining us today. Welcome to our session. We're going
+to give it a few seconds before we get started just to see if anybody else joins us. And
+as most of you know, today we're focusing on a demo for meeting admins and participants.
+Give it a few more seconds and then we'll go ahead and get started.
+All right. Thank you all for joining us today. Just wanted to call out at the beginning that
+we do have another upcoming Atlas webinar session talking through time management tips. You most
+likely have gotten an email about this already, but if not, we'll make sure to have your CSM
+send you that information if you're interested in joining. As I said, thank you guys for joining
+us today. We have our speakers here with us today. We have Kelsey, who is our lead product owner. We
+have Sandra, who's one of our customer success managers who some of you have probably worked
+with. And then we have Oscar, our principal product marketing manager. He's been on some of
+these sessions before, so we're excited to have him back. And then my name is Megan and I am the
+product marketing manager for eScribe. We're going to go ahead and click through.
+So just a few housekeeping things. All participants are automatically muted. We have a Q&A section,
+so please go ahead and submit your questions there. As we say, every time we're going to do our best
+to answer as many questions as we can during the session, but we may not get to all. We'll make sure
+that your CSM follows up with you, so please make sure your name is included when you are submitting
+your questions. Today's recording will be shared via email afterwards with a handful of different
+resources included as well. This will also be posted in the eScribe community portal,
+where we have all of our eScribe 6 resources for you. Our final ask is that we ask you to take some
+time to complete our post webinar survey. We constantly say that your feedback is important
+to us, and these sessions are included in that. So for today's agenda, I'll quickly do a recap
+of our May 13th webinar. We have a quick poll question, and then we actually are going to dive
+into a document collaboration and WAPI update. We know there's been some questions around that.
+We're also going to take some time doing a brief demo of the document collaboration
+piece to show you, and then Kelsey and Sandra are also going to dive into the demo for the meeting
+administrators and participants. So then we'll leave time for questions. As I said,
+we'll do our best to get to all of those. Excuse me. There we go. So quick recap of the May webinar.
+We talked through eScribe 6 security, plans of moving away from SharePoint to WAPI,
+overall plans for document collaboration, and overall performance improvements.
+This was a bit more on the technical side of things, so that was kind of the recap there.
+Again, we'll be doing some follow-up to that today. Oscar will give some more information there,
+and then I just wanted to call out that we're continuing this series. You guys have been really
+engaged with it, which we appreciate. So our next session will be the week of July 15th. Our plan is
+to demo some meeting templates and walk through that with you all, and then we'll be sending out
+that registration link in detail soon. Again, all of our webinar recordings and other resources
+are available via the customer portal for you guys to be able to access that.
+So before we dive into anything else, we're going to do a quick poll question.
+Let me go ahead and launch this one. So our question today is around which internet browser
+do your participants use to log in? We know there's a variety. We know different organizations use
+different things, so we just wanted to take a second and poll you guys to see if there
+is anything else. Also, if you don't know, that's totally fine. It looks like Google Chrome seems to
+be the top, which is what I personally use for everything as well. Gave a lot of different
+options there, though. I'll give us a few more seconds. Almost everyone has participated,
+so thank you guys for that feedback. All right. I'm going to go ahead and end that.
+Google Chrome is by far our winner, so thank you for that. All right. So I'm going to go ahead
+now and pass it to Oscar for this update. Thanks, Megan. And hello, everyone. By the way,
+I'm a big kind of Google Chrome, too. That's what I use. So I know last week there's been a lot of
+concerns raised about document collaboration, especially in regards to WAPI and what we're
+doing, and I wanted to address some of those concerns. I'm hoping also when Kelsey does her
+demo, there'll be more clarity on this topic. So just to recap, with the development of
+eScribe 6, we've transitioned from SharePoint to Azure, and we went through this modernization
+for faster performance, enhanced ease and speed, and developing and adding new features, also
+with the modernization, having support for innovative capabilities. So once you build
+that modern foundation, it's a lot easier to add a new feature that you can gain a lot from. So
+that was the entire reason for us changing that and making it easier, modernizing it.
+The issue that we ran into was that document collaboration is not available on Macs because
+of Microsoft's Mac OS limitation. So when we went through this modernization, that's what the issue
+we ran into. In order to support that, in order to support both Windows and Macs, we're adopting
+Web Application Open Platform Interface, WAPI, which will allow document collaboration on both
+Windows and Mac users. The concern, of course, has come up now because what's going to be different
+is that documents will now open in the browser version instead of the desktop version. And again,
+this is in line and this change is in line with Microsoft's shift towards cloud services,
+which is where really everyone is moving towards in terms of browser versions of applications.
+Next slide, please.
+So there's two things I want to address, right? Developer tab and content controls.
+Let's start with developer tab. So yes, developer tab will not be available in the browser version
+due to a Microsoft limitation. It's still available in the desktop version for template creation. So
+developer tab not available in browser. What the user will have to do is to create templates in
+the desktop version and then upload them into eScribe. If there's ever a change to be made
+with that particular template, it would need to be edited in the desktop version,
+uploaded into eScribe, similarly with new templates as well. Now, how often are you
+going to do this? When you first start off, your implementation manager will help you with building
+these templates. From what I understand, changes to templates aren't made that often, maybe every
+few months, in some cases every year, but that's when you would have to edit it in the desktop
+version and update it and to upload it into eScribe. Next slide, please.
+So we talked about the developer tab being absent now in the browser version. Let's stop and look
+at content controls. But before we do that, and this is going to come out from Kelsey showing you
+how document collaboration works, with eScribe 6, with eScribe 5, you'd have to enter data twice
+when it came to meeting date or meeting type using the date picker. Now in eScribe 6, users will
+enter your meeting date, meeting type, document number, and department sponsors. They'd enter that
+upfront within eScribe, and when you open up your document, that data will get populated into the
+document automatically. So all of the content will now be edited within eScribe in the flyout,
+and then when the document's opened, it would get put into the document. If you need to make a change
+to it, you would close the document, edit the flyout in eScribe 6, and then open the document again.
+So no need to replicate, no need to go into that document or use the date picker or the drop down
+from meeting type. It's now done within eScribe. All of this data, when it comes to meeting date,
+meeting type, document number, department sponsors, flows only one way from eScribe into the document.
+Alternatively, when you're building your template initially, you'll have title, description, motion.
+These are the fields that you create within the template in the desktop version. When that
+document's opened and you enter data into those fields, text into those fields, that automatically
+gets put into eScribe. So there's a flow of information for those five fields that we've got
+up there that go one way, and then you've got title, description, and motion that move the
+other way. So eScribe 6 works differently, where now you've got the ability to edit,
+create your template with the absence of the developer tab. You create that in your desktop
+version, you bring it up, but when it comes to all of these fields, a lot of that now is done within
+eScribe 6. In fact, all of it's done within eScribe 6. That was a concern for moving over
+to WAPI and now using the browser version. Next slide, please.
+So we know that you're not going to be able to do a date picker or drop down,
+or you don't need to do it anymore, but the question might come up as to,
+you know, can I add another date picker? Can I add another drop down?
+So with our onboard platform that does have WAPI implemented, we were able to do some tests,
+and you could add a drop down within a template, upload it, and the drop down will still work.
+However, date pickers, when you do the same thing, that won't work,
+right? So this is in addition to what you typically would use in eScribe 5 because now that
+data moves from the fly out within eScribe 6 into the document. And all of this will make a
+lot more sense when actually Kelsey shows it to you, but I wanted to call this out because this
+was one of the questions as well that said, okay, you know, can we have additional drop downs and
+additional date pickers? Drop downs, yes. Date pickers, no. You'd potentially have to add,
+you know, extra data field or a text field and add in your additional dates there.
+Next slide, please. So talked about not having developer tab, content control still being in
+place. What about document collaboration as a whole? Document collaboration will still continue
+to exist as it does today with eScribe 6. So even in terms of someone opening up a browser version,
+users will still be able to collaborate, but now in the browser version instead of the desktop
+version. So that is not going away. Everything I've covered, and of course Kelsey is going to
+show stuff in the demo as well, but everything I've covered will be sent out where we put together
+some communication around this that will get sent out with a follow-up email after the webinar. So
+it's either later today or potentially tomorrow, but you will have this documentation around
+what I've talked about. So with that, I'm going to hand it over to Kelsey.
+Thanks, Oscar. I will just share my screen here in a moment.
+Okay, great. I'm just going to give a quick demo on what Oscar shared earlier. So here in my,
+this is my admin view on the screen here. I'm going to go to my documents list and I'm going
+to create a new document. I'll just clear my filters first. My new document here, I'm going
+to click create document and I'm just going to type in today's date so I can easily find it.
+My meeting type, I'll make my city council meeting. I'll select my future date and I'm
+just going to scroll down here and fill in some fields that are going to fill into my word document
+once it's created. So my department, my document template, I've got my sponsors over here and I'm
+going to give it a report number, which I've done and I'll make Joe and Umair my sponsors here.
+I'm going to click create and I'm going to have that document up here in my list and I'm going
+to filter that out just so that I can find that document a bit easier. So I've got my June 17th
+here. I can click on the document itself or I can go into this menu here. If you see the three dots
+menu throughout eScribe typically means that there's a hidden menu there with more options.
+So I'm going to click into that and I'm going to click open document. Just going to prepare,
+take some moment and then it's going to pop up my word document and we're going to see some of the
+fields in there. Like Oscar said, some of that information is going to flow in and some of that's
+going to flow out into eScribe itself. So I'm going to click open document there again
+and I'm going to have that word document open up on my screen here.
+That's just loading here
+and I'm going to drag it over here on my screen because it opened up on one of my other screens.
+Here we go. So you can see here this is a template that we've created for eScribe 6
+and of course implementation support. Everyone's going to be willing to help
+you create any document templates needed. You can see here these are my different fields. So
+for my title I'm just going to type in title for today. I'm going to type in description
+for today just so we can see that information flow out and I'm going to type in motion for today.
+I'm going to click save but as you can notice I don't have bilingual setup on this site
+but my template is bilingual. That's a change and improvement that we made from eScribe 5 to
+eScribe 6. The sites are now bilingual or the templates are. So I can have bilingual fields
+for my title, description, and motion and that information is going to flow into my French
+field, something that wasn't able to be done in eScribe 5. So that's really exciting for our
+bilingual customers. If I scroll down here though you can see that I have five fields,
+my document number, meeting date, meeting type, department, and sponsors. Those ones are the
+information that flow into the Word document from eScribe. So you don't have to have a drop
+down for maybe meeting type for your business users to use. You don't have to have any of these
+fields anymore because we flow that information into the Word document now. Whereas this information
+here for your title, description, and motion all flow out and while I'm doing this I'm editing
+my document. You can have multiple users in here editing so we haven't taken that away at all. If
+anything we've improved it with the French fields and having this information flow in and not having
+to do that twice. So I've already saved that. I'm just going to close out of my Word document
+now and I'm just going to go to the document templates area. So this is what Oscar was
+mentioning when he said that you have to upload your document templates and you can't edit them
+within eScribe or the WAPI version, the online one. So if I click this menu here for my 2024
+template I'm going to open that template. You can see here that I can easily remove that attachment
+for my template document template or I can click this to browse my computer and replace that file
+which I'm just going to click cancel and I don't want to do that today. But I'm going to close out
+of there just in case there was any confusion. That was the spot where you would have to edit it
+on the not the browser version but the desktop version. So if I go back to my documents list,
+my June 17th here, if I click here and I click edit details this is what a flyout is when you
+hear us mention a flyout. This is what that means and if I scroll down here I'm going to see for
+title, description, and my emotion down here. I'm going to have that information that I inputted
+into the Word document into my flyout here and that would in turn go into the system whether
+it was a draft item that's going to be in there. So hopefully that clears up anything and of course
+we're willing to answer more questions about that. Reach out, type your questions in and if
+there's anything else we'd be happy to help there. Hey Kelsey, really fast before you move on. I did
+want to call out there where it was one. A few of the other questions that have come in feel like
+they're a little more specific to the individual like experience so I'm going to make sure the
+CSMs can answer those ones offline but one that I wanted to ask was in the demo the report number
+auto-populated can you manually type in a document number when creating instead?
+Manually type it in here? Yes. No you just click to assign it because you set your document numbers
+up prior in the settings so you can't type it in that way it limits duplication of that.
+So you just click to assign it takes the next number in the queue. Perfect thank you for answering
+that. Sorry for interrupting. Go ahead. I'm going to close out up here and we're going to get to the
+meetings area which the demo is all about today. So if I click the meetings list here this is your
+home page really for most users and you can see we've got the navigation on the left here. This
+navigation is dependent on what user role you are so right now I'm a super admin in the system so I
+can do pretty much everything needed to be done. So you can see here it's the typical menu items
+for meetings agenda items documents which we were just in approvals users groups and then I've got
+my handy filters up at the top to help me manage this list here. So the first stop that we're going
+to go to today is users and groups and my attendee groups. So if I click here you can see I've got my
+attendee groups listed on the left. I can edit and create new groups if I want to and then I
+fly out appears here. I'm going to close out of that though or I can just click on to one that I've
+already have created to edit and play around with today. So I'm going to click in my office
+and you can easily reorder that add an attendee if you'd like or maybe you want to edit someone. So
+I'm just going to edit this attendee here and it's pretty similar to eScribe 5 the options that we
+have available. So you have your roles and voting permissions display if you wanted to have any
+specific voting groups the display names for that attendance or the motion and that handy checkbox
+of updating and upcoming meetings. Awesome this seems to be an area that people are really excited
+for I know I am it's just easier to navigate in general and just a simpler setup. So yes that's
+exactly what we tried for simpler less clicks making it much more easy for the user.
+If I go back to my meetings list here you can see that I can easily create a meeting on the right
+hand side. So if I click that the fly out appears and again similar to eScribe 5 where we've
+simplified things so the meeting type the attendee group location or the close if you'd like setting
+up your date your date and time and if I scroll down here we have this handy section where you
+can send email notifications to admins voting participants or non-voting participants. When you
+do so you can easily select a template so you can say hey this meeting's been scheduled or it's been
+rescheduled you enter that in there you select who you'd like it to send to you and you can do
+that on create or when you're editing that meeting site. I'm going to cancel out of this window
+because I've already got a meeting site set up for today that's my June 17th meeting so we'll
+just head into there. So this is where the magic happens this is our meeting site you can see it's
+pretty similar we have the agenda on the left hand side and more information about the items on the
+right hand side. I'm going to start at the very top though and go over things so at the very top
+here you can see on the right hand side this is like the state of my meeting so here we have
+meeting not started I believe it's meeting in session and then meeting concluded so we don't
+really use the terms pre-conductor post anymore just change that up a bit I can easily click into
+my closed session here and that takes me into closed session I don't think I have anything
+set up for today but this is where your closed session would take place so it's not hidden
+in a menu navigation over on the left it's just easily available in the right and you can click
+participant view that's for the closed session but if I click meeting site in participant view
+I can see exactly what my participants are going to see for my meeting site
+so I'll just click that again to turn that off and now I'm back in my admin view.
+Going down the next set of items here this is my agenda tab if I go into my packages tab you can
+see that I've got a drop down here so I can easily access my agendas or my minutes and I'm just going
+to click these check boxes to prepare my package so you can see that these check boxes gray out so
+that I can't accidentally reprepare them while they're preparing I've got the spinner over here
+to say hey this package is now preparing just give it a minute and my approval status so this
+can change from draft or it can change to approved if I send that through a workflow
+or if I automatically approve that as an admin I have that power you can see we have the resolution
+packages still for you to prepare and we have an options button here where you can add some
+special comments or any additional documents into any packages that you prepare on this screen
+so I've got my agenda and my full package prepared the agenda is what we used to call the cover sheet
+kind of confusing so we just changed that to simplify agenda and the full package is basically
+the agenda with your attachments in it so I'm going to open up my package there make sure it's
+exactly what I want it's my pdf I've set this up in my meeting template I've got my item starting
+on a separate page and okay that looks good so I'm just going to close that and I'm going to
+go to my publish tab now publish tab has a few options so you've got your participant you can
+publish the internet your visitor so I would like to publish my meeting site to my participants
+and I'll give them access to both of those packages that I just prepared by publishing
+them out it's also time for me to publish to the internet so I'm going to select internet from that
+drop down and I'll move over here to the right and click publish that meeting out to the internet
+publishing area now that that's published successfully I'll go to my internet publishing
+site refresh that page since I just performed that action and you'll see on the 17th there I
+should have my meeting site pop up with no documents just yet and all looks good I'm going
+to go back to my agenda tab here because that's where my meeting site primarily is and we're going
+to go over the secondary bar here so here's where my attendees would reside I can reorder them or
+add them if I need to add anybody on the fly and here if I click into that menu option I can easily
+remove somebody or I can go back to that it's like the same kind of options as we saw in the
+attendee groups so if you scroll down and need to change anything you're easily able to do that
+I can also close out of that I can also check out my roll call beforehand to make sure everything's
+okay and it's separated by your voting participants your non-voting participants and maybe if you
+wanted to add anybody any others in that meeting site who showed up so I'll just click cancel I'm
+not going to save that and over on the right we have two more buttons this one is for announcements
+so if you had any meeting site announcements specific to that meeting site you can easily
+add them you can create and you can edit them delete them and it's great because you can
+actually have an expiry date so when you say you know this announcement is going to expire you're
+not going to be able to see that anymore your participants in your meeting site will be able
+to see it lastly we have this settings icon here and this gives me access to clear out any
+participant comments maybe I don't want any comments lingering around after the meeting
+so that's chair comments group comments and participant comments I can't read the actual
+comments but I can click these clear buttons and just clear those out so I don't have any leftover
+awesome now Kelsey before we move on to actually conducting um do you need to use the side tab
+anymore to run the meeting at all no we found that in describe five a lot of things were buried in
+the menu over here on the left and it made for a lot of clicks and a lot of confusion from the
+admins and even participants in the meeting site so we've made everything accessible on the actual
+page awesome and second question do you need to sync your profile if you change any meeting
+settings anymore no if you change any settings you do not have to sync the profile that's not
+a thing anymore it's not a button you don't have to say that word ever again um the only thing that
+does not come over into a new and a meeting site that's already existing is uh the structure so if
+I want to go and add a new agenda item in my template area that new agenda item won't appear
+because it's part of the structure of it so you have to create a new meeting site for that one
+awesome and that's generally how it works today anyway as well yes yeah that's today's practice
+as well awesome so can I can I interrupt we had um and I don't know if this is the right time to
+ask this question um but before we go into conduct um one question just came in asked me how do you
+add a revised item um they said you used to have to approve the agenda once it was prepared to add
+revised items I don't know if this is the right time to answer that but I thought yeah potentially
+yeah that's okay um you it's the same idea so if I'm in my packages area I can um approve my package
+here and then any item that I added or maybe it made a change to if I wanted to it's going to
+appear automatically to have um include an addendum package that's your addendum and your revise are
+pretty similar so that would be checked off automatically but if I didn't want to approve
+my agenda for some reason I could just go to any item I wanted to and select that option include
+an agenda package and then you would or addendum sorry and then you'd see the little star on the
+left hand side of it indicating that this is a primarily a late item good question thanks yeah
+thank you sorry feel free to conduct now um so as you can see like I said on the left hand side it's
+your um agenda navigation on the right there's more information you can see that this button
+is new here this is the conduct meeting button um and this allows multiple admins to be in the
+meeting site in the same meeting mode at the same time so if I click conduct this is really taking
+off my meeting so it's going to say hey are you sure you want to conduct your um it's going to
+record my click sequence so I'm going to click conduct and you can see that I've got my roll
+call automatically so I'm going to mark everyone as present get that out of the way and my meeting
+mode up here has changed so I'm now meeting in session I have two new buttons here stop conducting
+and conclude conclude as the meeting is finished done so I'm not going to click that just yet and
+stop conducting means I'm no longer the person who's in control of this meeting um yep so do
+toggles affect time stamping specifically uh yes so over on the left here you can see that because
+I'm conducting I have access to these toggles and these toggles are what we call the active toggles
+um toggles hold a lot of power because they um manage your timestamps so if I toggle this on
+a timestamp would be um saved it also records my click sequence it um says hey this is the active
+item for the public display if the participants have that current item button in their site
+it also says this is the item that the admin is on so yes it does affect time stamping in that way
+um any other questions do you so when you click something that's not uh toggled can you kind of
+make some changes in the minutes while people are discussing things but not have it affect timestamps
+yes you can so that's what's great about the toggles is because if I had another admin maybe
+I had two or three other admins helping me manage minutes or motions they can go and click they won't
+see the toggles themselves but if maybe I needed to um they can them or myself can go and click
+other items and my clicks are not going to really matter I can go into other things save
+and it's not going to affect that active item at all it's just the toggle that matters
+awesome and then let's say you needed to step away for any reason and I needed to take over is that
+possible yes if you click the stop conducting button it um lets the other admins conduct but
+they also do have a start conducting button so they can take over at any time if there was an
+emergency they needed to take over awesome thanks Kelsey yeah no problem um in the middle
+here you can see we've got a little menu so if I click that that's how I can add an item
+if you wanted to see your agenda maybe a little bit less busy I can hide the minutes so I can
+see maybe just a structure and I can click that again to show the minutes I can reorder the agenda
+and really handy for when the meeting is kind of in that pre-meeting mode show draft item only so
+I can see those draft items that are maybe waiting for approval and what workflow they're
+currently in the right hand side here when you are in pre-meeting or in your post-meeting or
+concluded mode details is going to be your default tab since you can edit those fields
+but when you're conducting that minutes tab is going to be your default since that's primarily
+where you spend your time but in your details tab here you can see I'm in session and I'm able to
+edit the title in the description that's something that was new you could only edit those in
+pre-meeting before so we've made that change so you can like I said edit the title the description
+I can add my sponsors departments conflicts maybe I wanted to upload some more information here some
+more documents but I'm going to go to my minutes tab here and minutes hold motions and minutes so
+if I go to my add button I can add minutes I can add motions and you can add multiple of them so
+before you could only add one minutes and one motions box so that made it kind of hard for
+people to structure their agendas the way that they want it so now you could maybe have your
+minutes your motions if you want to add another minutes underneath it so you could have your
+agenda in your minutes structured the way that you want them to be speakers list tab is pretty
+explanatory I can easily add a speaker make my speakers list active and the more tab posts
+the tasks and the chair comments information so now that we've seen Kelsey oh sorry I have a few
+I have a few questions and then I did I did want to say it is it is two o'clock so we we've hit
+that 30 minute mark if suddenly you have to drop off please feel free to do so but we'll also stay
+here to kind of wrap this up and answer a few more questions maybe for the next like five to
+six minutes so if you are able to say we encourage you sorry for interrupting but Kelsey and Sandra
+we had a few questions that came from once you hit conduct so one of the questions was once we hit
+conduct does it automatically turn the live streaming on no it does not automatically turn
+that on you would have a live streaming button here and you like you click that and a fly out
+would appear similar to the other ones and you'd be able to turn that stream and record toggle on
+yourself okay and then does the stop conducting function impact the live stream my answer would
+be okay sorry stop conducting does not conclude will conclude will automatically stop the stream
+and the record but conducting will not okay give me one second I think there was one more
+apologies trying to answer as many live as we can everyone since we're in the demo
+um okay when you start the meeting do the other admins need to click on stop conducting so I
+wonder if that's multiple admins what they're asking about um if I click start conducting
+and I'm conducting then Sandra said you know I want to run today's meeting she could take
+it over from me there's nothing stopping the system from doing that okay awesome thank you
+sorry those were those were kind of the questions that related to that so I just wanted to jump in
+yeah no problem so I'm going to drag over my other screen here this is the participant view
+so the other one was the admin this is the participant side um you can see that my
+participant of course only has the user role of participant so I've got more of a simplified view
+this is my home page of that meetings list like we saw for the admin but I'm only going to see
+the meetings applicable to myself the navigation on the left hand side here is very simplified
+so we've got meetings any approvals maybe that I'm taking part of resource library tasks and
+reporting but I'm going to refresh my page here because I published this to my participants so
+I'm just going to refresh this and that status is now going to change to published and it's also
+published the internet those are something new that we added so that participants no longer have
+to just see that little green globe I don't think anyone was a fan of that and they can actually
+just see that it's been published so I'm going to click into there and the meeting site I can see
+which one is active so that's great but just to navigate you around here we do have the meeting
+site sorry meeting and session in the top right corner and if I click there I'm also going to be
+able to access closed session only if I have permissions to if I wasn't able to get into
+closed session I wouldn't be seeing that drop down option but over on the left here I've got my
+comments button so this is like a summary of all of the comments that I've made in my meeting site
+so maybe I'm wondering hey where did I leave that comment I forget where I left it I could see the
+item that it's on and I can also clear all of those comments if I didn't want those lingering
+around after the meeting I'm going to close out of there these are my downloaded packages
+these are the packages that the admin first published when they prepared and published
+out to the participants so I can just download this and it goes right to my computer it saves to my
+computer request to speak here this is a change I have the setting turned on for a request to
+speak at any time so the request to speak does not have to be active in order for me to submit
+a request to speak so I can choose to say I'm going to request to speak on just about everything
+and click submit and you'll see my little microphone icon appears next to the item where
+I've requested to speak and that would disappear if the admin marks me as complete maybe they
+deleted my request or if I go to request to speak myself and I go uh never mind I'm just
+going to request to speak on three of those items um on the very right side just like the admin we
+have that announcements area so I'm able to read any meeting announcements that are applicable to
+myself awesome and just so people know these options are configurable in the settings so some
+of you might not use all of these settings like group group comments or whatnot still configurable
+yes just like Sandra said um maybe I don't want my participants to have access to private comments
+or group comments maybe even reading the minutes those things are still configurable
+just like they were in describe five so sorry so someone asked the question of like who will be
+able to see the request to speak um again is that configurable or is there any setting that we need
+um right now it's going to be the participants can submit a request to speak though that's
+voting and non-voting and then as the admin you can also add maybe you had someone from the
+public who wanted to speak so you can add just a name if you type in the name but to manage the
+request to speak right now it's just the admin and then on the roadmap we have the ability for
+the chair to manage that request to speak awesome thank you yeah no problem um yes similar to the
+admin um left side is the agenda navigation right side is more information as you can see here it's
+just um read only and then here I can open or download any attachments that I'd like to see
+I've got my minutes here which are read only and then my comments tab hosting private and group
+comments and maybe chair comments if I was the chair I also have my current item here so if I
+click that current item button it takes me to the one that's active that the admin has that active
+item toggle on um I'm just going to play with my screen here I'm just going to move this one over
+so that I can open a vote and show you what that looks like so we're going to um open up a move
+and second here so you can see what that looks like so I'm going to be on item number one
+and I'm just going to go to my motion here and I'm going to ask for a mover and seconder
+so it's waiting for participants I'm going to click that move button hopefully I get
+added in there thanks Sandra for selecting one looks like I got added so I'm just waiting for
+that seconder that admin is going to select the seconder and that move in second is now over so
+that process closes and you can see that screen updates to show who moved and who seconded
+we're also going to open up a vote here so you can see what that looks like I'm going to click
+open to vote on the admin side and I've got that voting card open up on my screen here so I can see
+who moved who seconded and what that motion text was I'm going to select yes and maybe I say I don't
+really want to vote yes anymore I'm going to click back to voting and I'm going to click no my vote
+submitted successfully and voting is still in progress so I'm just going to go back to voting
+and have that open on my screen on the admin side I'm just going to click in what the other
+participants are going to vote and I'm going to close that vote so you can see my ballot then
+closes and I get that little notification saying hey the vote has now closed I'm going to move my
+participant back over and I'm going to make the admin one back on my screen here so now the admin
+one is on sorry I'm just going to move this one back over so now that we're on the admin side I'm
+going to show you the exact same thing just from the admin side so I'm going to move down to item
+number two maybe I'll make this one active now I'm on my minutes tab and I'm going to scroll down
+here and say okay time to move and second this one so I'm waiting for my participants we're going
+to have a couple people move I can select I don't have automatic mover a second or turn on so I
+want to select them myself I'm going to select Sandra for this one first and I'm going to get
+Jim to move the second one sorry to second over here there we go I want to select Jim
+and that move in second is now closed so my screen is going to update there
+now that I have my mover and seconder I'm going to open that vote
+and we can see all of the voting options there I'm going to select yes as Jim since that's who I'm
+running and everyone else I'll just add in here we go and I'm going to close that vote so once
+that vote's closed it's carried it was a recorded vote I'm going to close this and if I wanted to see
+voting results for that I can easily click on that button and because it was a recorded vote
+your participants will have access to that button as well so they can see what those voting results
+are too lastly I just wanted to show the task area so I'm going to select more on that item
+add a task I'll just do testing task I'm going to assign this to Sandra
+and I'll be really nice and I'll give her oops click the wrong button I'm going to give her
+till the end of summer
+I'll click create and you can see my task is going to appear here on the right hand side
+I can easily add more or I can always edit and delete this task also if I wanted to add a
+conflict of interest here I go to my details and I can easily add a conflict by selecting my voting
+member I'm just going to say this is the reason and I can always edit this later I can also add
+attachments for that conflict of interest and when I click create you'll see that my conflict
+we call them chips appear on the item that it's affecting that name also appears here where I can
+also easily edit or remove that conflict and in that special action the declaration of pecuniary
+interest it also appears as an item underneath it where I can edit that those options as well
+once we are ready to conclude we're happy with the meeting I'm going to click this conclude
+button here and it's going to take me to my concluded state and when you conclude does that
+automatically list all the attendees as out in the roll call yes it does if I were to click on my
+roll call here and I want to click in you can see that I've got the time for in and then my time
+for out as well so it automatically marks everybody out now my next step here is to go to my packages
+so I'm going to want to prepare my post agenda so I'm going to let that prepare and maybe I want
+to go to my minutes and I may as well prepare that as well so that just takes a minute to prepare
+you can see my post agenda has already been done I'm just going to check on my minutes
+it's preparing it'll be there just in a second so I'm going to go over to my publish tab
+if I wanted to I could publish that information out to my participants but I'm really anxious
+to get that out on my internet publishing site so that the public has access to it so I'm not
+concerned about my agenda maybe my post agenda and I'm just going to publish my pdf today
+my post minutes as well I'm going to decide to publish the pdf I've got those two documents out
+there and I'm just going to refresh my internet publishing site since I just did that and it's
+going to appear on the 17th I've got my minutes I don't have my agenda I'm just going to try that
+again I'll just unpublish and publish that
+just takes a second sometimes
+it was successfully unpublished let me try the full package here just publishing that pdf one
+more time if I refresh that I should click into that and be able to see that perfect okay we've
+run through the meeting process if anybody else has any questions please drop them in the Q&A and
+like Megan said we'll be able to get those answered and over to you back to you thanks Megan
+yeah thank you so yeah Kelsey if you want to go ahead and stop screen sharing we can go ahead and
+do that there were a lot of questions that came in so thank you all please go ahead we're probably
+only going to be here for another few minutes I think we have a few questions that we can answer
+but if there's anything else please put them in the chat we always encourage everyone to reach
+out if you want a specific demo to reach out to your CSM I know these sessions go by really fast
+but if you schedule a demo for six they will walk through each little individual thing with
+you I see Sandra smiling and nodding so just wanted to call that out one question that did
+come in I know we've kind of touched on it a few times today but Oscar if you want to take this one
+is WAPI in eScribe 6 now the answer is no so right now WAPI is not in eScribe 6 what does that mean
+um you know we're we're working on a timeline to to work WAPI in um and the way eScribe 6 is
+as it stands today document collaboration still works it's just that it's on the windows
+machines doesn't work on Macs right okay okay thank you and then um this will be our last
+question today um again this recording will be shared out with everyone we have a handful
+of resources available on the customer community portal for you um again schedule time with your
+CSM but uh Oscar again kind of answered it but who is the best or where is the best resource for me
+to get more information on document collaboration WAPI anything else in the future that that kind of
+comes up as a question or concern yeah so we will be sending out as I mentioned there'll be um you
+know um detailed communication put into the resource folder it's going out as part of this
+you know the communication that goes out after the webinar but I moving forward if there's any
+questions any concerns please please work through your CSMs you know there's been certain customers
+too that products gotten involved and and met with um so if there are any concerns please work
+through your CSM and we'll get get your questions answered to you as as soon as possible
+um well thank you all I know this session went a little over this time um but really we do
+appreciate your time we appreciate your questions be on the lookout for the follow-up communication
+um coming hopefully within the next 24 hours or so um and we'll make sure to also send you
+the registration link for the upcoming session uh for July so on that note we'll go ahead and
+end the session and thank you all for speaking again appreciate your time as well
+awesome thanks guys take care

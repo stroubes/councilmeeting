@@ -43,7 +43,7 @@ export interface ReportAttachmentRecord {
   fileName: string;
   mimeType?: string;
   sizeBytes?: number;
-  sourceType: 'SHAREPOINT';
+  sourceType: 'SHAREPOINT' | 'LOCAL';
   sourceSharePointSiteId?: string;
   sourceSharePointDriveId?: string;
   sourceSharePointItemId?: string;

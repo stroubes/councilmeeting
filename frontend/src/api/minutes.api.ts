@@ -1,5 +1,6 @@
 import { httpGet, httpPatch, httpPost } from './httpClient';
 import type { MinutesContent, MinutesRecord } from './types/minutes.types';
+import type { PaginatedResponse } from './types/pagination.types';
 
 export function listMinutes(meetingId?: string, isInCamera?: boolean): Promise<MinutesRecord[]> {
   const params = new URLSearchParams();
@@ -7,6 +8,21 @@ export function listMinutes(meetingId?: string, isInCamera?: boolean): Promise<M
   if (isInCamera !== undefined) params.set('isInCamera', String(isInCamera));
   const query = params.toString() ? `?${params.toString()}` : '';
   return httpGet<MinutesRecord[]>(`/minutes${query}`);
+}
+
+export function listMinutesPaged(params?: {
+  meetingId?: string;
+  isInCamera?: boolean;
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<MinutesRecord>> {
+  const query = new URLSearchParams();
+  if (params?.meetingId) query.set('meetingId', params.meetingId);
+  if (params?.isInCamera !== undefined) query.set('isInCamera', String(params.isInCamera));
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+  const queryString = query.toString();
+  return httpGet<PaginatedResponse<MinutesRecord>>(`/minutes/paged${queryString ? `?${queryString}` : ''}`);
 }
 
 export function createMinutes(payload: {
@@ -17,7 +33,7 @@ export function createMinutes(payload: {
   return httpPost<MinutesRecord, typeof payload>('/minutes', payload);
 }
 
-export function updateMinutes(minutesId: string, payload: { contentJson?: MinutesContent; richTextSummary?: Record<string, unknown>; note?: string }) {
+export function updateMinutes(minutesId: string, payload: { contentJson?: MinutesContent; richTextSummary?: string; note?: string }) {
   return httpPatch<MinutesRecord, typeof payload>(`/minutes/${minutesId}`, payload);
 }
 

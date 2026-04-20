@@ -5,6 +5,7 @@ import { Public } from '../core/decorators/public.decorator';
 import { CreatePublicSubscriptionDto } from './dto/create-public-subscription.dto';
 import { UpdatePublicSubscriptionDto } from './dto/update-public-subscription.dto';
 import { PublicPortalService } from './public-portal.service';
+import { PaginationQueryDto } from '../types/pagination-query.dto';
 
 @Controller('public')
 export class PublicPortalController {
@@ -23,9 +24,21 @@ export class PublicPortalController {
   }
 
   @Public()
+  @Get('meetings/paged')
+  meetingsPaged(@Query() query: PaginationQueryDto) {
+    return this.publicPortalService.listMeetingsPaged(query);
+  }
+
+  @Public()
   @Get('agendas')
   agendas() {
     return this.publicPortalService.listAgendas();
+  }
+
+  @Public()
+  @Get('agendas/paged')
+  agendasPaged(@Query() query: PaginationQueryDto) {
+    return this.publicPortalService.listAgendasPaged(query);
   }
 
   @Public()
@@ -35,9 +48,21 @@ export class PublicPortalController {
   }
 
   @Public()
+  @Get('reports/paged')
+  reportsPaged(@Query() query: PaginationQueryDto) {
+    return this.publicPortalService.listReportsPaged(query);
+  }
+
+  @Public()
   @Get('minutes')
   minutes() {
     return this.publicPortalService.listMinutes();
+  }
+
+  @Public()
+  @Get('minutes/paged')
+  minutesPaged(@Query() query: PaginationQueryDto) {
+    return this.publicPortalService.listMinutesPaged(query);
   }
 
   @Public()

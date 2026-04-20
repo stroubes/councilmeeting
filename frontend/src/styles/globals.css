@@ -49,6 +49,11 @@
   --info: #0b62a3;
   --focus: #1455a9;
 
+  /* === Meeting type badge tokens === */
+  --meeting-type-text: #334155;
+  --meeting-type-bg: #f1f5f9;
+  --meeting-type-border: #cbd5e1;
+
   /* === Status badge tokens — derived from semantic colors === */
   --status-draft-text: #465466;
   --status-draft-bg: #edf2f8;
@@ -1277,6 +1282,21 @@ a:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 700;
+}
+
+.meeting-type-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--meeting-type-border);
+  background: var(--meeting-type-bg);
+  color: var(--meeting-type-text);
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .status-draft {

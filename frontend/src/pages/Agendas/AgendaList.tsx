@@ -16,7 +16,10 @@ import {
   deleteAgenda,
   deleteAgendaItem,
   listAgendas,
+  getAgendaVersionHistory,
   publishAgenda,
+  runAgendaBulkAction,
+  runAgendaScheduledSweep,
   rejectAgenda,
   reorderAgendaItems,
   submitAgendaForDirector,
@@ -145,6 +148,8 @@ export default function AgendaList(): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isActionPending, setIsActionPending] = useState<string | null>(null);
   const [agendaToReject, setAgendaToReject] = useState<AgendaRecord | null>(null);
+  const [versionHistoryAgenda, setVersionHistoryAgenda] = useState<AgendaRecord | null>(null);
+  const [versionHistoryRows, setVersionHistoryRows] = useState<Array<Record<string, unknown>>>([]);
   const [rejectReason, setRejectReason] = useState('Requires revisions for compliance and clarity.');
   const [searchParams, setSearchParams] = useSearchParams();
   const { addToast } = useToast();
@@ -154,6 +159,7 @@ export default function AgendaList(): JSX.Element {
     title: '',
     templateId: '',
   });
+  const agendaDraftStorageKey = 'agendas.createDraft.v1';
 
   const [createItemForm, setCreateItemForm] = useState({
     itemType: 'STAFF_REPORT',
@@ -199,6 +205,27 @@ export default function AgendaList(): JSX.Element {
       setCreateForm((current) => ({ ...current, meetingId: meetings[0].id }));
     }
   }, [meetings]);
+
+  useEffect(() => {
+    try {
+      const storedDraft = localStorage.getItem(agendaDraftStorageKey);
+      if (!storedDraft) {
+        return;
+      }
+      const parsedDraft = JSON.parse(storedDraft) as Partial<typeof createForm>;
+      setCreateForm((current) => ({ ...current, ...parsedDraft }));
+    } catch {
+      // Ignore malformed draft payloads.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(agendaDraftStorageKey, JSON.stringify(createForm));
+    } catch {
+      // Ignore browser storage restrictions.
+    }
+  }, [createForm]);
 
   useEffect(() => {
     if (searchParams.get('quick') === 'new-agenda') {
@@ -317,6 +344,7 @@ export default function AgendaList(): JSX.Element {
       });
       setIsCreateOpen(false);
       setCreateForm({ meetingId: '', title: '', templateId: '' });
+      localStorage.removeItem(agendaDraftStorageKey);
       await loadAgendas();
       addToast('Agenda created successfully.', 'success');
     } catch {
@@ -568,6 +596,77 @@ export default function AgendaList(): JSX.Element {
     }
   };
 
+  const handleBulkSubmitVisible = async (): Promise<void> => {
+    const draftAgendaIds = pagedAgendas
+      .filter((agenda) => agenda.status === 'DRAFT' || agenda.status === 'REJECTED')
+      .map((agenda) => agenda.id);
+    if (draftAgendaIds.length === 0) {
+      addToast('No visible draft agendas to submit.', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const summary = await runAgendaBulkAction({ agendaIds: draftAgendaIds, action: 'SUBMIT' });
+      await loadAgendas();
+      addToast(`Submitted ${summary.succeeded}/${summary.requested} agendas.`, summary.failed.length > 0 ? 'error' : 'success');
+    } catch {
+      setError('Could not run bulk submit.');
+      addToast('Could not run bulk submit.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkPublishVisible = async (): Promise<void> => {
+    const approvedAgendaIds = pagedAgendas.filter((agenda) => agenda.status === 'APPROVED').map((agenda) => agenda.id);
+    if (approvedAgendaIds.length === 0) {
+      addToast('No visible approved agendas to publish.', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const summary = await runAgendaBulkAction({ agendaIds: approvedAgendaIds, action: 'PUBLISH' });
+      await loadAgendas();
+      addToast(`Published ${summary.succeeded}/${summary.requested} agendas.`, summary.failed.length > 0 ? 'error' : 'success');
+    } catch {
+      setError('Could not run bulk publish.');
+      addToast('Could not run bulk publish.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRunScheduledSweep = async (): Promise<void> => {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const summary = await runAgendaScheduledSweep();
+      await loadAgendas();
+      addToast(`Scheduled sweep published ${summary.published} agenda items.`, 'success');
+    } catch {
+      setError('Could not run scheduled publication sweep.');
+      addToast('Could not run scheduled publication sweep.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenVersionHistory = async (agenda: AgendaRecord): Promise<void> => {
+    setError(null);
+    try {
+      const rows = await getAgendaVersionHistory(agenda.id);
+      setVersionHistoryAgenda(agenda);
+      setVersionHistoryRows(rows as Array<Record<string, unknown>>);
+    } catch {
+      setError('Could not load agenda version history.');
+      addToast('Could not load agenda version history.', 'error');
+    }
+  };
+
   interface SortableItemProps {
     item: AgendaItemRecord;
     isSubmitting: boolean;
@@ -716,6 +815,15 @@ export default function AgendaList(): JSX.Element {
                 <option value="desc">Descending</option>
                 <option value="asc">Ascending</option>
               </select>
+              <button type="button" className="btn" disabled={isSubmitting} onClick={() => void handleBulkSubmitVisible()}>
+                Bulk Submit Visible
+              </button>
+              <button type="button" className="btn" disabled={isSubmitting} onClick={() => void handleBulkPublishVisible()}>
+                Bulk Publish Visible
+              </button>
+              <button type="button" className="btn btn-quiet" disabled={isSubmitting} onClick={() => void handleRunScheduledSweep()}>
+                Run Scheduled Sweep
+              </button>
             </div>
           </div>
           {isLoading ? <p className="muted">Loading agendas...</p> : null}
@@ -761,6 +869,9 @@ export default function AgendaList(): JSX.Element {
                       <div className="page-actions">
                         <button type="button" className="btn btn-quiet" onClick={() => openItemDrawer(agenda)}>
                           Items
+                        </button>
+                        <button type="button" className="btn btn-quiet" onClick={() => void handleOpenVersionHistory(agenda)}>
+                          History
                         </button>
                         {agenda.status === 'DRAFT' || agenda.status === 'REJECTED' ? (
                           <button
@@ -1184,6 +1295,46 @@ export default function AgendaList(): JSX.Element {
             </button>
           </div>
         </form>
+      </Drawer>
+
+      <Drawer
+        isOpen={Boolean(versionHistoryAgenda)}
+        title="Agenda Version History"
+        subtitle={versionHistoryAgenda ? `Version snapshots for ${versionHistoryAgenda.title}` : 'Version snapshots'}
+        onClose={() => {
+          setVersionHistoryAgenda(null);
+          setVersionHistoryRows([]);
+        }}
+      >
+        {versionHistoryRows.length === 0 ? (
+          <p className="muted">No snapshots recorded for this agenda yet.</p>
+        ) : (
+          <div className="table-wrap">
+            <table className="data-table" aria-label="Agenda version history">
+              <thead>
+                <tr>
+                  <th>Version</th>
+                  <th>Status</th>
+                  <th>Changed By</th>
+                  <th>Changed At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {versionHistoryRows.map((row, index) => {
+                  const rowId = String((row.id as string | undefined) ?? `history-row-${index}`);
+                  return (
+                    <tr key={rowId}>
+                      <td>v{String(row.version ?? '—')}</td>
+                      <td>{String(row.status ?? '—')}</td>
+                      <td>{String(row.changed_by ?? 'system')}</td>
+                      <td>{row.changed_at ? new Date(String(row.changed_at)).toLocaleString() : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Drawer>
     </AppShell>
   );

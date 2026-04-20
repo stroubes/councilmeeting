@@ -1,0 +1,478 @@
+Hello and welcome everyone to our webinar today for eScribe 6.
+Today we're going to be talking through some product updates and information and really
+focusing on a demo of documents and approvals.
+So let's go ahead and get started.
+So just wanted to post this in here so everyone knew that we had another upcoming session
+on September 26th and we'll be talking through enhancing public meetings, practical tips
+and strategies for clerks.
+So we'll make sure to include that in our follow up email.
+We've also added in this disclaimer really just calling out that these sessions are
+meant for us to inform you and we just really hope that any information that's presented
+that you guys feel comfortable following up with us and keeping it between this group.
+So let's get started. So let's meet your speaker.
+So for today we have Taylor, Kelsey, Geeta and then myself, Megan, who's here to moderate
+this conversation.
+Some quick housekeeping, all participants are automatically muted.
+Please submit your questions in the Q&A section.
+As always, we'll do our best to answer as many questions as we can during this session.
+We may not get to all, but we'll make sure your CSM follows up with you.
+And today's recording will be shared via email and then also posted in the community
+portal. And then please take time to complete our post webinar survey that will pop up at
+the end. Your feedback, as always, is very important to us.
+And then our special note, just a reminder, these webinars are not meant to be training
+sessions, just meant to be informative sessions.
+So for today's agenda, we're going to do a reminder of what is eScribe 6 as we have been
+doing a quick recap of the August webinar.
+Have an update from product.
+We have a few poll questions today and then we're going to dive into a demo of documents and
+approvals with hopefully leaving some time at the end for Q&A.
+So what is eScribe 6?
+eScribe 6 is an improved version of eScribe that is faster, more user friendly and
+modernized. Really leaning into why eScribe 6, we heard your feedback, wanting fewer
+bugs, more feature improvements, releases, improved speed performance and usability.
+Really just reiterating this, that things will be ever evolving as it relates to 6.
+So we'll do our best to keep you in the loop.
+And our quick recap of our August 21st webinar, that was a focused demo of tasks and
+reporting. In that session, our product team gave us an update on the state of the product
+for eScribe 6, a state of upgrades as it relates to eScribe 6.
+And then we shared the eScribe 6 roadmap, looking at our now, next and upcoming items.
+Again, we gave that demo of tasks and reporting.
+Again, thank you all for submitting your questions and recommendations during this
+webinar. We're hoping to put those into practice.
+And then again, you can always view all webinar recordings in the community portal.
+Now, after I take a breath, I will pass it to Taylor to give us an update for product.
+Awesome. Thanks, Megan.
+So a little bit about the state of the product.
+I know we shared last month that we were making some additional investments in eScribe 6
+to really expedite our development efforts and some of our roadmap items.
+So I'm just going to start with that topic specifically.
+So we've actually added a specialized development team.
+Their goal is to help fast track some of those high value roadmap items, some of the
+ones we shared on last month's webinar.
+The team just began work this month.
+Once they kind of get ramped up over the next couple of weeks, we're really hoping they
+can start accelerating some of our progress on some of these items.
+The first one the team is working on is going to be graphical vote display and some
+updates on some custom configurations to how your voting screen looks with different
+images, configurations and setups.
+So as we make progress on that first kind of roadmap feature that would be that's being
+fast tracked, we'll come back in future webinars to actually give you a demo of how
+it looks and we'll continue to do that with other features as they're developed by that
+team. On the eScribe 6 progress front, we have our first set of new customers coming
+live on the platform this month in October.
+So based off of their feedback, we'll obviously help decide some further direction on
+what we're going to focus on on eScribe 6.
+You know, the one other piece that I'll mention too is we're not making any sort of
+upgrades to any customers at this time from five.
+So go to the next slide, Megan.
+So just as a quick reminder, right, we covered this on last month's webinar.
+But from a state of the upgrade perspective, we're not making any upgrades this year at
+this time. Our mantra has always been that eScribe 5 works perfect.
+It does no harm. We're not going to basically force you into a product that you're
+not ready for. So we're going to continue to obviously keep this group up to date on
+where we are with the upgrades.
+Internally on the eScribe 6 side, we're going to be doing some additional testing on the
+upgrades with existing customers to make sure that obviously the upgrades will work
+properly with data that we're moving and how eScribe 5 currently functions for different
+customers. So just as a little reminder, right, we're not going to start any upgrades this
+year whatsoever. We covered that on last month's webinar.
+We're obviously committed to making sure that your upgrade experience is as seamless as
+possible. So and as I mentioned, we'll keep you up to date in future webinars this year on
+where we stand with the actual with the upgrade timelines too.
+So any additional questions, feel free to reach out to your CSM if you have any specific
+upgrade related questions or anything related to any timeline concerns on the actual
+upgrades, feel free to reach out to your CSM.
+Awesome. I'll pass it back to Megan.
+Thanks, Taylor. So we have two poll questions today that will kind of help us guide our
+demos. So for the first question, on average, how many users typically work on a document at
+the same time? So if you guys want to take a quick second, submit that information.
+OK, thank you all. OK, that's great information.
+So our biggest area is two to three. Thank you guys for submitting that.
+And then I'll go ahead and click us to the next question.
+How does your organization typically approve a report or document in eScribe?
+And thank you, as always, for your participation in these.
+They do help us kind of guide these sessions and future sessions.
+So thank you.
+OK, so through workflow.
+OK, good information to know.
+Thank you all for participating.
+And with that, I will go ahead and pass it to Kelsey to stop screen sharing.
+There we go. Excuse me.
+There we go. Thanks, Megan.
+Sorry, Kelsey, I was looking for my stop screen share button.
+That's OK. Thanks.
+I'm just going to walk through some of the documents pieces here.
+I'm going to take you through the templates and the settings area, and then Gita will
+cover the rest of the documents list.
+So here I'm logged in as a super admin so I can see just about everything.
+And I'm going to navigate over to my menu and hit the document template area.
+This is where all of your Microsoft Word document templates would be hosted.
+And you can see here easily create a new template by uploading your document from your
+computer into the system and you can name that.
+We also kept the settings where you can restrict those templates to a certain meeting
+type. So not every meeting type will be able to use the same document template over and
+over again. And you can also do the same for your departments, just making it easier to
+filter through and less of a time waster there trying to figure out who can use what.
+So you can see there that you can do the multi select.
+And if I want to get rid of some, you can easily just click that X to do that.
+And I'll just cancel out of this screen and you can easily edit a template or even
+deactivate a template. So that's not even an option for your contributors or your
+admins when you're setting up documents or you can edit it.
+And you'll see it's the same screen as that create template area where you can easily
+remove that template that's already in the system or you can replace it by uploading
+something from your computer.
+So I'll close out of there. It's a pretty simple page, and I'm going to go over to my
+document settings, document settings, host the universal document settings and even
+some approval settings. So there's three sections here to run through document
+settings, approval settings and then document numbering, since it's a bit larger, has
+its own section. If I go to edit the document settings, you can see here the first
+one is allowed documents to be uploaded.
+This just means if I turn this off, you wouldn't be allowed to upload documents into
+that documents list. You'd have to create them right from the scribe.
+So I'll leave that on. And same with the meeting date as required, you wouldn't be
+able to create a document without filling out that meeting date first.
+Confidential reasons, you can add as many as you like by putting a reason in here.
+Testing out and just add the reason.
+And when you have a closed session document, you can choose any of these
+reasonings here so that you can say why that document is a confidential document.
+And the last, second last part here is the approval settings.
+You can change these settings per approval as well.
+So this is just a universal area for these settings.
+So set the pending approval document as read only.
+That means that any document that's in draft will be read only, so no one will be
+able to edit it except for that super admin setting the approved document as read
+only. Again, any document that's been approved in the system would be read only.
+Nobody can touch it except for certain users like the super admin and then
+including that signature page.
+Again, you can choose this per approval and that's when the document has been
+approved. It's run through a workflow and that signature page is added to the very
+end of that document with signatures.
+And the I believe it's the times that the users have approved that document.
+And late items and mid-approval late items, they're pretty similar.
+So there's three options there for allow the late items to be submitted, which
+means that even if they are late, they're allowed to be run through an approval.
+If I don't allow that, it means that the deadline has passed and I'm not allowed to
+start an approval whatsoever.
+So I'd have to go and change my meeting date and the required exception approval
+is basically it's allowed, but it has to be run through a special exception
+workflow first and then it can run through its regular workflow.
+Very similar idea here for the mid-approval late items, allow, cancel and
+require. Allow means that it wouldn't matter.
+It's allowed. Cancel approval request would be that approval workflow is
+basically canceled on the spot and it'd have to be set up and run through a new
+one. And the require exception approval would be again, it would have to run
+through an exception approval in the middle of your normal approval and then
+go back to that normal approval.
+I'll just close out of there.
+And the last spot to cover is the document numbering.
+So you can enable document numbering for your whole system right here at this
+toggle. You can also configure the sequence number by clicking in here.
+And there's three categories here, the sequencing category, which I can choose
+department name, the branch, meeting type, meeting year, the month and the
+current year. You can choose another additional sequencing category.
+Same idea with the same options there.
+And you can also choose how many digits you want that number to be, if you want
+it to be one, two, up to nine digits there.
+I'll just cancel out of that.
+We also have the option for you to append that document number to the document
+name and an area for you to edit that numbering format where you can choose the
+sequencing number and also enter any other variables that you'd like selected.
+At the bottom here, the sequence number allows you to see what the count is for
+the different meeting types when you assign that document number out.
+And let's say a new year starts and you want to you have maybe the year as part
+of your document number, but you want to reset the number.
+You can also come here and reset that back to one so that you have a new year
+and a new set of numbers for your documents.
+And with that, I'll pass it over to Geeta and she'll take you to the documents list.
+Oh, you're just on mute, Geeta.
+Hello, everyone. Nice to meet you guys all again.
+I am your customer education specialist at eScribe.
+So you've probably met me either in a workshop or you've heard my voice
+through the eScribe Academy.
+What I'm going to do now is I'm going to show you the documents portion
+in version five to eScribe five today.
+We refer to it often as the report manager module.
+We've changed the wording slightly for eScribe six
+and we'll refer to it as the document manager.
+Same idea, we're just trying to work away from the word report
+and change it to become documents as it's a little more of a universal label.
+Now, on the left hand side in the navigation, very much the same
+as you see it today in eScribe five, we have a documents list.
+The good change with the screen you can see up here is that we've made it
+very clear now that you can see easily which items are in the draft mode
+and which ones are approved.
+If you can think back to your eScribe five platform today,
+we have them in separate spots.
+Here we put them together in the same screen.
+So less confusion about what is in progress or what's the difference
+between the menu options.
+Now, the view you see here on my screen as an administrator
+is exactly the same as your staff will see when they log in
+to write a report through eScribe as well.
+They have the same draft tab and they have the same proof tab.
+So it's very clear to see what is in what state and where it's assigned.
+One side note I did want to mention, and I used to get this question
+a lot in training is, can we change the word rejected
+because we thought it wasn't as nice?
+So some of the status labels have changed and you'll see the words become declined
+instead of rejected throughout this portion of the document center.
+Now, I'm going to start over to the right hand side just quickly,
+and you'll see there's a new document button, same as we have today.
+It's replacing the plus icon.
+Now, within eScribe six, there's actually three ways,
+depending on how you would like to configure your instance of eScribe
+to allow staff to submit a document to you.
+You can choose the create document option, which is using an approved template,
+which is tagged to extract the title, the description,
+your recommendation, meeting dates, meeting types and sponsors.
+So that's that's all new.
+Then we have the upload function that Kelsey mentioned.
+Works exactly the same.
+The difference is it allows you to take a document
+already created outside of eScribe and bring it into eScribe.
+And we will still manage the tagging for that.
+So it will still extract your titles, the description,
+recommendation, all the content that you need.
+And then one more section I just want to mention really quick
+is over to the left as admins where we have agenda items in the toolbar.
+This will locate this will show you all of the requests
+that have been made by staff.
+So anyone who wishes to request an item appear on the agenda,
+but it's not tied to a document template per se
+or a drafted document outside of the system.
+So just give you a little bit of recap on those three ways.
+Now, you'll see on my draft tab, I have a list of documents already created here.
+And I'm going to go over to the far right hand menu.
+And we call this your options menu with the three dots.
+And this shows you all of the functionality available as an admin today
+when you're drafting your document.
+You can open it in Word the same as we do today.
+You can change the properties of that document today.
+You can move your document from a draft state
+or an override to an approval request.
+You can approve the document automatically as an admin.
+You can see the approval history,
+share the documents with other users and other departments.
+Version history has stayed the same.
+One that's slightly changed is the copy link feature.
+If any of you have used it today, right now, the copy feature allows you
+to send an email to other users,
+letting them know that they have access to the document in eScribe.
+Here, we've changed it.
+So it's just a regular link that you can copy, paste.
+You can share it in email and a Teams chat just to make it a little easier.
+We've kept the functionality of duplicating a document.
+That's not changed.
+And then deleting a document.
+On the approve tab, you'll see here we have our document that's completed.
+And we also have the same options menu.
+What differs slightly in the approve tab is we're giving you the option
+to move that document back to draft for any reason.
+So if something has changed and it doesn't necessarily go back
+through an approval request, you have the option as an admin to move it back to draft.
+Now, I'm going to take a document I already have open
+and I want to walk you through what has changed.
+So you probably heard me mention content tags
+and titles and descriptions and recommendations.
+With eScribe 6, when a report is drafted,
+the fields that your staff will fill in
+which are meeting types, meeting dates, departments, perhaps a sponsor.
+We're going to bring those into the documents when you are rolled into version six.
+So it's one or two or three less fields that your staff will have to retype
+if the template is going to extract that content.
+Hey, Geeta, sorry to interrupt you.
+Are you wanting to share the Word document or?
+OK, you're sharing the eScribe page right now.
+Don't worry, it didn't take it. Just one second.
+No, you're fine. Just wanted to let you know.
+So we didn't have confusion.
+No, that's OK. Sorry.
+It just didn't register. How about now?
+Yeah, perfect. Yeah.
+OK, sorry about that. So there's my Word document.
+It's very similar to ones that you guys have seen before.
+The difference is we've introduced different title tags to or title tag
+will come over, a title in French would be extracted.
+Now, what's going to happen slightly is that there are some fields
+that will come from eScribe into the Word document.
+And those are going to be those popular ones that we get asked a lot.
+So meeting type, department, meeting date, sponsor.
+But from the Word document itself, we're still going to send over the title,
+whether it's English or French.
+We'll still bring over the description for you if it populates on the agenda
+and as well as the motion in English and French.
+And then for those customers that have document numbering
+or what we refer today as automatic report numbering,
+that can also be pulled from eScribe into the Word document automatically.
+So we're changing slightly how the tags are used.
+We won't be supporting a functionality called Quick Parts,
+but tags would be built into your templates using the developer tab
+by inserting rich text control boxes.
+And all of this training we will provide to you when you're ready for training,
+whether it's through myself or Viola or through the eScribe Academy,
+we'll make sure that you're covered with how to complete all of these steps
+on your own.
+And then down here at the bottom, here's the meeting date value.
+So you can see I didn't type it in, we brought it over.
+Meeting type, same, didn't type that.
+And the department.
+Now, one thing I didn't want to mention is if within eScribe,
+the actual document properties change, it will also change in the Word document.
+So there's nothing that staff will have to do twice or refresh.
+We will take care of making sure that the data feeds
+from your eScribe report properties back into the Word document as it's changed.
+One of that last thing I want to mention,
+when it comes to collaboration within the Word document,
+that is a supported function.
+So based on the poll today that you had entered,
+we can see there's generally two to three people who would collaborate on a document,
+whether that's track changes, commenting or actual collaboration
+that is still supported in the sense that if we have two people
+making edits together and we save the document,
+it will let us know that there is another user who is working with us
+and what those changes are within the document.
+That ensures that the changes are made in real time
+and anyone that has access to that can always go back to look at that
+through the version history.
+Now, the only one thing that I didn't mention just briefly here
+is for anyone that chooses to use a signature page,
+we would still, we still support that with eScribe 6,
+a signature page is appended at the end of your document
+and it would show you who has signed off on the document itself.
+So if you opt to show a digital signature
+and their name on the signature page as well,
+and that would be carried into your agenda package as it is today.
+All right, Megan, are there any questions here before I take them back to you?
+We had one question.
+So if you want to answer this, Geeta or Kelsey,
+if you want to jump in, that's fine too.
+So the question came from Leslie asking for the upload document option.
+Does this integrate with a user's local document management system,
+local document management system, i.e. SharePoint, OpenText, E-Docs?
+Based on what I'm seeing here today, this, when I did upload document,
+this took me right back to my drive on my desktop.
+OK, so the next, the follow up question was,
+if so, does it maintain a link to that document in the document manager?
+i.e. changes made to the doc in eScribe are applied to the doc.
+Correct. That's right.
+So if I selected upload document and I picked a document from my desktop,
+it builds it exactly the same.
+The only difference is it's not asking us for a template.
+We're just uploading an approved document.
+And it keeps all of the same characteristics
+had I drafted it using an approved template.
+So all of the properties are the same.
+The characteristics would be the same.
+It's just a different way of loading your document into eScribe.
+OK, Leslie, let us know if we didn't answer your question or if we did.
+And we can try to rephrase it a little bit if need be.
+And then there was one more that came in, Geeta.
+Leslie said, all good. So perfect. Thank you, Geeta.
+And then the other question that came in is,
+how is best to view all documents going to one meeting
+if some are approved and some are in draft?
+OK, at the top of the documents list, you have a draft tab
+and then there's a filter drop down.
+So you can choose by meeting type,
+meeting date, the deadline and the approval status.
+So that same filter is there on the approved tab as well,
+except this time it's meeting type and meeting date.
+OK. You know, for that one, could you also use the forecast report
+and then just filter the meeting date to see all documents
+going into that meeting? We could.
+That would be all that's right.
+Versus just a specific status versus reports.
+The question, the follow up question came.
+So then they show on two tabs instead of just one.
+I'm guessing the question is for if it's like if some are in draft
+and if some are in approved. Correct.
+You're going to have two separate tabs. OK.
+Our approval status there only has draft in progress,
+pending exception, declined in Kansas.
+OK. And then we had one more come in really fast.
+Do the filters stick even when you log out like they do now?
+That's a good question. Kelsey, do you know that one?
+I may have to go check that one.
+Give me one moment. I believe they do.
+Good question.
+OK, I have one last thing I just want to show.
+I just showed you very briefly, but let's take an approved report
+that's on the approved tab.
+So we'll take our financial considerations report
+and using the options menu now, you'll see there's two options
+we've introduced.
+One is called attached to new agenda item.
+It's the same functionality as it is today with the Ascribe Five.
+We've changed the label.
+And instead of it being called create agenda item,
+we've called it attached to agenda item.
+Works exactly the same.
+It will extract your title, your descriptions, your sponsors
+and any supporting documents and create that item on the agenda.
+The other one, just to clarify, the wording is called attached
+to agenda item very much the same as we have today, where we attach it
+to an agenda item that already exists within the meeting.
+So we're not asking for the name of the document.
+We're just simply asking you where would you like it to go?
+And then it will carry over any supporting documents
+plus the report itself.
+OK, anything else, Gita, that I think that's enough.
+OK, well, yeah, I know.
+Thank you. And thank you for everyone for submitting questions.
+And thank you both for answering.
+I just really fast before I know we're getting close to time.
+But if anybody has any other questions, please go ahead
+and put those in the Q&A.
+Even if we aren't able to answer them in the next few minutes,
+like I said, we'll make sure your CSM follows up with you.
+But we did have a few more come in.
+So really fast, Kelsey did reply and said, yes, the filter stick,
+even when you log out like they do now.
+So just wanted to let everyone know the answer to that.
+Thank you, Kelsey.
+And then we had two more questions come in that I think we have time
+to potentially answer both, and then we'll go ahead and wrap up for today.
+So a question that came in was, can you show
+how report numbers would be assigned? Sure.
+Can they be assigned by department or would it just be one numbering list
+for the whole organization?
+OK, so very good question.
+So you have options now with eScribe6.
+You can choose to create a global counter, which would be your year
+and then your sequence where some reports can have a number assigned.
+So let me show you that here.
+So in the creating of a new document,
+click to assign is not a required field, as it is today in eScribe6.
+So for those reports that don't necessarily need a number,
+you can still create the report as normal,
+but it'll only be assigned where you need it to be assigned.
+Now, for the document settings piece here on the left,
+we go to document settings under document numbering.
+We can configure with you how you want your sequence to be laid out.
+So if you wanted it to be done instead of a meeting year,
+you can choose the department name.
+So department name, perhaps the year is very common.
+And then the number of digits that make up that sequence.
+So, for example, if it's finance, 2024,
+0004, that's a copy of an automatic document numbering.
+If you choose to do something that's a global sequence
+where it automatically picks up the next number,
+then in this case here, you would have your first sequence as a meeting year,
+no middle sequence, and we'll just change maybe that sequencing to three.
+So in this case, you would have 2024, 001002 and sequential.
+Hopefully that helped and answered the question.
+I mean, I think it did. I apologize.
+OK, we have one more question and then, like I said, we'll go ahead and wrap it up.
+I know we're at time, but the question came in for uploading documents.
+Does this mean that in eScribe 6, staff members will not be required
+to select and use a preloaded template?
+Correct. That's right.
+So with the upload function, it's the same thing in eScribe 5.
+You don't have to use the approved template.
+The request is simply that the template that you do distribute to staff,
+we want to make sure that it is the most recent and it is tagged properly as per your setup.
+OK, well, hopefully we answered, I think, all the questions that came in via Q&A.
+So, again, thank you all for submitting those.
+If for some reason you have more questions, feel free to reach out to your CSM.
+But thank you all for joining and we will hopefully see you in October.
+Have a good rest of your day. Bye bye.

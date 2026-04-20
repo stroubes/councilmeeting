@@ -9,6 +9,7 @@ import {
   previewPublicSubscription,
   updatePublicSubscription,
 } from '../../api/public.api';
+import { searchContent, type SearchResult } from '../../api/search.api';
 import type {
   PublicMeetingPackage,
   PublicSubscriptionPreview,
@@ -18,6 +19,7 @@ import type {
 import type { MeetingRecord } from '../../api/types/meeting.types';
 import AppShell from '../../components/layout/AppShell';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
+import MeetingTypeBadge from '../../components/ui/MeetingTypeBadge';
 import StatusBadge from '../../components/ui/StatusBadge';
 
 function formatDateTime(value: string): string {
@@ -62,6 +64,9 @@ export default function PublicPortal(): JSX.Element {
   const [packageQuery, setPackageQuery] = useState('');
   const [packages, setPackages] = useState<PublicMeetingPackage[]>([]);
   const [expandedPackageMeetingId, setExpandedPackageMeetingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -168,6 +173,24 @@ export default function PublicPortal(): JSX.Element {
       setPackages(packageData);
     } catch {
       setError('Could not search public meeting packages.');
+    }
+  };
+
+  const handleGlobalSearch = async (): Promise<void> => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    setError(null);
+    try {
+      const result = await searchContent({ q: searchQuery.trim(), type: 'all', limit: 20, page: 1 });
+      setSearchResults(result.data);
+    } catch {
+      setError('Could not run full-text search.');
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -295,6 +318,43 @@ export default function PublicPortal(): JSX.Element {
           <p className="stat-delta">Follow-up commitments currently active</p>
         </article>
       </section>
+
+      <Card>
+        <CardHeader
+          title="Public Full-Text Search"
+          description="Search meetings, agendas, reports, and minutes using server-side ranking."
+        />
+        <CardBody>
+          <div className="page-actions" style={{ marginBottom: '1rem' }}>
+            <input
+              className="field"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search council content"
+              aria-label="Search published council content"
+            />
+            <button type="button" className="btn btn-primary" onClick={() => void handleGlobalSearch()}>
+              {isSearching ? 'Searching…' : 'Search'}
+            </button>
+          </div>
+          {searchResults.length === 0 && searchQuery.trim() && !isSearching ? (
+            <p className="muted">No matches found.</p>
+          ) : null}
+          {searchResults.length > 0 ? (
+            <div className="stack">
+              {searchResults.map((result) => (
+                <article className="card" key={`${result.type}:${result.id}`}>
+                  <div className="page-actions" style={{ justifyContent: 'space-between' }}>
+                    <strong>{result.title}</strong>
+                    <StatusBadge status={result.type.toUpperCase()} />
+                  </div>
+                  <p className="muted" dangerouslySetInnerHTML={{ __html: result.excerpt || 'No excerpt available.' }} />
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader
@@ -614,7 +674,7 @@ export default function PublicPortal(): JSX.Element {
                     <tr key={meeting.id}>
                       <td>
                         <strong>{meeting.title}</strong>
-                        <div className="muted">{meeting.meetingTypeCode}</div>
+                        <MeetingTypeBadge code={meeting.meetingTypeCode} />
                       </td>
                       <td>
                         <StatusBadge status={meeting.status} />

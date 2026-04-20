@@ -29,6 +29,14 @@ const ResolutionsRegister = lazy(() => import('./pages/Resolutions/ResolutionsRe
 const ActionTracker = lazy(() => import('./pages/Actions/ActionTracker'));
 const PublicLiveMotionScreen = lazy(() => import('./pages/Public/PublicLiveMotionScreen'));
 const PublicLiveMeetingScreen = lazy(() => import('./pages/Public/PublicLiveMeetingScreen'));
+const ParticipantPortal = lazy(() => import('./pages/Participant/ParticipantPortal'));
+const ParticipantMeetingView = lazy(() => import('./pages/Participant/ParticipantMeetingView'));
+const ParticipantAgendaView = lazy(() => import('./pages/Participant/ParticipantAgendaView'));
+const AttendanceReport = lazy(() => import('./pages/Reports/AttendanceReport'));
+const MotionReport = lazy(() => import('./pages/Reports/MotionReport'));
+const VotingReport = lazy(() => import('./pages/Reports/VotingReport'));
+const ConflictReport = lazy(() => import('./pages/Reports/ConflictReport'));
+const ForecastReport = lazy(() => import('./pages/Reports/ForecastReport'));
 import ProtectedRoute from './guards/ProtectedRoute';
 import PermissionRoute from './guards/PermissionRoute';
 import AdminAccessRoute from './guards/AdminAccessRoute';
@@ -76,6 +84,56 @@ export default function App(): JSX.Element {
         element={
           <ProtectedRoute>
             <ReportList />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/attendance"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="meeting.read">
+              <AttendanceReport />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/motions"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="meeting.read">
+              <MotionReport />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/voting"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="meeting.read">
+              <VotingReport />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/conflicts"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="meeting.read">
+              <ConflictReport />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/forecast"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="meeting.read">
+              <ForecastReport />
+            </PermissionRoute>
           </ProtectedRoute>
         }
       />
@@ -267,6 +325,36 @@ export default function App(): JSX.Element {
           <ProtectedRoute>
             <PermissionRoute requiredPermission="meeting.read.in_camera">
               <InCameraPortal />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/participant"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="meeting.read">
+              <ParticipantPortal />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/participant/meetings/:meetingId"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="meeting.read">
+              <ParticipantMeetingView />
+            </PermissionRoute>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/participant/agendas/:agendaItemId"
+        element={
+          <ProtectedRoute>
+            <PermissionRoute requiredPermission="meeting.read">
+              <ParticipantAgendaView />
             </PermissionRoute>
           </ProtectedRoute>
         }

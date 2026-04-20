@@ -5,6 +5,8 @@ export type MeetingStatus =
   | 'CANCELLED'
   | 'COMPLETED';
 
+export type PublishStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
 export interface MeetingRecord {
   id: string;
   title: string;
@@ -14,6 +16,8 @@ export interface MeetingRecord {
   endsAt?: string;
   location?: string;
   status: MeetingStatus;
+  publishStatus: PublishStatus;
+  publishedAt?: string;
   isPublic: boolean;
   isInCamera: boolean;
   videoUrl?: string;

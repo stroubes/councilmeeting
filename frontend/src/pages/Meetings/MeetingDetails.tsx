@@ -6,6 +6,7 @@ import { recordInCameraMinutes } from '../../api/minutes.api';
 import type { AgendaRecord } from '../../api/types/agenda.types';
 import type { MeetingRecord } from '../../api/types/meeting.types';
 import AppShell from '../../components/layout/AppShell';
+import MeetingTypeBadge from '../../components/ui/MeetingTypeBadge';
 import StatusBadge from '../../components/ui/StatusBadge';
 import MetricTile from '../../components/ui/MetricTile';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
@@ -155,7 +156,7 @@ export default function MeetingDetails(): JSX.Element {
                 </li>
                 <li className="timeline-item">
                   <h4>Meeting Type</h4>
-                  <p>{meeting.meetingTypeCode}</p>
+                  <MeetingTypeBadge code={meeting.meetingTypeCode} />
                 </li>
               </ul>
             </CardBody>

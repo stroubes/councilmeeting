@@ -22,6 +22,7 @@ export interface AgendaItemRecord {
   itemNumber?: string;
   bylawId?: string;
   status: AgendaStatus;
+  publishStatus: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
   createdBy: string;
   createdAt: string;
   updatedAt: string;

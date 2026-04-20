@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { DatabaseUnavailableError, PostgresService } from '../database/postgres.service';
+import { PostgresService } from '../database/postgres.service';
+import { BaseRepository } from '../database/base.repository';
 import { createDefaultMinutesContent, normalizeMinutesContent, type MinutesContent } from './minutes-content';
 
 export type MinutesStatus = 'DRAFT' | 'IN_PROGRESS' | 'FINALIZED' | 'ADOPTED' | 'PUBLISHED';
@@ -32,11 +33,13 @@ interface CreateMinutesInput {
 }
 
 @Injectable()
-export class MinutesRepository {
+export class MinutesRepository extends BaseRepository {
   private readonly memory = new Map<string, MinutesRecord>();
-  private schemaEnsured = false;
+  protected schemaEnsured = false;
 
-  constructor(private readonly postgresService: PostgresService) {}
+  constructor(postgresService: PostgresService) {
+    super(postgresService);
+  }
 
   async create(input: CreateMinutesInput): Promise<MinutesRecord> {
     return this.withFallback(async () => {
@@ -229,20 +232,6 @@ export class MinutesRepository {
     this.schemaEnsured = true;
   }
 
-  private async withFallback<T>(dbFn: () => Promise<T>, fallbackFn: () => Promise<T> | T): Promise<T> {
-    if (!this.postgresService.isEnabled) {
-      return fallbackFn();
-    }
-
-    try {
-      return await dbFn();
-    } catch (error) {
-      if (error instanceof DatabaseUnavailableError) {
-        return fallbackFn();
-      }
-      throw error;
-    }
-  }
 }
 
 interface DbMinutesRow {

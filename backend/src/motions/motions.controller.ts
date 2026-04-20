@@ -55,13 +55,43 @@ export class MotionsController {
     return this.motionsService.update(id, dto, user);
   }
 
-  @Permissions(PERMISSIONS.AGENDA_WRITE)
+  @Permissions(PERMISSIONS.MOTION_CALL)
   @Post(':id/set-live')
   setLive(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.motionsService.setLive(id, user);
   }
 
-  @Permissions(PERMISSIONS.AGENDA_WRITE)
+  @Permissions(PERMISSIONS.MOTION_PROPOSE)
+  @Post(':id/propose')
+  propose(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.motionsService.propose(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MOTION_SECOND)
+  @Post(':id/second')
+  second(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.motionsService.second(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MOTION_OPEN_DEBATE)
+  @Post(':id/open-debate')
+  openDebate(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.motionsService.openDebate(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MOTION_CLOSE_DEBATE)
+  @Post(':id/close-debate')
+  closeDebate(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.motionsService.closeDebate(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MOTION_CALL)
+  @Post(':id/call-vote')
+  callVote(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.motionsService.callVote(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MOTION_CALL)
   @Post(':id/set-outcome')
   setOutcome(@Param('id') id: string, @Body() dto: SetMotionOutcomeDto, @CurrentUser() user: AuthenticatedUser) {
     return this.motionsService.setOutcome(id, dto, user);

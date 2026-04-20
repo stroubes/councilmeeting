@@ -1,5 +1,6 @@
 import { httpDelete, httpGet, httpPost } from './httpClient';
 import type { AgendaItemRecord, AgendaRecord } from './types/agenda.types';
+import type { PaginatedResponse } from './types/pagination.types';
 
 interface CreateAgendaPayload {
   meetingId: string;
@@ -27,6 +28,25 @@ interface RejectAgendaPayload {
 export function listAgendas(meetingId?: string): Promise<AgendaRecord[]> {
   const query = meetingId ? `?meetingId=${encodeURIComponent(meetingId)}` : '';
   return httpGet<AgendaRecord[]>(`/agendas${query}`);
+}
+
+export function listAgendasPaged(params?: {
+  meetingId?: string;
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<AgendaRecord>> {
+  const query = new URLSearchParams();
+  if (params?.meetingId) {
+    query.set('meetingId', params.meetingId);
+  }
+  if (params?.page) {
+    query.set('page', String(params.page));
+  }
+  if (params?.limit) {
+    query.set('limit', String(params.limit));
+  }
+  const queryString = query.toString();
+  return httpGet<PaginatedResponse<AgendaRecord>>(`/agendas/paged${queryString ? `?${queryString}` : ''}`);
 }
 
 export function createAgenda(payload: CreateAgendaPayload): Promise<AgendaRecord> {
@@ -76,6 +96,21 @@ export function reorderAgendaItems(agendaId: string, itemIdsInOrder: string[]): 
   return httpPost<AgendaRecord, { itemIdsInOrder: string[] }>(`/agendas/${agendaId}/items/reorder`, {
     itemIdsInOrder,
   });
+}
+
+export function runAgendaBulkAction(payload: { agendaIds: string[]; action: 'SUBMIT' | 'PUBLISH'; reason?: string }) {
+  return httpPost<{ requested: number; succeeded: number; failed: Array<{ agendaId: string; reason: string }> }, typeof payload>(
+    '/agendas/bulk-action',
+    payload,
+  );
+}
+
+export function runAgendaScheduledSweep() {
+  return httpPost<{ scanned: number; published: number; runAt: string }>('/agendas/scheduled/sweep');
+}
+
+export function getAgendaVersionHistory(agendaId: string): Promise<unknown[]> {
+  return httpGet<unknown[]>(`/agendas/${agendaId}/version-history`);
 }
 
 export type { CreateAgendaItemPayload, AgendaItemRecord };

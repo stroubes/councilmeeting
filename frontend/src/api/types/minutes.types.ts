@@ -65,7 +65,7 @@ export interface MinutesRecord {
   meetingId: string;
   minuteTakerUserId?: string;
   contentJson: MinutesContent;
-  richTextSummary?: Record<string, unknown>;
+  richTextSummary?: string;
   isInCamera: boolean;
   status: MinutesStatus;
   startedAt?: string;

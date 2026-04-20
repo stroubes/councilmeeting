@@ -8,6 +8,7 @@ import type {
   UpdateWorkflowStagePayload,
   WorkflowDomain,
   WorkflowRecord,
+  RoleDelegationRecord,
 } from './types/workflow.types';
 
 interface ApprovalPayload {
@@ -142,4 +143,22 @@ export function reorderWorkflowStages(workflowId: string, stageIdsInOrder: strin
     `/workflows/configurations/${workflowId}/stages/reorder`,
     { stageIdsInOrder },
   );
+}
+
+export function listRoleDelegations(): Promise<RoleDelegationRecord[]> {
+  return httpGet<RoleDelegationRecord[]>('/workflows/delegations');
+}
+
+export function createRoleDelegation(payload: {
+  delegateFromUserId: string;
+  delegateToUserId: string;
+  roleCode: string;
+  startsAt: string;
+  endsAt?: string;
+}): Promise<RoleDelegationRecord> {
+  return httpPost<RoleDelegationRecord, typeof payload>('/workflows/delegations', payload);
+}
+
+export function removeRoleDelegation(id: string): Promise<{ ok: true }> {
+  return httpDelete<{ ok: true }>(`/workflows/delegations/${id}`);
 }

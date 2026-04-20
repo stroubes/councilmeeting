@@ -223,10 +223,20 @@ export class AttendeesRepository {
     }
 
     await this.postgresService.query(`
-      CREATE TYPE IF NOT EXISTS attendance_role AS ENUM ('CHAIR', 'COUNCIL_MEMBER', 'STAFF', 'GUEST')
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'attendance_role') THEN
+          CREATE TYPE attendance_role AS ENUM ('CHAIR', 'COUNCIL_MEMBER', 'STAFF', 'GUEST');
+        END IF;
+      END $$;
     `);
     await this.postgresService.query(`
-      CREATE TYPE IF NOT EXISTS attendee_status AS ENUM ('PRESENT', 'ABSENT', 'EXCUSED', 'LATE', 'EARLY_DEPARTURE')
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'attendee_status') THEN
+          CREATE TYPE attendee_status AS ENUM ('PRESENT', 'ABSENT', 'EXCUSED', 'LATE', 'EARLY_DEPARTURE');
+        END IF;
+      END $$;
     `);
 
     await this.postgresService.query(`

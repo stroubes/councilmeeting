@@ -9,8 +9,11 @@ import {
   reorderWorkflowStages,
   updateWorkflowConfiguration,
   updateWorkflowStage,
+  listRoleDelegations,
+  createRoleDelegation,
+  removeRoleDelegation,
 } from '../../api/workflows.api';
-import type { WorkflowRecord, WorkflowStageRecord } from '../../api/types/workflow.types';
+import type { WorkflowRecord, WorkflowStageRecord, RoleDelegationRecord } from '../../api/types/workflow.types';
 import AppShell from '../../components/layout/AppShell';
 import { useToast } from '../../hooks/useToast';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
@@ -42,6 +45,14 @@ export default function WorkflowsAdmin(): JSX.Element {
     minimumApprovals: 1,
   });
   const [editingStageId, setEditingStageId] = useState<string | null>(null);
+  const [delegations, setDelegations] = useState<RoleDelegationRecord[]>([]);
+  const [delegationForm, setDelegationForm] = useState({
+    delegateFromUserId: '',
+    delegateToUserId: '',
+    roleCode: 'DIRECTOR',
+    startsAt: new Date().toISOString().slice(0, 16),
+    endsAt: '',
+  });
 
   const selectedWorkflow = useMemo(
     () => workflows.find((workflow) => workflow.id === selectedWorkflowId) ?? null,
@@ -52,8 +63,12 @@ export default function WorkflowsAdmin(): JSX.Element {
     setIsLoading(true);
     setError(null);
     try {
-      const records = await listWorkflowConfigurations({ domain: 'REPORT', includeInactive: true });
+      const [records, delegationRecords] = await Promise.all([
+        listWorkflowConfigurations({ domain: 'REPORT', includeInactive: true }),
+        listRoleDelegations(),
+      ]);
       setWorkflows(records);
+      setDelegations(delegationRecords);
       setSelectedWorkflowId((current) => {
         if (current && records.some((workflow) => workflow.id === current)) {
           return current;
@@ -65,6 +80,41 @@ export default function WorkflowsAdmin(): JSX.Element {
       addToast('Could not load workflow configurations.', 'error');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreateDelegation = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    setError(null);
+    try {
+      await createRoleDelegation({
+        delegateFromUserId: delegationForm.delegateFromUserId,
+        delegateToUserId: delegationForm.delegateToUserId,
+        roleCode: delegationForm.roleCode,
+        startsAt: new Date(delegationForm.startsAt).toISOString(),
+        endsAt: delegationForm.endsAt ? new Date(delegationForm.endsAt).toISOString() : undefined,
+      });
+      setDelegationForm((current) => ({ ...current, delegateFromUserId: '', delegateToUserId: '', endsAt: '' }));
+      await loadWorkflows();
+      addToast('Role delegation created.', 'success');
+    } catch {
+      setError('Could not create role delegation.');
+      addToast('Could not create role delegation.', 'error');
+    }
+  };
+
+  const handleRemoveDelegation = async (delegation: RoleDelegationRecord): Promise<void> => {
+    if (!window.confirm('Deactivate this role delegation?')) {
+      return;
+    }
+    setError(null);
+    try {
+      await removeRoleDelegation(delegation.id);
+      await loadWorkflows();
+      addToast('Role delegation deactivated.', 'success');
+    } catch {
+      setError('Could not remove role delegation.');
+      addToast('Could not remove role delegation.', 'error');
     }
   };
 
@@ -265,6 +315,124 @@ export default function WorkflowsAdmin(): JSX.Element {
       <section className="module-overview">
         <MetricTile label="Report Workflows" value={workflows.length} foot="Definitions available to report lifecycle orchestration" variant="primary" />
       </section>
+
+      <Card>
+        <CardHeader
+          title="Role Delegations"
+          description="Configure substitute approvers when a designated approver is absent."
+        />
+        <CardBody>
+          <form onSubmit={(event) => void handleCreateDelegation(event)}>
+            <div className="form-grid">
+              <div className="form-field">
+                <label htmlFor="delegate-from-user">Delegator User ID</label>
+                <input
+                  id="delegate-from-user"
+                  className="field"
+                  value={delegationForm.delegateFromUserId}
+                  onChange={(event) =>
+                    setDelegationForm((current) => ({ ...current, delegateFromUserId: event.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="delegate-to-user">Delegate User ID</label>
+                <input
+                  id="delegate-to-user"
+                  className="field"
+                  value={delegationForm.delegateToUserId}
+                  onChange={(event) =>
+                    setDelegationForm((current) => ({ ...current, delegateToUserId: event.target.value }))
+                  }
+                  required
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="delegate-role">Role</label>
+                <select
+                  id="delegate-role"
+                  className="field"
+                  value={delegationForm.roleCode}
+                  onChange={(event) => setDelegationForm((current) => ({ ...current, roleCode: event.target.value }))}
+                >
+                  {ROLE_OPTIONS.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-field">
+                <label htmlFor="delegate-start">Starts At</label>
+                <input
+                  id="delegate-start"
+                  className="field"
+                  type="datetime-local"
+                  value={delegationForm.startsAt}
+                  onChange={(event) => setDelegationForm((current) => ({ ...current, startsAt: event.target.value }))}
+                  required
+                />
+              </div>
+              <div className="form-field">
+                <label htmlFor="delegate-end">Ends At (optional)</label>
+                <input
+                  id="delegate-end"
+                  className="field"
+                  type="datetime-local"
+                  value={delegationForm.endsAt}
+                  onChange={(event) => setDelegationForm((current) => ({ ...current, endsAt: event.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary">Create Delegation</button>
+            </div>
+          </form>
+
+          {delegations.length === 0 ? (
+            <div className="empty-state">No role delegations configured.</div>
+          ) : (
+            <div className="table-wrap">
+              <table className="data-table" aria-label="Role delegations">
+                <thead>
+                  <tr>
+                    <th>Delegator</th>
+                    <th>Delegate</th>
+                    <th>Role</th>
+                    <th>Window</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {delegations.map((delegation) => (
+                    <tr key={delegation.id}>
+                      <td>{delegation.delegateFromUserId}</td>
+                      <td>{delegation.delegateToUserId}</td>
+                      <td>{delegation.roleCode}</td>
+                      <td>
+                        {new Date(delegation.startsAt).toLocaleString()}
+                        {delegation.endsAt ? ` → ${new Date(delegation.endsAt).toLocaleString()}` : ' → ongoing'}
+                      </td>
+                      <td>{delegation.isActive ? 'Active' : 'Inactive'}</td>
+                      <td>
+                        {delegation.isActive ? (
+                          <button type="button" className="btn btn-danger" onClick={() => void handleRemoveDelegation(delegation)}>
+                            Deactivate
+                          </button>
+                        ) : (
+                          <span className="muted">Archived</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader

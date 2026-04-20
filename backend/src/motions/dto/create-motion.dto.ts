@@ -14,4 +14,8 @@ export class CreateMotionDto {
 
   @IsString()
   body!: string;
+
+  @IsOptional()
+  @IsString()
+  moverUserId?: string;
 }

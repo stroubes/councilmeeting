@@ -14,6 +14,7 @@ import {
   type PublicSubscriptionRecord,
   PublicSubscriptionsRepository,
 } from './public-subscriptions.repository';
+import { normalizePagination, toPaginatedResult } from '../types/pagination';
 
 @Injectable()
 export class PublicPortalService {
@@ -67,6 +68,17 @@ export class PublicPortalService {
     return this.meetingsService.listPublic();
   }
 
+  async listMeetingsPaged(input: { page?: number; limit?: number }) {
+    const allMeetings = await this.listMeetings();
+    const pagination = normalizePagination(input.page, input.limit);
+    return toPaginatedResult(
+      allMeetings.slice(pagination.offset, pagination.offset + pagination.limit),
+      allMeetings.length,
+      pagination.page,
+      pagination.limit,
+    );
+  }
+
   async listAgendas() {
     const agendas = await this.agendasService.list();
     return agendas
@@ -81,6 +93,17 @@ export class PublicPortalService {
             (!item.publishAt || new Date(item.publishAt).getTime() <= Date.now()),
         ),
       }));
+  }
+
+  async listAgendasPaged(input: { page?: number; limit?: number }) {
+    const allAgendas = await this.listAgendas();
+    const pagination = normalizePagination(input.page, input.limit);
+    return toPaginatedResult(
+      allAgendas.slice(pagination.offset, pagination.offset + pagination.limit),
+      allAgendas.length,
+      pagination.page,
+      pagination.limit,
+    );
   }
 
   async listMotions() {
@@ -152,6 +175,17 @@ export class PublicPortalService {
     return reports.filter((report) => publicAgendaItemIds.has(report.agendaItemId));
   }
 
+  async listReportsPaged(input: { page?: number; limit?: number }) {
+    const allReports = await this.listReports();
+    const pagination = normalizePagination(input.page, input.limit);
+    return toPaginatedResult(
+      allReports.slice(pagination.offset, pagination.offset + pagination.limit),
+      allReports.length,
+      pagination.page,
+      pagination.limit,
+    );
+  }
+
   async listMinutes() {
     const [minutes, meetings] = await Promise.all([
       this.minutesService.list(),
@@ -159,6 +193,17 @@ export class PublicPortalService {
     ]);
     const publicMeetingIds = new Set(meetings.map((meeting) => meeting.id));
     return minutes.filter((record) => record.status === 'PUBLISHED' && publicMeetingIds.has(record.meetingId));
+  }
+
+  async listMinutesPaged(input: { page?: number; limit?: number }) {
+    const allMinutes = await this.listMinutes();
+    const pagination = normalizePagination(input.page, input.limit);
+    return toPaginatedResult(
+      allMinutes.slice(pagination.offset, pagination.offset + pagination.limit),
+      allMinutes.length,
+      pagination.page,
+      pagination.limit,
+    );
   }
 
   async createSubscription(dto: CreatePublicSubscriptionDto): Promise<PublicSubscriptionRecord> {

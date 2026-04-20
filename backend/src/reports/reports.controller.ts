@@ -1,4 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Query, Res } from '@nestjs/common';
+import { existsSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { ReportsService } from './reports.service';
 import { Public } from '../core/decorators/public.decorator';
 import { Permissions } from '../core/decorators/permissions.decorator';
@@ -10,6 +12,8 @@ import { CreateReportAttachmentDto } from './dto/create-report-attachment.dto';
 import { ImportDocxReportDto } from './dto/import-docx-report.dto';
 import { ReportQueryDto } from './dto/report-query.dto';
 import { UpdateStaffReportDto } from './dto/update-staff-report.dto';
+import { PaginationQueryDto } from '../types/pagination-query.dto';
+import { BulkReportActionDto } from './dto/bulk-report-action.dto';
 
 @Controller('reports')
 export class ReportsController {
@@ -19,6 +23,22 @@ export class ReportsController {
   @Get('health')
   health(): { status: string } {
     return this.reportsService.health();
+  }
+
+  @Public()
+  @Get('local-attachments/:fileName')
+  downloadLocalAttachment(@Param('fileName') fileName: string, @Res() response: any) {
+    const safeFileName = basename(fileName);
+    if (safeFileName !== fileName) {
+      throw new NotFoundException('Attachment not found');
+    }
+
+    const filePath = join(process.cwd(), '.local-report-attachments', safeFileName);
+    if (!existsSync(filePath)) {
+      throw new NotFoundException('Attachment not found');
+    }
+
+    return response.sendFile(filePath);
   }
 
   @Permissions(PERMISSIONS.REPORT_SUBMIT)
@@ -37,6 +57,12 @@ export class ReportsController {
   @Get()
   list(@Query() query: ReportQueryDto) {
     return this.reportsService.list(query);
+  }
+
+  @Permissions(PERMISSIONS.MEETING_READ)
+  @Get('paged')
+  listPaged(@Query() query: ReportQueryDto & PaginationQueryDto) {
+    return this.reportsService.listPaged(query);
   }
 
   @Permissions(PERMISSIONS.MEETING_READ)
@@ -61,6 +87,12 @@ export class ReportsController {
   @Post(':id/publish')
   publish(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.reportsService.publish(id, user);
+  }
+
+  @Permissions(PERMISSIONS.REPORT_SUBMIT)
+  @Post('bulk-action')
+  bulkAction(@Body() dto: BulkReportActionDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.reportsService.runBulkAction(dto, user);
   }
 
   @Permissions(PERMISSIONS.MEETING_READ)

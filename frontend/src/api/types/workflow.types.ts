@@ -38,6 +38,18 @@ export interface WorkflowRecord {
   stages: WorkflowStageRecord[];
 }
 
+export interface RoleDelegationRecord {
+  id: string;
+  delegateFromUserId: string;
+  delegateToUserId: string;
+  roleCode: string;
+  startsAt: string;
+  endsAt?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateWorkflowPayload {
   code: string;
   name: string;

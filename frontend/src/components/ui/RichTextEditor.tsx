@@ -1,11 +1,17 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { TableCell } from '@tiptap/extension-table-cell';
 import { useEffect } from 'react';
 
 interface RichTextEditorProps {
-  content?: Record<string, unknown>;
-  onChange?: (content: Record<string, unknown>) => void;
+  content?: string;
+  onChange?: (content: string) => void;
   placeholder?: string;
   editable?: boolean;
 }
@@ -19,6 +25,15 @@ export default function RichTextEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+      }),
+      Image,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
       Placeholder.configure({
         placeholder,
       }),
@@ -26,12 +41,12 @@ export default function RichTextEditor({
     content: content ?? '',
     editable,
     onUpdate: ({ editor }) => {
-      onChange?.(editor.getJSON());
+      onChange?.(editor.getHTML());
     },
   });
 
   useEffect(() => {
-    if (editor && content && JSON.stringify(editor.getJSON()) !== JSON.stringify(content)) {
+    if (editor && typeof content === 'string' && editor.getHTML() !== content) {
       editor.commands.setContent(content);
     }
   }, [editor, content]);
@@ -48,6 +63,7 @@ export default function RichTextEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleBold().run()}
             className={editor.isActive('bold') ? 'active' : ''}
+            aria-label="Bold"
           >
             B
           </button>
@@ -55,6 +71,7 @@ export default function RichTextEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleItalic().run()}
             className={editor.isActive('italic') ? 'active' : ''}
+            aria-label="Italic"
           >
             I
           </button>
@@ -62,6 +79,7 @@ export default function RichTextEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             className={editor.isActive('bulletList') ? 'active' : ''}
+            aria-label="Bulleted list"
           >
             •
           </button>
@@ -69,6 +87,7 @@ export default function RichTextEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             className={editor.isActive('orderedList') ? 'active' : ''}
+            aria-label="Numbered list"
           >
             1.
           </button>
@@ -76,13 +95,37 @@ export default function RichTextEditor({
             type="button"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             className={editor.isActive('blockquote') ? 'active' : ''}
+            aria-label="Quote"
           >
             "
           </button>
           <button
             type="button"
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className={editor.isActive('heading', { level: 2 }) ? 'active' : ''}
+            aria-label="Heading"
+          >
+            H2
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const targetUrl = window.prompt('Enter link URL');
+              if (!targetUrl) {
+                return;
+              }
+              editor.chain().focus().setLink({ href: targetUrl }).run();
+            }}
+            className={editor.isActive('link') ? 'active' : ''}
+            aria-label="Insert link"
+          >
+            Link
+          </button>
+          <button
+            type="button"
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
+            aria-label="Undo"
           >
             Undo
           </button>
@@ -90,6 +133,7 @@ export default function RichTextEditor({
             type="button"
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
+            aria-label="Redo"
           >
             Redo
           </button>

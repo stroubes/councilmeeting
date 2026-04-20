@@ -14,6 +14,7 @@ import { ResubmitReportDto } from './dto/resubmit-report.dto';
 import { UpdateWorkflowConfigDto } from './dto/update-workflow-config.dto';
 import { UpdateWorkflowStageDto } from './dto/update-workflow-stage.dto';
 import { WorkflowConfigQueryDto } from './dto/workflow-config-query.dto';
+import { CreateRoleDelegationDto } from './dto/create-role-delegation.dto';
 
 @Controller('workflows')
 export class WorkflowsController {
@@ -117,6 +118,24 @@ export class WorkflowsController {
     @Body() dto: ResubmitReportDto,
   ) {
     return this.workflowsService.resubmitReport(reportId, user, dto);
+  }
+
+  @Permissions(PERMISSIONS.USERS_MANAGE)
+  @Get('delegations')
+  listDelegations() {
+    return this.workflowsService.listRoleDelegations();
+  }
+
+  @Permissions(PERMISSIONS.USERS_MANAGE)
+  @Post('delegations')
+  createDelegation(@Body() dto: CreateRoleDelegationDto) {
+    return this.workflowsService.createRoleDelegation(dto);
+  }
+
+  @Permissions(PERMISSIONS.USERS_MANAGE)
+  @Delete('delegations/:id')
+  removeDelegation(@Param('id') id: string) {
+    return this.workflowsService.removeRoleDelegation(id);
   }
 
   @Permissions(PERMISSIONS.MEETING_READ)

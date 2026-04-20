@@ -73,4 +73,32 @@ export class MeetingsController {
   remove(@Param('id') id: string) {
     return this.meetingsService.remove(id);
   }
+
+  @Permissions(PERMISSIONS.MEETING_START)
+  @Post(':id/start')
+  start(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.meetingsService.startMeeting(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MEETING_END)
+  @Post(':id/end')
+  end(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body('endStatus') endStatus?: 'ADJOURNED' | 'COMPLETED',
+  ) {
+    return this.meetingsService.endMeeting(id, user, endStatus ?? 'ADJOURNED');
+  }
+
+  @Permissions(PERMISSIONS.MEETING_PUBLISH)
+  @Post(':id/publish')
+  publish(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.meetingsService.publishMeeting(id, user);
+  }
+
+  @Permissions(PERMISSIONS.MEETING_PUBLISH)
+  @Post(':id/archive')
+  archive(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.meetingsService.archiveMeeting(id, user);
+  }
 }

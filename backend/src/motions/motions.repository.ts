@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { DatabaseUnavailableError, PostgresService } from '../database/postgres.service';
 
 export type MotionStatus = 'DRAFT' | 'LIVE' | 'CARRIED' | 'DEFEATED' | 'WITHDRAWN';
+export type MotionPhase = 'PROPOSED' | 'SECONDED' | 'DEBATING' | 'CALLED';
 
 export interface MotionRecord {
   id: string;
@@ -12,6 +13,9 @@ export interface MotionRecord {
   title: string;
   body: string;
   status: MotionStatus;
+  motionPhase: MotionPhase;
+  moverUserId?: string;
+  seconderUserId?: string;
   isCurrentLive: boolean;
   resultNote?: string;
   liveAt?: string;
@@ -26,6 +30,7 @@ interface CreateMotionInput {
   agendaItemId?: string;
   title: string;
   body: string;
+  moverUserId?: string;
   createdBy: string;
 }
 
@@ -82,12 +87,12 @@ export class MotionsRepository {
       const now = new Date().toISOString();
       const result = await this.postgresService.query<DbMotionRow>(
         `INSERT INTO app_motions (
-          id, meeting_id, agenda_item_id, sort_order, title, body, status,
-          is_current_live, result_note, live_at, created_by, updated_by, created_at, updated_at
+          id, meeting_id, agenda_item_id, sort_order, title, body, status, motion_phase,
+          mover_user_id, is_current_live, result_note, live_at, created_by, updated_by, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, 'DRAFT', false, NULL, NULL, $7, $8, $9, $10
+          $1, $2, $3, $4, $5, $6, 'DRAFT', 'PROPOSED', $7, false, NULL, NULL, $8, $9, $10, $11
         ) RETURNING *`,
-        [id, input.meetingId, input.agendaItemId, sortOrder, input.title, input.body, input.createdBy, input.createdBy, now, now],
+        [id, input.meetingId, input.agendaItemId, sortOrder, input.title, input.body, input.moverUserId ?? null, input.createdBy, input.createdBy, now, now],
       );
       return toMotionRecord(result.rows[0]);
     }, async () => {
@@ -101,6 +106,9 @@ export class MotionsRepository {
         title: input.title,
         body: input.body,
         status: 'DRAFT',
+        motionPhase: 'PROPOSED',
+        moverUserId: input.moverUserId,
+        seconderUserId: undefined,
         isCurrentLive: false,
         createdBy: input.createdBy,
         updatedBy: input.createdBy,
@@ -114,7 +122,7 @@ export class MotionsRepository {
 
   async update(
     id: string,
-    patch: Partial<Pick<MotionRecord, 'agendaItemId' | 'title' | 'body' | 'status' | 'isCurrentLive' | 'resultNote' | 'liveAt' | 'updatedBy'>>,
+    patch: Partial<Pick<MotionRecord, 'agendaItemId' | 'title' | 'body' | 'status' | 'motionPhase' | 'moverUserId' | 'seconderUserId' | 'isCurrentLive' | 'resultNote' | 'liveAt' | 'updatedBy'>>,
   ): Promise<MotionRecord> {
     return this.withFallback(async () => {
       await this.ensureSchema();
@@ -126,19 +134,25 @@ export class MotionsRepository {
              title = $3,
              body = $4,
              status = $5,
-             is_current_live = $6,
-             result_note = $7,
-             live_at = $8,
-             updated_by = $9,
-             updated_at = $10
-         WHERE id = $1
-         RETURNING *`,
+             motion_phase = $6,
+             mover_user_id = $7,
+             seconder_user_id = $8,
+             is_current_live = $9,
+             result_note = $10,
+             live_at = $11,
+             updated_by = $12,
+             updated_at = $13
+          WHERE id = $1
+          RETURNING *`,
         [
           id,
           patch.agendaItemId ?? null,
           patch.title ?? existing.title,
           patch.body ?? existing.body,
           patch.status ?? existing.status,
+          patch.motionPhase ?? existing.motionPhase,
+          patch.moverUserId ?? existing.moverUserId ?? null,
+          patch.seconderUserId ?? existing.seconderUserId ?? null,
           patch.isCurrentLive ?? existing.isCurrentLive,
           patch.resultNote ?? null,
           patch.liveAt ?? existing.liveAt ?? null,
@@ -241,6 +255,9 @@ export class MotionsRepository {
         title VARCHAR(500) NOT NULL,
         body TEXT NOT NULL,
         status VARCHAR(50) NOT NULL,
+        motion_phase VARCHAR(50) NOT NULL DEFAULT 'PROPOSED',
+        mover_user_id VARCHAR(255),
+        seconder_user_id VARCHAR(255),
         is_current_live BOOLEAN NOT NULL DEFAULT FALSE,
         result_note TEXT,
         live_at TIMESTAMPTZ,
@@ -250,8 +267,20 @@ export class MotionsRepository {
         updated_at TIMESTAMPTZ NOT NULL
       )
     `);
+    await this.postgresService.query(`ALTER TABLE app_motions ADD COLUMN IF NOT EXISTS motion_phase VARCHAR(50) NOT NULL DEFAULT 'PROPOSED'`);
+    await this.postgresService.query(`ALTER TABLE app_motions ADD COLUMN IF NOT EXISTS mover_user_id VARCHAR(255)`);
+    await this.postgresService.query(`ALTER TABLE app_motions ADD COLUMN IF NOT EXISTS seconder_user_id VARCHAR(255)`);
     await this.postgresService.query(
       `CREATE INDEX IF NOT EXISTS idx_app_motions_meeting_id ON app_motions(meeting_id)`,
+    );
+    await this.postgresService.query(
+      `CREATE INDEX IF NOT EXISTS idx_app_motions_phase ON app_motions(motion_phase)`,
+    );
+    await this.postgresService.query(
+      `CREATE INDEX IF NOT EXISTS idx_app_motions_mover ON app_motions(mover_user_id)`,
+    );
+    await this.postgresService.query(
+      `CREATE INDEX IF NOT EXISTS idx_app_motions_seconder ON app_motions(seconder_user_id)`,
     );
     await this.postgresService.query(
       `CREATE UNIQUE INDEX IF NOT EXISTS idx_app_motions_one_live_per_meeting ON app_motions(meeting_id) WHERE is_current_live = true`,
@@ -283,6 +312,9 @@ interface DbMotionRow {
   title: string;
   body: string;
   status: MotionStatus;
+  motion_phase: MotionPhase;
+  mover_user_id: string | null;
+  seconder_user_id: string | null;
   is_current_live: boolean;
   result_note: string | null;
   live_at: string | null;
@@ -301,6 +333,9 @@ function toMotionRecord(row: DbMotionRow): MotionRecord {
     title: row.title,
     body: row.body,
     status: row.status,
+    motionPhase: row.motion_phase,
+    moverUserId: row.mover_user_id ?? undefined,
+    seconderUserId: row.seconder_user_id ?? undefined,
     isCurrentLive: row.is_current_live,
     resultNote: row.result_note ?? undefined,
     liveAt: row.live_at ?? undefined,

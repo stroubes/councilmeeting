@@ -11,7 +11,7 @@ import { ConflictDeclarationsService } from './conflict-declarations.service';
 export class ConflictDeclarationsController {
   constructor(private readonly conflictDeclarationsService: ConflictDeclarationsService) {}
 
-  @Permissions(PERMISSIONS.MEETING_WRITE)
+  @Permissions(PERMISSIONS.CONFLICT_DECLARE)
   @Post()
   create(@Body() dto: CreateConflictDeclarationDto, @CurrentUser() user: AuthenticatedUser) {
     return this.conflictDeclarationsService.create(dto, user);

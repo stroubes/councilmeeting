@@ -11,6 +11,8 @@ import { CreateAgendaItemDto } from './items/dto/create-agenda-item.dto';
 import { UpdateAgendaItemDto } from './items/dto/update-agenda-item.dto';
 import { ReorderAgendaItemsDto } from './items/dto/reorder-agenda-items.dto';
 import { RejectAgendaDto } from './dto/reject-agenda.dto';
+import { PaginationQueryDto } from '../types/pagination-query.dto';
+import { BulkAgendaActionDto } from './dto/bulk-agenda-action.dto';
 
 @Controller('agendas')
 export class AgendasController {
@@ -32,6 +34,16 @@ export class AgendasController {
   @Get()
   list(@Query('meetingId') meetingId?: string) {
     return this.agendasService.list(meetingId);
+  }
+
+  @Permissions(PERMISSIONS.MEETING_READ)
+  @Get('paged')
+  listPaged(@Query() query: PaginationQueryDto & { meetingId?: string }) {
+    return this.agendasService.listPaged({
+      meetingId: query.meetingId,
+      page: query.page,
+      limit: query.limit,
+    });
   }
 
   @Permissions(PERMISSIONS.MEETING_READ)
@@ -106,6 +118,36 @@ export class AgendasController {
   @Post(':id/publish')
   publish(@Param('id') id: string) {
     return this.agendasService.publish(id);
+  }
+
+  @Permissions(PERMISSIONS.AGENDA_PUBLISH)
+  @Post(':id/items/:itemId/publish')
+  publishItem(@Param('id') id: string, @Param('itemId') itemId: string) {
+    return this.agendasService.publishItem(id, itemId);
+  }
+
+  @Permissions(PERMISSIONS.AGENDA_PUBLISH)
+  @Post(':id/items/:itemId/unpublish')
+  unpublishItem(@Param('id') id: string, @Param('itemId') itemId: string) {
+    return this.agendasService.unpublishItem(id, itemId);
+  }
+
+  @Permissions(PERMISSIONS.AGENDA_PUBLISH)
+  @Post('scheduled/sweep')
+  runScheduledSweep() {
+    return this.agendasService.runScheduledPublicationSweep();
+  }
+
+  @Permissions(PERMISSIONS.AGENDA_WRITE)
+  @Post('bulk-action')
+  runBulkAction(@Body() dto: BulkAgendaActionDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.agendasService.runBulkAction(dto, user);
+  }
+
+  @Permissions(PERMISSIONS.MEETING_READ)
+  @Get(':id/version-history')
+  versionHistory(@Param('id') id: string) {
+    return this.agendasService.getVersionHistory(id);
   }
 
   @Permissions(PERMISSIONS.AGENDA_WRITE)

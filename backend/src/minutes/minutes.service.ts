@@ -22,6 +22,7 @@ import {
   type VoteMethod,
 } from './minutes-content';
 import { NotificationsService } from '../notifications/notifications.service';
+import { normalizePagination, toPaginatedResult, type PaginatedResult } from '../types/pagination';
 
 @Injectable()
 export class MinutesService {
@@ -67,6 +68,18 @@ export class MinutesService {
 
   list(meetingId?: string, isInCamera?: boolean): Promise<MinutesRecord[]> {
     return this.minutesRepository.list(meetingId, isInCamera);
+  }
+
+  async listPaged(input: {
+    meetingId?: string;
+    isInCamera?: boolean;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResult<MinutesRecord>> {
+    const allMinutes = await this.minutesRepository.list(input.meetingId, input.isInCamera);
+    const pagination = normalizePagination(input.page, input.limit);
+    const pagedMinutes = allMinutes.slice(pagination.offset, pagination.offset + pagination.limit);
+    return toPaginatedResult(pagedMinutes, allMinutes.length, pagination.page, pagination.limit);
   }
 
   getById(id: string): Promise<MinutesRecord> {

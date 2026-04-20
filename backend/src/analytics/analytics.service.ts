@@ -70,18 +70,8 @@ export class AnalyticsService {
     const publishedAgendas = agendas.filter((entry) => entry.status === 'PUBLISHED' && entry.publishedAt);
     const publishedMinutes = minutes.filter((entry) => entry.status === 'PUBLISHED' && entry.publishedAt);
     const publishedReports = reports.filter((entry) => entry.workflowStatus === 'PUBLISHED');
-
-    const reportPublishedAtMap = new Map<string, string>();
-    await Promise.all(
-      publishedReports.map(async (report) => {
-        const history = await this.reportsService.getApprovalHistory(report.id);
-        const publishedEvent = history
-          .filter((event) => event.action === 'PUBLISHED')
-          .sort((left, right) => right.actedAt.localeCompare(left.actedAt))[0];
-        if (publishedEvent?.actedAt) {
-          reportPublishedAtMap.set(report.id, publishedEvent.actedAt);
-        }
-      }),
+    const reportPublishedAtMap = await this.reportsService.getLatestPublishedAtByReportIds(
+      publishedReports.map((report) => report.id),
     );
 
     const agendaCycleHours = publishedAgendas

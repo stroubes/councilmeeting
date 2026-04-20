@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { DatabaseUnavailableError, PostgresService } from '../database/postgres.service';
+import { PostgresService } from '../database/postgres.service';
+import { BaseRepository } from '../database/base.repository';
 import type { ReportQueryDto } from './dto/report-query.dto';
 import type {
   ReportAttachmentRecord,
@@ -49,7 +50,7 @@ interface CreateAttachmentInput {
   fileName: string;
   mimeType?: string;
   sizeBytes?: number;
-  sourceType: 'SHAREPOINT';
+  sourceType: 'SHAREPOINT' | 'LOCAL';
   sourceSharePointSiteId?: string;
   sourceSharePointDriveId?: string;
   sourceSharePointItemId?: string;
@@ -76,13 +77,15 @@ interface TransitionWorkflowInput {
 }
 
 @Injectable()
-export class ReportsRepository {
+export class ReportsRepository extends BaseRepository {
   private readonly memoryReports = new Map<string, StaffReportRecord>();
   private readonly memoryApprovals = new Map<string, ReportApprovalEvent[]>();
   private readonly memoryAttachments = new Map<string, ReportAttachmentRecord[]>();
-  private schemaEnsured = false;
+  protected schemaEnsured = false;
 
-  constructor(private readonly postgresService: PostgresService) {}
+  constructor(postgresService: PostgresService) {
+    super(postgresService);
+  }
 
   async create(input: CreateReportInput): Promise<StaffReportRecord> {
     return this.withFallback(async () => {
@@ -365,7 +368,7 @@ export class ReportsRepository {
         }
 
         const existing = existingResult.rows[0];
-        if (existing.updated_at !== input.expectedUpdatedAt) {
+        if (!timestampsMatch(existing.updated_at, input.expectedUpdatedAt)) {
           throw new ConflictException('Staff report changed by another user. Refresh and try again.');
         }
 
@@ -417,7 +420,7 @@ export class ReportsRepository {
       });
     }, async () => {
       const existing = await this.getById(input.reportId);
-      if (existing.updatedAt !== input.expectedUpdatedAt) {
+      if (!timestampsMatch(existing.updatedAt, input.expectedUpdatedAt)) {
         throw new ConflictException('Staff report changed by another user. Refresh and try again.');
       }
 
@@ -466,6 +469,36 @@ export class ReportsRepository {
       return result.rows.map((row) => toApprovalEvent(row));
     }, () =>
       [...(this.memoryApprovals.get(reportId) ?? [])].sort((a, b) => a.actedAt.localeCompare(b.actedAt)));
+  }
+
+  async getLatestPublishedAtByReportIds(reportIds: string[]): Promise<Map<string, string>> {
+    if (reportIds.length === 0) {
+      return new Map();
+    }
+
+    return this.withFallback(async () => {
+      await this.ensureSchema();
+      const result = await this.postgresService.query<{ report_id: string; published_at: string }>(
+        `SELECT staff_report_id AS report_id, MAX(acted_at)::text AS published_at
+         FROM app_report_approvals
+         WHERE action = 'PUBLISHED' AND staff_report_id = ANY($1::uuid[])
+         GROUP BY staff_report_id`,
+        [reportIds],
+      );
+
+      return new Map(result.rows.map((row) => [row.report_id, row.published_at]));
+    }, () => {
+      const publishedAtByReportId = new Map<string, string>();
+      for (const reportId of reportIds) {
+        const latestPublishedEvent = (this.memoryApprovals.get(reportId) ?? [])
+          .filter((event) => event.action === 'PUBLISHED')
+          .sort((left, right) => right.actedAt.localeCompare(left.actedAt))[0];
+        if (latestPublishedEvent?.actedAt) {
+          publishedAtByReportId.set(reportId, latestPublishedEvent.actedAt);
+        }
+      }
+      return publishedAtByReportId;
+    });
   }
 
   async createAttachment(input: CreateAttachmentInput): Promise<ReportAttachmentRecord> {
@@ -691,21 +724,6 @@ export class ReportsRepository {
     this.schemaEnsured = true;
   }
 
-  private async withFallback<T>(dbFn: () => Promise<T>, fallbackFn: () => Promise<T> | T): Promise<T> {
-    if (!this.postgresService.isEnabled) {
-      return fallbackFn();
-    }
-
-    try {
-      return await dbFn();
-    } catch (error) {
-      if (error instanceof DatabaseUnavailableError) {
-        return fallbackFn();
-      }
-      throw error;
-    }
-  }
-
   private createInMemory(input: CreateReportInput): StaffReportRecord {
     const now = new Date().toISOString();
     const report: StaffReportRecord = {
@@ -833,7 +851,7 @@ interface DbReportAttachmentRow {
   file_name: string;
   mime_type: string | null;
   size_bytes: number | null;
-  source_type: 'SHAREPOINT';
+  source_type: 'SHAREPOINT' | 'LOCAL';
   source_sharepoint_site_id: string | null;
   source_sharepoint_drive_id: string | null;
   source_sharepoint_item_id: string | null;
@@ -901,4 +919,15 @@ function toAttachmentRecord(row: DbReportAttachmentRow): ReportAttachmentRecord 
     uploadedBy: row.uploaded_by,
     createdAt: row.created_at,
   };
+}
+
+function timestampsMatch(left: string | Date, right: string | Date): boolean {
+  const leftTime = new Date(left).getTime();
+  const rightTime = new Date(right).getTime();
+
+  if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) {
+    return String(left) === String(right);
+  }
+
+  return leftTime === rightTime;
 }

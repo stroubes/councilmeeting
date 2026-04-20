@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { DatabaseUnavailableError, PostgresService } from '../database/postgres.service';
+import { PostgresService } from '../database/postgres.service';
+import { BaseRepository } from '../database/base.repository';
 import type { MeetingListQueryDto } from './dto/meeting-list-query.dto';
 import type { MeetingQueryDto } from './dto/meeting-query.dto';
 import type { MeetingPageResult, MeetingRecord, MeetingStatus } from './meetings.service';
@@ -13,6 +14,7 @@ interface CreateMeetingInput {
   endsAt?: string;
   location?: string;
   status: MeetingStatus;
+  publishStatus: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   isPublic: boolean;
   isInCamera: boolean;
   videoUrl?: string;
@@ -22,11 +24,13 @@ interface CreateMeetingInput {
 }
 
 @Injectable()
-export class MeetingsRepository {
+export class MeetingsRepository extends BaseRepository {
   private readonly memoryMeetings = new Map<string, MeetingRecord>();
-  private schemaEnsured = false;
+  protected schemaEnsured = false;
 
-  constructor(private readonly postgresService: PostgresService) {}
+  constructor(postgresService: PostgresService) {
+    super(postgresService);
+  }
 
   async create(input: CreateMeetingInput): Promise<MeetingRecord> {
     return this.withFallback(async () => {
@@ -36,11 +40,11 @@ export class MeetingsRepository {
       const result = await this.postgresService.query<DbMeetingRow>(
         `INSERT INTO app_meetings (
           id, title, description, meeting_type_code, starts_at, ends_at, location,
-          status, is_public, is_in_camera, video_url, recurrence_group_id, recurrence_index,
+          status, publish_status, is_public, is_in_camera, video_url, recurrence_group_id, recurrence_index,
           created_by, created_at, updated_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7,
-          $8, $9, $10, $11, $12, $13, $14, $15, $16
+          $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
         )
         RETURNING *`,
         [
@@ -52,6 +56,7 @@ export class MeetingsRepository {
           input.endsAt,
           input.location,
           input.status,
+          input.publishStatus,
           input.isPublic,
           input.isInCamera,
           input.videoUrl,
@@ -161,12 +166,14 @@ export class MeetingsRepository {
              ends_at = $6,
              location = $7,
              status = $8,
-             is_public = $9,
-             is_in_camera = $10,
-             video_url = $11,
-             recurrence_group_id = $12,
-             recurrence_index = $13,
-             updated_at = $14
+             publish_status = $9,
+             published_at = $10,
+             is_public = $11,
+             is_in_camera = $12,
+             video_url = $13,
+             recurrence_group_id = $14,
+             recurrence_index = $15,
+             updated_at = $16
           WHERE id = $1
           RETURNING *`,
         [
@@ -178,6 +185,8 @@ export class MeetingsRepository {
           patch.endsAt ?? existing.endsAt,
           patch.location ?? existing.location,
           patch.status ?? existing.status,
+          (patch as any).publishStatus ?? existing.publishStatus,
+          (patch as any).publishedAt ?? existing.publishedAt,
           patch.isPublic ?? existing.isPublic,
           patch.isInCamera ?? existing.isInCamera,
           patch.videoUrl ?? existing.videoUrl,
@@ -240,6 +249,8 @@ export class MeetingsRepository {
         ends_at TIMESTAMPTZ,
         location VARCHAR(255),
         status VARCHAR(50) NOT NULL,
+        publish_status VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
+        published_at TIMESTAMPTZ,
         is_public BOOLEAN NOT NULL,
         is_in_camera BOOLEAN NOT NULL,
         video_url TEXT,
@@ -254,6 +265,8 @@ export class MeetingsRepository {
 
     await this.postgresService.query(`ALTER TABLE app_meetings ADD COLUMN IF NOT EXISTS recurrence_group_id UUID`);
     await this.postgresService.query(`ALTER TABLE app_meetings ADD COLUMN IF NOT EXISTS recurrence_index INTEGER`);
+    await this.postgresService.query(`ALTER TABLE app_meetings ADD COLUMN IF NOT EXISTS publish_status VARCHAR(50) NOT NULL DEFAULT 'DRAFT'`);
+    await this.postgresService.query(`ALTER TABLE app_meetings ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ`);
 
     await this.postgresService.query(
       `CREATE INDEX IF NOT EXISTS idx_app_meetings_starts_at ON app_meetings(starts_at)`,
@@ -261,23 +274,11 @@ export class MeetingsRepository {
     await this.postgresService.query(
       `CREATE INDEX IF NOT EXISTS idx_app_meetings_recurrence ON app_meetings(recurrence_group_id, recurrence_index)`,
     );
+    await this.postgresService.query(
+      `CREATE INDEX IF NOT EXISTS idx_app_meetings_publish_status ON app_meetings(publish_status)`,
+    );
 
     this.schemaEnsured = true;
-  }
-
-  private async withFallback<T>(dbFn: () => Promise<T>, fallbackFn: () => Promise<T> | T): Promise<T> {
-    if (!this.postgresService.isEnabled) {
-      return fallbackFn();
-    }
-
-    try {
-      return await dbFn();
-    } catch (error) {
-      if (error instanceof DatabaseUnavailableError) {
-        return fallbackFn();
-      }
-      throw error;
-    }
   }
 
   private createInMemory(input: CreateMeetingInput): MeetingRecord {
@@ -291,6 +292,8 @@ export class MeetingsRepository {
       endsAt: input.endsAt,
       location: input.location,
       status: input.status,
+      publishStatus: input.publishStatus,
+      publishedAt: undefined,
       isPublic: input.isPublic,
       isInCamera: input.isInCamera,
       videoUrl: input.videoUrl,
@@ -437,6 +440,8 @@ interface DbMeetingRow {
   ends_at: string | null;
   location: string | null;
   status: MeetingStatus;
+  publish_status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  published_at: string | null;
   is_public: boolean;
   is_in_camera: boolean;
   video_url: string | null;
@@ -457,6 +462,8 @@ function toMeetingRecord(row: DbMeetingRow): MeetingRecord {
     endsAt: row.ends_at ?? undefined,
     location: row.location ?? undefined,
     status: row.status,
+    publishStatus: row.publish_status,
+    publishedAt: row.published_at ?? undefined,
     isPublic: row.is_public,
     isInCamera: row.is_in_camera,
     videoUrl: row.video_url ?? undefined,

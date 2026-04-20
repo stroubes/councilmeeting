@@ -4,8 +4,16 @@ export const PERMISSIONS = {
   BYLAW_READ: 'bylaw.read',
   BYLAW_WRITE: 'bylaw.write',
   MEETING_WRITE: 'meeting.write',
+  MEETING_START: 'meeting.start',
+  MEETING_END: 'meeting.end',
+  MEETING_PUBLISH: 'meeting.publish',
   AGENDA_WRITE: 'agenda.write',
   AGENDA_PUBLISH: 'agenda.publish',
+  MOTION_PROPOSE: 'motion.propose',
+  MOTION_SECOND: 'motion.second',
+  MOTION_OPEN_DEBATE: 'motion.open_debate',
+  MOTION_CLOSE_DEBATE: 'motion.close_debate',
+  MOTION_CALL: 'motion.call',
   REPORT_SUBMIT: 'report.submit',
   REPORT_APPROVE_DIRECTOR: 'report.approve.director',
   REPORT_APPROVE_CAO: 'report.approve.cao',
@@ -19,6 +27,7 @@ export const PERMISSIONS = {
   PUBLIC_PUBLISH: 'public.publish',
   RESOLUTION_MANAGE: 'resolution.manage',
   ACTION_MANAGE: 'action.manage',
+  CONFLICT_DECLARE: 'conflict.declare',
 } as const;
 
 export type PermissionCode = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

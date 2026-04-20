@@ -19,7 +19,9 @@ describe('AnalyticsService', () => {
         ]),
         listPendingDirector: jest.fn().mockResolvedValue([{ id: 'r3' }]),
         listPendingCao: jest.fn().mockResolvedValue([]),
-        getApprovalHistory: jest.fn().mockResolvedValue([{ action: 'PUBLISHED', actedAt: '2026-03-01T12:00:00.000Z' }]),
+        getLatestPublishedAtByReportIds: jest
+          .fn()
+          .mockResolvedValue(new Map<string, string>([['r1', '2026-03-01T12:00:00.000Z']])),
       } as never,
       {
         list: jest.fn().mockResolvedValue([

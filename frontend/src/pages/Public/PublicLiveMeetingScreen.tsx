@@ -109,18 +109,18 @@ export default function PublicLiveMeetingScreen(): JSX.Element {
         setError(null);
       };
 
-      stream.onmessage = (event) => {
+      stream.addEventListener('meeting-display-state', (event: MessageEvent) => {
         if (isDisposed) {
           return;
         }
         try {
-          const state = JSON.parse(event.data) as MeetingDisplayState;
+          const state = JSON.parse(event.data as string) as MeetingDisplayState;
           applyIncomingState(state);
           setError(null);
         } catch {
           setError('Received an invalid live display update payload.');
         }
-      };
+      });
 
       stream.onerror = () => {
         if (stream) {
@@ -135,6 +135,8 @@ export default function PublicLiveMeetingScreen(): JSX.Element {
       };
     };
 
+    void loadState();
+    startPolling();
     connectStream();
 
     return () => {

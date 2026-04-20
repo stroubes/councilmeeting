@@ -66,7 +66,7 @@ export default function MinutesRegister(): JSX.Element {
   const [resolutionCount, setResolutionCount] = useState(0);
   const [overdueActions, setOverdueActions] = useState(0);
   const [editingMinutes, setEditingMinutes] = useState<MinutesRecord | null>(null);
-  const [richTextContent, setRichTextContent] = useState<Record<string, unknown> | undefined>();
+  const [richTextContent, setRichTextContent] = useState<string | undefined>();
   const [structuredContent, setStructuredContent] = useState<MinutesContent>(buildDefaultMinutesContent());
   const [showInCameraOnly, setShowInCameraOnly] = useState(false);
   const { addToast } = useToast();

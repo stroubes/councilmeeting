@@ -44,7 +44,7 @@ export class VotesRepository {
     return this.withFallback(async () => {
       await this.ensureSchema();
       const existing = await this.postgresService.query<DbVoteRow>(
-        `SELECT * FROM votes WHERE motion_id = $1 AND council_member_id = $2 LIMIT 1`,
+        `SELECT * FROM app_votes WHERE motion_id = $1 AND council_member_id = $2 LIMIT 1`,
         [input.motionId, input.councilMemberId],
       );
       if (existing.rows.length > 0) {
@@ -58,7 +58,7 @@ export class VotesRepository {
     return this.withFallback(async () => {
       await this.ensureSchema();
       const result = await this.postgresService.query<DbVoteRow>(
-        `SELECT * FROM votes WHERE motion_id = $1 ORDER BY voted_at ASC`,
+        `SELECT * FROM app_votes WHERE motion_id = $1 ORDER BY voted_at ASC`,
         [motionId],
       );
       return result.rows.map(toVoteRecord);
@@ -82,7 +82,7 @@ export class VotesRepository {
     return this.withFallback(async () => {
       await this.ensureSchema();
       const result = await this.postgresService.query<DbVoteRow>(
-        `SELECT * FROM votes WHERE id = $1 LIMIT 1`,
+        `SELECT * FROM app_votes WHERE id = $1 LIMIT 1`,
         [id],
       );
       if (result.rows.length === 0) {
@@ -102,7 +102,7 @@ export class VotesRepository {
     return this.withFallback(async () => {
       await this.ensureSchema();
       const result = await this.postgresService.query<DbVoteRow>(
-        `SELECT * FROM votes WHERE motion_id = $1 AND council_member_id = $2 LIMIT 1`,
+        `SELECT * FROM app_votes WHERE motion_id = $1 AND council_member_id = $2 LIMIT 1`,
         [motionId, councilMemberId],
       );
       return result.rows.length > 0 ? toVoteRecord(result.rows[0]) : null;
@@ -118,7 +118,7 @@ export class VotesRepository {
   async remove(id: string): Promise<void> {
     return this.withFallback(async () => {
       await this.ensureSchema();
-      const deleted = await this.postgresService.query(`DELETE FROM votes WHERE id = $1`, [id]);
+      const deleted = await this.postgresService.query(`DELETE FROM app_votes WHERE id = $1`, [id]);
       if (deleted.rowCount === 0) {
         throw new NotFoundException('Vote not found');
       }
@@ -135,7 +135,7 @@ export class VotesRepository {
     const id = randomUUID();
     const now = new Date().toISOString();
     const result = await this.postgresService.query<DbVoteRow>(
-      `INSERT INTO votes (id, motion_id, council_member_id, vote_value, voted_at, is_conflict_declared, note, created_at)
+      `INSERT INTO app_votes (id, motion_id, council_member_id, vote_value, voted_at, is_conflict_declared, note, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
@@ -156,10 +156,10 @@ export class VotesRepository {
     const existing = await this.getById(id);
     const now = new Date().toISOString();
     const result = await this.postgresService.query<DbVoteRow>(
-      `UPDATE votes
+      `UPDATE app_votes
        SET vote_value = $2,
-           is_conflict_declared = $3,
-           note = $4,
+            is_conflict_declared = $3,
+            note = $4,
            voted_at = $5
        WHERE id = $1
        RETURNING *`,
@@ -180,7 +180,16 @@ export class VotesRepository {
     }
 
     await this.postgresService.query(`
-      CREATE TABLE IF NOT EXISTS votes (
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'vote_value_enum') THEN
+          CREATE TYPE vote_value_enum AS ENUM ('YEA', 'NAY', 'ABSTAIN', 'ABSENT');
+        END IF;
+      END $$;
+    `);
+
+    await this.postgresService.query(`
+      CREATE TABLE IF NOT EXISTS app_votes (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         motion_id UUID NOT NULL,
         council_member_id UUID NOT NULL,
@@ -194,8 +203,22 @@ export class VotesRepository {
     `);
 
     await this.postgresService.query(
-      `CREATE INDEX IF NOT EXISTS idx_votes_motion ON votes(motion_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_app_votes_motion ON app_votes(motion_id)`,
     );
+
+    await this.postgresService.query(`
+      DO $$
+      BEGIN
+        IF to_regclass('public.app_motions') IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'fk_app_votes_motion'
+          ) THEN
+          ALTER TABLE app_votes
+            ADD CONSTRAINT fk_app_votes_motion
+            FOREIGN KEY (motion_id) REFERENCES app_motions(id) ON DELETE CASCADE;
+        END IF;
+      END $$;
+    `);
 
     this.schemaEnsured = true;
   }

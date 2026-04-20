@@ -1,9 +1,19 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 @Injectable()
 export class SharePointDocxService {
   constructor(private readonly configService: ConfigService) {}
+
+  hasGraphCredentials(): boolean {
+    return Boolean(
+      this.configService.get<string>('microsoft.tenantId') &&
+        this.configService.get<string>('microsoft.clientId') &&
+        this.configService.get<string>('microsoft.clientSecret'),
+    );
+  }
 
   async resolveBase64(input: {
     contentBase64?: string;
@@ -42,6 +52,10 @@ export class SharePointDocxService {
     contentBase64: string;
     mimeType?: string;
   }): Promise<{ itemId: string; webUrl?: string; sizeBytes?: number }> {
+    if (!this.hasGraphCredentials()) {
+      return this.storeLocalBase64File(input);
+    }
+
     const token = await this.getGraphAccessToken();
     const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
     const targetPath = `CouncilMeetingAttachments/${Date.now()}-${safeName}`;
@@ -77,6 +91,27 @@ export class SharePointDocxService {
       itemId: payload.id,
       webUrl: payload.webUrl,
       sizeBytes: payload.size,
+    };
+  }
+
+  async storeLocalBase64File(input: {
+    fileName: string;
+    contentBase64: string;
+    mimeType?: string;
+  }): Promise<{ itemId: string; webUrl: string; sizeBytes: number }> {
+    const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const itemId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const storedFileName = `${itemId}-${safeName}`;
+    const buffer = Buffer.from(input.contentBase64, 'base64');
+    const storageDir = join(process.cwd(), '.local-report-attachments');
+
+    await mkdir(storageDir, { recursive: true });
+    await writeFile(join(storageDir, storedFileName), buffer);
+
+    return {
+      itemId,
+      webUrl: `http://localhost:3000/api/reports/local-attachments/${storedFileName}`,
+      sizeBytes: buffer.byteLength,
     };
   }
 

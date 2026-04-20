@@ -8,6 +8,6 @@ import { DatabaseModule } from '../database/database.module';
   imports: [DatabaseModule],
   controllers: [ConflictDeclarationsController],
   providers: [ConflictDeclarationsService, ConflictDeclarationsRepository],
-  exports: [ConflictDeclarationsService],
+  exports: [ConflictDeclarationsService, ConflictDeclarationsRepository],
 })
 export class ConflictDeclarationsModule {}

@@ -229,6 +229,18 @@ export class MeetingTypesRepository {
 
     await this.postgresService.query(`ALTER TABLE app_meeting_types ADD COLUMN IF NOT EXISTS wizard_config_json JSONB`);
     await this.postgresService.query(`ALTER TABLE app_meeting_types ADD COLUMN IF NOT EXISTS standing_items_json JSONB`);
+    await this.postgresService.query(`ALTER TABLE app_meeting_types ADD COLUMN IF NOT EXISTS council_size INTEGER NOT NULL DEFAULT 0`);
+    await this.postgresService.query(`ALTER TABLE app_meeting_types ADD COLUMN IF NOT EXISTS quorum_required BOOLEAN NOT NULL DEFAULT TRUE`);
+
+    await this.postgresService.query(`
+      UPDATE app_meeting_types
+         SET council_size = CASE
+           WHEN code IN ('COUNCIL', 'SPECIAL_COUNCIL') THEN 5
+           WHEN code = 'COMMITTEE_OF_WHOLE' THEN 5
+           ELSE council_size
+         END
+       WHERE council_size = 0
+    `);
 
     const result = await this.postgresService.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM app_meeting_types`);
     const count = Number.parseInt(result.rows[0]?.count ?? '0', 10);
@@ -239,9 +251,18 @@ export class MeetingTypesRepository {
         await this.postgresService.query(
           `INSERT INTO app_meeting_types (
             id, code, name, description, is_in_camera, is_active, created_by,
-            wizard_config_json, standing_items_json, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, TRUE, 'system', NULL, NULL, $6, $7)`,
-          [randomUUID(), meetingType.code, meetingType.name, meetingType.description, meetingType.isInCamera, now, now],
+            wizard_config_json, standing_items_json, council_size, quorum_required, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, TRUE, 'system', NULL, NULL, $6, TRUE, $7, $8)`,
+          [
+            randomUUID(),
+            meetingType.code,
+            meetingType.name,
+            meetingType.description,
+            meetingType.isInCamera,
+            meetingType.code === 'IN_CAMERA' ? 0 : 5,
+            now,
+            now,
+          ],
         );
       }
     }

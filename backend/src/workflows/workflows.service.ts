@@ -15,12 +15,15 @@ import {
   type WorkflowDomain,
   type WorkflowRecord,
 } from './workflow-config.repository';
+import { RoleDelegationsRepository } from './role-delegations.repository';
+import type { CreateRoleDelegationDto } from './dto/create-role-delegation.dto';
 
 @Injectable()
 export class WorkflowsService {
   constructor(
     private readonly reportsService: ReportsService,
     private readonly workflowConfigRepository: WorkflowConfigRepository,
+    private readonly roleDelegationsRepository: RoleDelegationsRepository,
   ) {}
 
   health(): { status: string } {
@@ -124,6 +127,25 @@ export class WorkflowsService {
 
   resubmitReport(reportId: string, user: AuthenticatedUser, dto: ResubmitReportDto) {
     return this.reportsService.resubmit(reportId, user, dto.comments);
+  }
+
+  listRoleDelegations() {
+    return this.roleDelegationsRepository.listAll();
+  }
+
+  createRoleDelegation(dto: CreateRoleDelegationDto) {
+    return this.roleDelegationsRepository.create({
+      delegateFromUserId: dto.delegateFromUserId,
+      delegateToUserId: dto.delegateToUserId,
+      roleCode: dto.roleCode.trim().toUpperCase(),
+      startsAt: dto.startsAt,
+      endsAt: dto.endsAt,
+    });
+  }
+
+  async removeRoleDelegation(id: string): Promise<{ ok: true }> {
+    await this.roleDelegationsRepository.deactivate(id);
+    return { ok: true };
   }
 
   listWorkflowConfigurations(query: WorkflowConfigQueryDto): Promise<WorkflowRecord[]> {
@@ -348,6 +370,8 @@ export class WorkflowsService {
     }
 
     const normalizedRoles = new Set(user.roles.map((role) => role.toUpperCase()));
+    const delegations = await this.roleDelegationsRepository.listActiveByDelegate(user.id);
+    delegations.forEach((delegation) => normalizedRoles.add(delegation.roleCode.toUpperCase()));
     const [pendingDirector, pendingCao, pendingWorkflow] = await Promise.all([
       this.reportsService.listPendingDirector(),
       this.reportsService.listPendingCao(),

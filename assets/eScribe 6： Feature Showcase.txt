@@ -1,0 +1,378 @@
+Hello, everyone, and welcome to our session today.
+I'm going to give it a few seconds for everyone to join us, and then we'll go ahead and dive
+in.
+All right, well, welcome, everyone, today to our first session of 2025.
+Today we're going to walk through a product showcase where we're really focusing on graphical
+votes.
+And so I'm going to go ahead and click.
+As a reminder, we just have this confidentiality roadmap disclaimer.
+Basically what this is saying is that we're excited to share this information with you
+guys, but we really just want to kind of keep it in this webinar session, and we're happy
+to answer any questions that you guys have related to anything roadmap, product related,
+etc.
+So as always, we have Taylor Bold, our senior project manager with us.
+We have Kelsey Harlow, our other senior project manager with us, and then myself, Megan Snyder,
+product marketing manager.
+We're excited to walk you guys through everything today, and we'll hopefully answer some of
+your questions.
+So as a reminder, our housekeeping items, all participants are automatically muted.
+Please go ahead and submit your questions in the Q&A section, and we'll do our best
+to answer as many of those as we can during the session.
+And if for some reason we don't get to it, we'll make sure your CSM follows up with you.
+As always, today's recording will be shared via email after the session and also posted
+to the eScribe community portal for you to view at your own convenience.
+And then we ask that you please take time to complete our post webinar survey.
+That pops up at the end.
+Now more than ever, your feedback is important to us, so we just appreciate anything you're
+willing to share.
+And then as a special note, just a reminder, these webinars are not meant to be a training
+session.
+They're meant to be an informative session to keep you updated on all things eScribe 6.
+So for today's agenda, we'll do a quick reminder of what is eScribe 6.
+We'll do a quick recap of our November webinar.
+We did not have a session in December, so we'll make sure to give an update on what's
+happened since then.
+We'll have a few poll questions and then we'll hear from Taylor from an update from
+product and then Kelsey will walk us through a showcase talking through graphical votes
+and then we'll leave space at the end for questions.
+So what is eScribe 6?
+eScribe 6 is an improved version of eScribe that's faster, more user friendly and modernized.
+Basically what we feel like is that you deserve the industry's most advanced, most modern
+and easiest to use solution.
+So that's what we're working to build.
+So why eScribe 6?
+We heard your feedback.
+You want fewer bugs, more feature improvements, releases, speed, performance, usability.
+So eScribe 6 will allow you to do your job faster, have an improved layout and flow and
+a modernized appearance.
+So as we've said before, things are ever evolving as it relates to eScribe 6.
+So these sessions and other sessions will do our best to keep you as informed as possible.
+So a quick recap of our November webinar.
+In that session, we focused on the contributor experience.
+Our product team gave an update on the state of the product.
+We had our first set of net new customers go live on eScribe 6 in October with more
+in November and December and with more continuing in January.
+So Taylor will give an update on that.
+We talked through our dedicated development team's support and progress so far and then
+showcased our eScribe 6 roadmap and upcoming features.
+We also gave a mention around the state of the upgrades.
+As we had said that there are no upgrades happening last year.
+So we did a detailed demonstration focusing on our contributor experience.
+You can always view that recording in the customer portal mentioned before.
+Thank you again for always submitting questions and any comments during the webinar.
+We really want to include your feedback in these sessions moving forward, especially
+for this year.
+And then again, as a reminder, you can view all webinar recordings in our community portal.
+So with that quick wrap up, we have a few poll questions today.
+This is the first one, then we have another one.
+So quick question for everyone.
+During a meeting, does your organization use the public display functionality?
+And if our answers are yes, no, what is public display?
+Hopefully we can give a little bit more insight to that today.
+Thank you guys for participating.
+We'll give it another few seconds before we close this.
+Awesome.
+Thank you.
+We actually had a pretty wide variety of answers there.
+So thank you guys for that feedback.
+I'll stop sharing that.
+And then we can click to our next question.
+And during a meeting, does your organization use the graphical vote results in eScribe5
+to display a vote?
+It will give another few seconds.
+Okay, so the majority of you do not.
+So that's good information.
+Thank you guys for sharing that with us.
+We really appreciate it.
+Also, if you don't use these functionalities right now, feel free to follow up with your
+CSM and they'll be happy to share any information there.
+And I'm going to go ahead and click and I will pass it to Taylor.
+Awesome.
+Thanks, Megan.
+We'll give a quick update from the product side.
+So as Megan mentioned, our core focus, obviously last quarter was focusing on new customer
+implementations.
+We have a lot more net new customer implementations on customers going live on eScribe6 over the
+next couple of months.
+So that's going to be our primary focus.
+As of the end of the year, we have six net new customers live on the platform of various
+sizes, small, large, different types of municipalities as well.
+So we're super excited with the progress.
+We're very proud of where we are.
+As Megan mentioned, we're going to keep focusing on these net new customer implementations
+while we finish out our preparations for upgrades.
+So the other part that I want to give an update on is where we are with our surge effort.
+So over the past couple of months, we've chatted about how we've been adding additional engineering
+resources to really close the gap and get some of these core features done.
+So we're making great progress.
+Obviously, one that we're going to show today is related to graphical, you know, graphical
+boat results.
+So we're close to wrapping up subscription list and our automatic resolution numbering
+features.
+Same thing with our public comments module.
+That's in five.
+We're rebuilding that in six.
+It's nearing completion as well.
+And we're about to kick off, you know, some additional work around approval workflow and
+making them more flexible.
+So roadmap wise, you'll see that obviously we'll be able to show graphical votes today
+as part of our product showcase.
+As of working right now, we're wrapping up the subscription list, public comments, automatic
+resolution numbering.
+Our next core focus is making a lot of enhancements to making approval workflows more flexible
+without auto delegation, the ability to decline and return to certain approvers, as well as,
+you know, setting up review groups and setting those up as well.
+Once we get through some of those, you know, the finishing touches on what we're working
+on right now, and obviously working on our approval workflow flexibility, we'll go back
+and we'll keep working on some additional improvements and enhancements on the meeting
+manager and document manager modules as well.
+So that's where we are, at least from a product perspective.
+This is where we are from a roadmap.
+We'll have an update in subsequent webinars as we look to finish some of these features.
+We'll come back and do additional showcases and we'll keep the roadmap up to date as well.
+So I'll pass it over to Kelsey because I think she wanted to actually show and do a deep
+dive on a couple items related to approval workflows.
+Okay, thanks, Taylor.
+This is an approval enhancement that we're working on right now.
+We got a lot of feedback from customers saying, hey, it would be really great if we could
+improve the approval process in a certain way of when you go to add an approver, it's
+not always just one person who is responsible for a step.
+It could be a whole department.
+It could be a group of people.
+So instead of just having one person and then have a approval assistant and a delegate
+responsible for a step, we're letting you add review groups, which means that you can
+add a group of people.
+So here you can see on the screen under users and groups, we would have a new
+section called reviewer groups, and it's basically like you're setting up that bulk
+approval step and who's in charge of that approval step.
+So here you can see on the left, you can create a reviewer group and you could name it
+finance department and just type in a whole department and everyone from that department
+would appear in the list.
+And then you can choose who you want to actually be the one to approve that approval step.
+Maybe you don't want them approving it, you just want them to be aware so they'll still
+be able to see that there's something in the approval process for them, but they won't
+be able to click that approve or decline button.
+And you'll also be able to say if you want them to have that email notification to say
+there's an approval step waiting for them.
+So let's you have more flexibility on how many people are within that one approval step.
+Maybe someone's on vacation and you want a couple other people to manage that.
+So we've decided to give that flexibility.
+And when you go and add an approval step underneath approvals there on the left, this is
+just a screenshot, but we'll be able to show it eventually.
+You can type in the name of the reviewer group and that whole reviewer group would just be
+part of the approval process for one step.
+That's pretty much a summary of it until I can show more.
+If there's any questions about it, though, feel free to type anything in the chat and
+we'll get back to you throughout the webinar.
+Yeah, thanks, Kelsey.
+I'm going to go ahead and stop sharing my screen so Kelsey can go ahead and dive into
+our demo today.
+Yeah, and as Kelsey said, feel free to put any questions in the chat and I will politely
+interrupt Kelsey as we're going through these if I feel like she can answer some of these
+questions. So I'm going to go ahead and mute.
+But any questions in the chat and Kelsey, go ahead.
+Thanks, Megan. So we're taking a look at the graphical votes today.
+So first off, I'm just on my home page of my site.
+This is one of our QA tech sites.
+So you'll see some information here that's not as pretty as normal.
+But this is where our product or our feature lives today.
+So I'm going to go over to my meeting templates because that's where I'm going to set things
+up. And mine for today is called Anytown Council product.
+I'm going to click on the ellipsis here and edit my template.
+And this feature lives in my configure meeting settings area.
+So you can see here, I've got my public display tab and I'm going to click that.
+And I've got some settings here that allow me to set up my public display exactly how
+I'd like for my meeting. So you can see here, I've got I can choose my agenda view or
+logo view. So when you scribe five that lived within the meeting site.
+But now you can choose that at your template level, since you're probably not going to
+switch back and forth throughout the actual meeting.
+I can choose my logo.
+Something handy is also choosing your header that you'd like to have on your public
+display. So you can insert different variables here, the meeting type, the date and
+time. So you have control over what displays at the top.
+We no longer put what we think belongs there.
+Scrolling down, I've got my vote display options for showing votes in real time.
+If I only want to show votes after close, maybe I don't want to show how people vote and I
+only want to show the results or if I don't want any votes to show at all.
+So all of these settings do tie into our graphical votes feature.
+And you can also choose how long you'd like that the duration of the results to stay up on the
+screen after. Maybe you know that it takes a long time to discuss these things and you want it up
+for five minutes so you can type in however many seconds that is.
+Scrolling down here, though, I do have a whole new section to show you and it's called
+graphical vote results. So it's just an easy toggle here.
+If you don't want to use graphical vote results, you turn that off and you'll see the table view.
+We've shown the table view before, but I can show it another time.
+Today, we're just focusing on the graphical vote.
+So I enable this and I've got a few settings here to play with.
+The first one is how I want that vote to display.
+So before in eScribe 5, if you wanted to use graphical vote results, it was a little bit tedious.
+You had to work with our IT team to build out exactly how you wanted it to look.
+But now in eScribe 6, you'll be able to do it all by yourself and change it whenever you'd like.
+So here you can choose if you'd like it to be grid or semicircle view.
+So that's exactly how they sound. Grid is what I have chosen here.
+And I've got my top, my middle and my bottom row.
+And I can choose seven per row.
+And so you can have a total of 21 people showing on the grid view.
+Or if you only have maybe nine people in your meeting, it'll only show nine.
+It just depends however many people you fill out in these columns here.
+If I switched over to my semicircle view, we can only have nine people,
+just because it depends of how many people can fit on the screen there.
+So we don't want to throw in, let's say, 13 people per row and have them cutting off on the screen there.
+So I'll show grid first.
+I've got my nine voters set up.
+So you only want to type in your voters here, since that's the display on your public display.
+And I'm going to show my profile photos.
+You can also choose not to show them and it won't leave a space for images or whatnot on the public display.
+But I'm going to show them and you can set that up in the user list area.
+When you go and edit a user into the system, you can add a signature for them and you can also add a photo for them.
+So here I've got photos for everyone today.
+And let's just say, for example, I'm setting this area up.
+So let's say I have a new voter in my attendee group who I'd like to add.
+Let's just say we'll type in Prince.
+So you can see that I type in a voter from the attendee group and I've got the list here
+and I can just choose if I'd like them to be included in my graphical vote results.
+Of course, you only want people who are voters in your meeting site to be in here.
+If you filled in someone who did not exist in your attendee group,
+then on the public display, a blank card would show.
+You'll see what that looks like.
+But that just means that probably was a mistake when you were setting up your settings
+and that person doesn't have a vote in your meeting site.
+So I'm going to click Save Changes here and I'll go to my already created meeting site.
+I just I'm on a different tab right now.
+So any town council meeting product, that's the one for today.
+And I already have it kicked off and it's already conducting.
+So I'm going to open up my public display and it's going to open up in a new tab.
+And I'm just going to pull this my actual meeting site into a different window here
+so I can do them both at the same time.
+So here's an example of my public display, my agenda view.
+And I'm going to open up a vote and you'll see that my cards from my settings,
+my meeting template area appear here and you'll see that it has the voters last name,
+their title and then that they're currently voting.
+So there's different statuses here.
+And then whatever labels you have in your meeting template.
+So if you have for, against, if they're in conflict or if they're absent,
+they'll appear here depending on how that vote goes.
+So let's say I opened it up for voting and now I'm just going to refresh the page really quick.
+I've opened it up for voting and so people can submit their votes or as an admin,
+I can submit a vote for them.
+So here you can see as they click along, I've got my votes appearing in real time
+and that way the public is able to see exactly how they're voting.
+So when a card, sorry, when someone votes for, the card turns green.
+If someone votes against, that card turns red.
+We've got a conflict here and that's gray.
+Absent is also gray.
+So when everyone submits their vote, you can see at the top it says vote in progress
+and on the admin side I'm just going to click close the vote and you can see
+that my result is carried five to two.
+Of course, these also depend on the settings that you choose
+if it's majority present or whatnot.
+So just keep that in mind.
+But that's pretty much how graphical votes looks.
+And of course, that disappeared after my 15 seconds was up.
+I'll move my screen back over so that we can take a look at a different kind.
+So here, let's say I don't want to have votes appear in real time.
+Maybe I just want them to appear after close.
+I don't want that pressure of seeing how everyone's voting.
+So I'll just close here.
+I've already saved my changes and I'm just going to refresh my public display.
+Normally you wouldn't change settings on the fly like this,
+but I'd like to show you how it looks.
+So here I'm going to open up another vote and you'll see my public display says
+there's a vote in progress right now.
+So people are voting and it'll appear after.
+So I'm just clicking through on my admin side here,
+trying to get a different mix of what the cards will look like.
+And I'll click close voting and you can see that it says carried four to three.
+I've got four people who voted for and three who were against.
+So now that we have that done, I'll just click into a different tab here.
+I'm going to close my.
+Hey Kelsey, sorry, sorry to interrupt you.
+So I think you answered this question, but one question that came through like,
+is voting always shown in real time?
+The answer to me is that you kind of always have the option of what you want to do.
+That's what you were just showing, correct?
+Yes, correct. It just depends on the setting here in your public display.
+So voting in real time would be this first option here.
+If I didn't want people to see the public to see people voting,
+I would choose this option here and then you have the detailed result after it closes.
+Show result only means that you would just see that gray bar at the top,
+how it said carried four to three.
+So you don't see how people vote, you only see the result.
+And then don't show votes is, hey, people are voting.
+And then when the vote closes, it just says vote closed.
+Perfect. And then really fast, there was one question that came in.
+It's kind of a little more for like workflows, but it says,
+if a change is done to the workflow, once it started,
+does the workflow have to be canceled and start again from the beginning for the changes to take effect?
+Oh, OK, sorry, approvals there. Yeah, sorry, again, I was I was thinking of the the workflow for setting up the settings.
+Can you read that one? Yeah, of course.
+If it makes more sense to come back to that, we can come back to it.
+Sure. Yeah, let's answer that at the end. I'll just show one last thing for this.
+Perfect. God. So in my meeting template here, I'm just going to get rid of some of these people
+because I'm going to show you what the semicircle view looks like.
+And I'll flip over to semicircle and let me just quickly type in, I've got.
+Benson, I've got my user, Natalie, I'll just type in enough so that you can get the idea of what the arch looks like.
+Nazrin, we've got Jim Cousins, maybe we'll do six people.
+Oops. There we go. And we'll do Theodore.
+OK, six people, and then maybe we won't show the photos for this one.
+So I'm going to save that. We'll show votes in real time because I think that one's the most exciting.
+And I've saved my settings. I'm going back to my my tab back over here.
+I'll open up my public display again.
+And then you'll see what it looks like in the semicircle view.
+So I just move my screen off to the side here.
+I'm going to do open to vote and you'll be able to see that people appear in more of an arch.
+So you can have up to nine people here in your arch.
+Just like I said, you don't want them to be squished off the screen.
+So we did limit it to nine. But as people start to vote, you'll see again that they'll they're going to light up.
+And I have more people voting than I show on the screen right now because I didn't fill everyone in.
+So you'll see that when the vote closes, it'll look like more than who's there now.
+So, for example, I closed it. It's carried seven to one.
+But I did have people in my who are voting, like I said, who aren't currently on cards on the screen.
+But you'd want to set that up beforehand.
+So you have every voter showing so that it doesn't look like someone's missing on the screen.
+I believe that's all I wanted to show for a graphical vote results.
+Like I said, it's much easier to set up than eScribe five.
+You can do it all by yourself. We can we can definitely help you out with your implementation team or your trainers.
+Get you set up. But you can change it whenever you'd like.
+You don't have to go through it. And it is included in the meeting management package.
+Yeah, that was that was one of the questions that came in asking if the graphical vote module is extra or part of the main program.
+So, yeah, part of the main program. I'll go ahead and dismiss that one.
+OK, Kelsey, the question that was asked about workflow.
+So let's go back to that one.
+And if it makes more sense for you to showcase what we're talking about, we can do that, too.
+Also, at this point in time, Kelsey has wrapped up the demo of graphical vote.
+So if there's any other questions that you guys have or anything that we can answer related to that or anything related to six,
+we'll do our best to answer as much of those as we can live.
+So please go ahead and put that in the Q&A.
+And we may wrap up a few minutes early, depending on the questions.
+But just wanted to remind everyone and give them the opportunity to get questions in.
+And thank you all for joining us and participating.
+That was very long winded. But Kelsey, here's the question.
+OK, so if a change is done to a workflow once it has started,
+does the workflow have to be canceled and then restarted or started again from the beginning for the changes to take effect?
+Sure. I guess that I would ask back, what do you mean by changes?
+So if you're changing something to the your approval group, let's say you send you send a document through approval group one.
+If you go and change to add or remove people from approval group one,
+when you started the approval is when the system takes kind of like a stamp of who that approval group is.
+So if you make changes to that approval group or settings to your approval group or document, yes, you would need to cancel that approval and start again.
+OK, yeah, the approvers. Yeah, approvers. Yeah.
+Cool. Right. Let us know if we didn't answer that question in full.
+Another question that came in, Kelsey, I don't know if you saw it in the Q&A is related to
+talking about reporting. I don't know if that's something we want to dive into.
+I know we've done a session that focuses on reporting, so I know that recording is available, too.
+I think it was Linda who asked that question. So if you want to review that, we can make sure your CSM sends that to you, Kelsey.
+I don't know if you want to answer that, if it just makes more sense to kind of watch the other session.
+Sure. The question is, this question is not specific to today's topic, but I'm wondering if eScribe 6 will automatically create a report number
+when an administrative report is submitted and approved in a workflow, similar to automatic resolution numbering.
+The report number, or we call it document number now in eScribe 6, it's not created automatically, but you have the option to create it or to add a document number when you create the document.
+So it's not automatic when it gets approved, when that document gets approved.
+It's just you have the choice of adding that document number as you create that document.
+Okay, let us know if that also didn't answer your question, and we can send more of the recording that we've done previously if that would help as well.
+I think at this point, oh, one more question.
+I think we're good, actually.
+The other questions that we had come up in the chat, we'll do our best to follow up with you guys there.
+But thank you all for joining this first session of 2025.
+Like I said, if we didn't get to your question, we'll make sure our CSMs follow up with you.
+Otherwise, we will see you all in our next session.
+Appreciate your time today.
+Bye-bye.

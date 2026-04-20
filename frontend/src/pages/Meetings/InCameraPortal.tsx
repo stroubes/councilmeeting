@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { listMeetings } from '../../api/meetings.api';
 import type { MeetingRecord } from '../../api/types/meeting.types';
 import AppShell from '../../components/layout/AppShell';
+import MeetingTypeBadge from '../../components/ui/MeetingTypeBadge';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import DataTable from '../../components/ui/DataTable';
@@ -75,7 +76,7 @@ export default function InCameraPortal(): JSX.Element {
                   render: (meeting) => (
                     <>
                       <strong>{meeting.title}</strong>
-                      <div className="muted">{meeting.meetingTypeCode}</div>
+                      <MeetingTypeBadge code={meeting.meetingTypeCode} />
                     </>
                   ),
                 },

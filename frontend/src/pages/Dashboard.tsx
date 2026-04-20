@@ -11,6 +11,7 @@ import { getPublicSummary } from '../api/public.api';
 import type { AgendaRecord } from '../api/types/agenda.types';
 import type { MeetingRecord } from '../api/types/meeting.types';
 import type { StaffReportRecord } from '../api/types/report.types';
+import MeetingTypeBadge from '../components/ui/MeetingTypeBadge';
 import StatusBadge from '../components/ui/StatusBadge';
 import MetricTile from '../components/ui/MetricTile';
 import { Card, CardHeader, CardBody } from '../components/ui/Card';
@@ -29,7 +30,7 @@ const meetingsColumns: MeetingColumn[] = [
     render: (meeting) => (
       <>
         <strong>{meeting.title}</strong>
-        <div className="muted">{meeting.meetingTypeCode}</div>
+        <MeetingTypeBadge code={meeting.meetingTypeCode} />
       </>
     ),
   },

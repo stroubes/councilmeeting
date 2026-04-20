@@ -1,0 +1,317 @@
+Hello, everyone. Thank you for joining us today. I'm going to give us a little bit of
+time so everyone can join. But today's webinar for eScribe 6 will be a focused demo of tasks
+and reporting. We're happy that you're all here. I just wanted to do a quick promotion
+for our upcoming webinar that we have in September, talking through enhancing public meetings,
+and sharing some practical tips and strategies for clerks. We'll make sure to include this
+in the follow-up email so that way you all can register ahead of time and get that on
+your calendar. Like I said, we're excited to share this webinar today and just wanted
+to have you guys meet your speakers quickly. We have Tim, who spoke on some webinars before,
+our Chief Product Officer, Taylor, who you all met previously in our last webinar, Kelsey,
+who has joined us on a handful of different sessions, Shivani, who we're excited to have
+join us today, and then myself, Megan. Thank you guys for joining us again. It's nice to
+see you. Just some housekeeping things. Same as always, all participants are automatically
+muted. Please submit your questions in the Q&A section. We'll do our best to answer as
+many as we can during the session, but we may not get to all of them. So your CSM will
+make sure to follow up with you. And today's recording will be shared via email and posted
+to the eScribe community portal. And please take time to complete our post-webinar survey
+that will pop up at the end. As always, your feedback is very important to us. And then
+again, we just want to reiterate that these webinars are not meant to be training sessions
+for eScribe 6. These are just meant to be informative sessions walking you through some
+of the updates that we've made so far in the platform. So for today's agenda, we'll
+do a quick reminder of what is eScribe 6 for those who haven't joined any sessions before.
+We'll do a quick recap of the July 17th webinar that just happened. We'll have a quick update
+from product from Tim and Taylor. We'll have a quick poll question, and then Kelsey and
+Shivani will jive into a focus demo for tasks and reporting, and then we'll have time at
+the end for Q&A. So just a quick reminder, what is eScribe 6? eScribe 6 is an improved
+version of eScribe that's faster, more modern, user-friendly. Really, we heard your feedback,
+and that's why we're working to build eScribe 6, fewer bugs, more feature improvements,
+more releases, improved speed, performance, and usability. As we've said in multiple calls,
+as it relates to 6, and we'll do our best to keep you updated on our progress throughout.
+And for our recap of July 17th, like we said, we introduced Taylor. We're excited to have
+him as a part of our team. He'll be making sure to interact and engage with our customers
+regularly. And then also, while Tim is on this call, Taylor will continue to be giving
+and providing those regular updates on the product and product roadmap moving forward.
+So in that session, we walked through a detailed demonstration of meeting templates, and we
+also just wanted to say thank you for continuing to submit questions and recommendations in
+that Q&A box. We're really hoping to begin to put some of those into practice soon. And
+with that, I will go ahead and pass it to Taylor.
+Awesome. Thanks, Megan. So I wanted to give you an update on where we are with a state
+of the product for eScribe 6. So the two areas I wanted to go over with everyone today is
+our early customer testing and our findings from that group, and then some of our focus
+areas based off that actual testing. So at least where we are in the state of the product
+is we've done some initial testing with eScribe 6. It's definitely shown some areas of improvement
+that we wanted to focus on. One of the reasons why we decided to do this testing is we wanted
+to get that real feedback from our customers. Obviously, we know everyone here is using
+eScribe 5, so we really wanted to get some real hands-on experience from customers to
+really guide our work. So we decided to do some initial testing with our first slate of
+customers. We definitely found some things that we wanted to improve based off of that actual
+feedback. So one of the things that we wanted to share with you today is we've actually
+doubled down on our budget and our headcount to really attack these improvements and iterate
+more quickly. So we have a cohort of customers. They're going through implementation right
+now. We definitely see some benefits from the new version of the product, but we've definitely
+found some areas of improvement that we wanted to focus on. So one of the things that we wanted
+to share today on the actual product front is we've increased the amount of resources
+and individuals are working on 6 to really expedite our progress moving forward to get 6
+into a better state for everyone on the webinar. Now, in the actual focus areas, we are going
+to be very focused on quality. As we're getting feedback from our customers, as they're
+identifying certain gaps, we're going to constantly be prioritizing that feedback as it
+comes in. We've definitely been focusing on making sure the platform and the infrastructure
+is sound and solid for everyone. And as I mentioned, too, we're going to be focusing on
+these new customer implementations, making sure it's integrating with their workflows. And
+as I mentioned, too, we're going to be adding more software engineers to be supporting the
+eScribe 6 platform so that this platform will obviously meet your standards and your
+needs as well. So that's a little bit about where we are with the state of the product.
+I'm going to pass it over to Tim, and he's going to kind of go through a state of where
+we are with the upgrades.
+All right. Thanks, Taylor. Hey, everyone. Good to connect with you. Just a quick update on
+where we are with the upgrade process. We know there's been a few different dates
+communicated in the past, but based on our current state, I just wanted to share kind of
+directionally where we're going. So we know that eScribe 5 is in a good spot. Everybody's using
+it. And our goal here is to make sure that we do no harm as we move towards upgrading
+customers. And based on what Taylor was saying in the past, we found some areas that we need to
+improve on. We're continuing to focus on testing and making sure that we have a high quality
+product and we don't want to force anyone to move until we're ready and we're confident that
+we're in a really good spot. So due to where we're at, we're not going to start any upgrades this
+year. We're going to continue to focus on making sure that everything that we build is
+stable and that the seamless, we have a seamless upgrade process when the time is right.
+So just a quick reminder, no one's going to be upgraded without proper notice. There's no
+automated push that's going to happen. You'll be fully aware when this is initiated. And we'll,
+as we get closer to when upgrades can start, we'll share those timelines. So appreciate your
+patience. And there's more to come on timing. Taylor? Yep. Awesome. So and then just a little
+about where we're at the roadmap. This is one of the commits that we're coming from the eScribe
+product team, right, is to constantly share where we are on the roadmap with eScribe 6 and our
+development efforts. So as the webinars progress throughout the year and into 25, I'll be coming
+to everyone on the webinar and sharing where we are with the roadmap, what we're currently working
+on, what we're about to work on, and then some of those longer term items that we'll be developing
+on the platform. So as you can see with the roadmap, right now we're focused on quality
+improvements, right, around the product, around infrastructure. We're making some enhancements
+around the meeting site, both with real-time updates, some enhancements when it comes to
+agenda item history. Immediately following that, we're going to be focusing more on meeting manager,
+meeting management, right, making sure that our meeting site and our meeting templates
+are up to basically standards for our customers coming on to eScribe 6.
+And then you'll see we have a couple upcoming items that are, I know are definitely important
+items for customers on eScribe 5, but we've definitely heard as items as feedback for
+customers coming on to 6. So really things that are going to help make a better meeting experience
+and a document manager experience for our eScribe customers. So things that are going to hopefully
+help automate some of your work, whether it's resolution numberings or setting up a meeting
+recurrence on a certain cadence or certain things that are going to help deliver a great meeting
+experience for those that are participating, whether it's, you know, looking at voting results
+or having the public interact with an actual meeting, right. So those are some of the items
+that we have in our upcoming column that are going to be upcoming in the next couple months.
+But again, with this investment we're making in the platform and with eScribe 6,
+we're going to be able to deliver a lot of these features in an expedited path over the
+next couple quarters too. So this is where we are with the roadmap and this is something you'll be
+seeing for future webinars too going forward. And I'll pass it back to Megan.
+Thank you guys for that update. We appreciate you guys sharing that so candidly.
+So we'll go ahead and dive into our poll question for today. Today we're really
+focusing on tasks and reporting. So we would love your feedback when it comes to does your
+organization utilize tasks within eScribe? I'll give you guys a second to complete that.
+Okay. Thank you. So it looks like honestly kind of it's a big mixture there. So we had a decent
+amount say always and sometimes some people said never. And we also got a handful of what are tasks.
+Well, hopefully today we'll be able to show you a bit more about tasks. So I'm going to go ahead
+and there we go. Pass it over to Kelsey. Let me stop sharing my screen so you can go ahead
+and share Kelsey. There you go. Okay. Sharing my screen now. So we're just going to look at
+tasks first and there's a couple of different areas within the product that you can view your
+tasks. The first area is the meeting site. So currently I'm logged in as a super admin.
+Currently known as the portal admin in eScribe 5. So I'm going to click into my meeting site for
+today. And it's going to be in a tab over here in the more tab. And no matter what meeting mode
+you're in, whether it's pre and session or post or concluded mode, those tasks are going to reside in
+that more tab on that item. So you can see here for my item number one, I have one task sitting
+here. Let's go to an example. It doesn't have one. So you could see what that looks like. It just
+sits above the chair comments area. And you can see here, you can just easily click that button
+to add a task in there. And if you don't have any tasks, it just says new tasks. So I'm going to
+scroll down to an item where I already have a couple of tasks, click the more tab. And this is
+where my tasks will be laid out. You can see here, I've got the option, like I said, to add the task
+with that button. I have the option here to edit or delete that task. If I do want to delete it,
+I always get that confirmation pop up that allows me to have a second thought there if I'd like to
+do that. I'll click cancel and I'll just go through adding a task. So it's pretty simple.
+The task field here is something that you can fill out. And that's just the general idea of
+what the task is. So I'm just going to say, test for meetings for today. For assignees, I can add
+as many tasks as I would like. So here I'm going to click, and maybe I'll click Jim, they can work
+together. I can allow that task to be delegated. And if that means that those two assignees are
+able to further delegate this task to other people, when they do that, they're not going to be able to
+select anybody who's currently chosen. And they're going to select any active user within the system.
+So I'll give them the ability to do that. The due date, I'll say a week from today, and I can choose
+my priority level of low, normal or high. So I'll click high for that one. And as soon as I click
+create, those two recipients, those assignees are going to receive an email notification saying,
+hey, you have a new task, what would you like to do with it? And they can click that email and view
+the task and then work with it within the system. So you can see here it's newly added. So if I
+scroll down, it resides at the bottom. And if I click here, like I said, I can easily go and edit
+that task. I can also add comments for my assignee so that they can get more information or I can
+change any of the information above. Something different in eScribe 6 that we didn't have in 5
+is this toggle here to show motion. And that just allows me to have information about the motion
+that that task relates to. So it's going to be any motion will appear that relates to that item. So
+if you had a couple of motions here for that item, both motions would show up in that task.
+I'll just turn that off and I'll click close. Only admins in the meeting site will see tasks,
+so your participants and your visitors will not. And you'll notice here that I don't have a task
+icon that's coming very soon. So you'll still be able to see on items where you have a task
+within your meeting site. So that's it for the meeting site. The other spot in eScribe where
+you can view your task is this task information bar on the menu. So I can click that drop down
+and you'll see I have two sections here. The first is the My Assigned Task. So I'll click there
+and that's just any task that I have in the system that is assigned to me. So I'm an admin,
+maybe I don't have any tasks assigned to me, but I can't assign or create any tasks in that area
+because it's basically just a library of tasks that are assigned to myself. So because I'm a
+super admin, I'm going to click in Task Manager and this is where I can manage all tasks within
+the system. So it just depends on your user role and your permissions within the system and
+what you see here. For example, if you're a contributor or a participant, you're not going
+to see the My Assigned Task or Task Manager area. You would just see tasks because you're only going
+to have tasks assigned to you and you don't have the permissions or the user role able to assign
+tasks out to other people or create them. So a super admin, formerly known as the portal admin,
+will see all tasks within the system. And then user roles such as administrator,
+meeting administrator and task manager, they're going to see tasks listed to the meeting types
+that are assigned in the permissions for the meeting types. Something that's easily changed
+that you can change and play with and that's pretty easy to use. So here in this area for
+Task Manager, you can see I've got a bunch of columns with information and it basically just
+lists information out on the task. So in the top right corner, I have my Create Task button
+and it's a pretty similar fly out to what was in the meeting site, except you now have to choose
+things that the meeting type itself would already have selected from the meeting site.
+So for example, I'm going to choose my Any Town Council Meeting, my meeting date for today and
+I'm just relating it back to that meeting that I was currently on. So we'll select item five
+and I'll just say test task, assign it out to somebody, allow them to delegate and again select
+the due date and I can select the priority. So you can see here once I create that, it gets added to
+the list. This list is sorted by the due date. So anything upcoming is going to show up at the top
+and the furthest dates are going to show at the bottom. The check boxes on the left here are to
+bulk delete. So if you had a task that was complete or maybe you didn't need it anymore, you can easily
+select those check boxes there and do that bulk action. And you have multiple filters up here so
+that you can decide what you'd like to see exactly since this list can get pretty large.
+And the great thing about the filters is that if you put a filter on and then you move out of the
+system or you log out of it, when you come back, those filters are still going to be assigned
+so that you can always have a view that's exactly what you would like to see.
+One of the columns over here for closed session just means that it's a closed session,
+relates to a closed session item. So it's going to have a check box here or check mark, sorry,
+so that you can know exactly which one is related to closed session.
+I'm going to pull open my participant view. So this is my participant view now and you can see
+it's a much lighter menu, not as many options as the super admin of course, but if I click on tasks,
+it's a much simpler screen because I don't have the ability, like I said, to assign tasks or create
+tasks. So if I wanted to action my task, I can click on the menu over here and click view task
+and you can see it's more of a read only screen with a couple of options to select from. So I
+can change the status which will update for myself and anybody else assigned to the task and the
+admin. I can choose to show the motion like I had in the other area for the admin screen.
+I can add comments or I can choose to delegate that task to somebody else who's active in the
+system but who's not. Hey Kelsey, sorry to interrupt you. We can't see the participant side.
+Let me try.
+And also while we're waiting for that, thank you guys for continuing to put questions in the Q&A.
+Once we kind of get through this demo, I'll make sure to bring some of these questions
+up because they're great questions. So please continue to submit those. Thank you. All right,
+cool Kelsey. I think we're good now. Okay, thanks. Sorry, I was just showing the
+browser not the screen. This is the participant side so you can see it's a much lighter view.
+Like I said here, if you'd like to update that task, you can click the ellipsis menu there and
+view task and it's more of a read only section for the people who are not the admins. And you
+can update the status here which updates for everybody including the admin and the assignees.
+I can choose to show the motion and I can also delegate that task to anybody who's not listed
+here as an assignee but who's active in the system. So if I chose somebody else and click
+save changes, they would then also be added into that assignee area at the...
+Sorry, I unassigned it for myself so that's why it's missing from there now.
+But you can easily just delegate it out to other people as well.
+That's pretty much it for tasks and I'll stop sharing and pass it over to Shivani.
+We can answer some questions once Shivani sends her section as well.
+Thank you, Kelsey. I'm just going to start sharing my screen. Just give me a second.
+Okay. So what I really want to walk you through is the reporting section and what it was earlier or
+right now is called the report center. It's the same concept of reporting, just a change in
+terminology but in terms of how the product team has re-looked or redesigned the complete setup
+is slightly different so I just want to walk you through that aspect. So if you look at the default
+when you land on this page, on the reporting page, you will definitely see the agenda item report
+which is basically the default space. You will also have the opportunity to export the report.
+So any report that you export will by default export in a CSV file format and you can download
+that on your laptop or your computer. You now also have an option to group the report. So say
+for example, you select an option from here and you decide to group it by a meeting date. You can
+do that by selecting the meeting date and it'll group the reports for that particular agenda item
+report by a specific date. So just makes it much more easier for you to plan or if you're looking
+to get more information within that. Similarly, you also have many other buttons right up here
+to select from if you're looking to select the agenda item report but you're looking to get more
+detailed information in terms of filtering it further. You can do that by meeting type,
+meeting date, sponsor or department. Within the drop downs that are available,
+you also have many other options. So I will walk you through the attendance report basically giving
+you an overview if you are looking to say present an internal report to your manager saying what was
+the attendance for the year 2024. At the year end you can just pull a report from here and export
+that as a CSV file and it will give you all the information as to who the what the meeting type
+was, the dates and the attendees that were present or not present.
+Again an important task which sometimes or many a times clerk's team has to do
+is present a motions report at the year end to the CAO. Same thing, same concept. You can
+you know export that report as a CSV file but just gives you a clear indication of what the
+reports were that were what were the motions that were passed in the year along with the date,
+what was the agenda item for which the motion was passed, what were the resolution results.
+In this case it shows none but at the same time in your if you have more updated information it
+will definitely pop up here but it will give you a much more clarity in terms of
+what other motions that were passed for the year 2024 as an example.
+Voting report so this again will give you an option to view say you're looking to get more
+information in terms of a certain meeting type you're trying to say which was the meeting that
+was there or what were the results you're trying to do information on trying to sort that information
+trying to see who the voters were or what was the information or what was the motion and the
+results that were there. Maybe there was a motion which was a voting report that was not passed
+that will give you further information looking at this particular report.
+Task report similar to what Kelsey just showed you right now but just gives you a complete overview
+on all the tasks that have been assigned you just need to be mindful that participants who do not
+have access to certain meetings so if a participant only has specific access to
+a meeting they can only see those specific tasks but or reports for that matter they won't have
+access to everything that's there but definitely they can take advantage of this space and our
+important feature to be noted is the fact that visitors don't have access to the reports that
+visitors don't have access to the reports that you see over here.
+Conflicts report so if you in the clerks team have a current process where you are creating
+like an excel sheet and or doing a manual tracking of who made a conflict for which
+particular agenda item maybe you need to stop doing that and start using the report center
+in eScribe because all you need to do is just add that information the information's basically
+right here you can just export that from here and present it to your CAO or your clerks team
+for an internal presentation so it'll basically pull out all the information that's there related
+to who made the conflict what was the reason and what was the item related to that so kind of covers
+all the important aspects and makes it easier for internal or external reporting.
+You then have another drop down for items report so if there are any items that were referred
+you can quickly see which were the items that were referred in the year 2024
+just gives you much more clearer information.
+The forecast again this is something that you would usually have an excel document trying to
+track which are the upcoming reports coming to future meetings or which are the reports that
+are going to be presented to the upcoming council meeting or planning meeting instead of that if you
+can start adding that information right here you can just do a forecast and try and see
+do a quick check in terms of the meeting type or you can also try and sort it by
+the finance committee and see which are the meetings or the reports that are coming up and
+you would right away know there's just that one report coming in for your information or for your
+team. Reporting from my understanding in the discussion that we've had with many
+clerks is something that currently is managed by a lot of team members through
+excel document and we like looking to see if a feature like this can help you change that so
+if you have any questions please please feel free to reach out to your customer success manager and
+they can do provide you further demo and answer more questions related to this feature that's
+available in eScribe.
+All right thank you so much yeah thank you so much Kelsey and Shivani we had some questions come in
+which is great so thank you all I'm not going to reshare the the presentation but just wanted to
+remind you all to go ahead and submit any questions in the Q&A section shortly we'll do
+our best like I said to answer as many as we can live we may not get to all of them but like Shivani
+said we'll go ahead and make sure your CSM can follow up with you and then we please encourage
+you to complete our post webinar survey to provide feedback to us. So I'm going to go ahead and
+open up for the questions Taylor I saw that you had marked one that you were wanting to
+answer live so I'll let you go ahead and take it away. Yeah so that's a great question on
+specifically the actual upgrade experience from six to five so one of the things that
+we're definitely working on is we want to make sure that we deliver the best upgrade experience
+as you're making the transition from five to six. One of the things that we want to make sure is that
+we support you with enough training resources and support so we're still reviewing what the actual
+like setup is essentially if we're able to have a your version of five up and six simultaneously
+those are some of the details that we're going to be working out in you know the near future
+on specifics but that's definitely something we want to make sure is that everyone here when the
+upgrades do you know when we are planning those out that you have more than enough time and
+resources and support from the entire eScribe team to complete the transition so I saw that one come
+through wanted to mark that one off just to reiterate that that when upgrades do when those
+timelines are ready we'll make sure that you guys will have enough time and resources support from
+the entire eScribe team.
+Thank you Taylor. That's we love we love to share positive news so great news.
+Kelty I know you had marked a few questions that had come in as well as they related to tasks so
+if you want to go ahead I'll just let you take it away too. Sure one question was can you change
+the status of a task to complete it as soon as it's created so not as soon as it's created
+you have to click save and then if you go to edit that task then you'll be able to click that as
+completed so then it's done that task is then completed and the next question was does the
+motion appear and the email notification it does not it's a very simple email that goes out to the
+assignees so it just says the environment and it says hey this is the task list out that task
+information and then go and view tasks so they could click that button and go right into eScribe
+and view that task. The next one is can you pull an excel listing for tasks you can't do that from
+the task page but like Shivani showed you can pull a task report and filter that information out you
+can filter and sort and export it and that export will contain any filtering and sorting that you
+had applied to that report within eScribe. There's a couple more that task excel for the report does
+not contain the motion information that's a good additional option and there sorry there was one
+more eScribe five it does have a motions report it's just called resolutions report so it does
+have that same information if you are looking for that and the last one here that I can see
+is posting the conflict registry to the website yes you'll be able to do that so you can post
+your conflicts that you have listed in your meeting site go to the publish area publish those out and
+you can have those recorded in your conflict registry. Awesome thank you for answering those
+Kelsey I know that was pretty quick to get through all of those but thank you guys for submitting
+your questions I know we're right at time so we want to go ahead and wrap up for today but
+thank you all for participating for providing any of your questions like I said we'll make
+sure to have your CSM follow up with you but thank you for continuing to join these sessions and
+we'll see you next time thanks so much.

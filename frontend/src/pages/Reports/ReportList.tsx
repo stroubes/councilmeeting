@@ -7,6 +7,7 @@ import {
   importDocxReport,
   listReportAttachments,
   listReports,
+  runReportBulkAction,
   publishReport,
   removeReportAttachment,
   submitReport,
@@ -194,6 +195,7 @@ export default function ReportList(): JSX.Element {
     recommendations: '',
     financialImpact: '',
   });
+  const reportDraftStorageKey = 'reports.createDraft.v1';
 
   const [importForm, setImportForm] = useState({
     agendaItemId: '',
@@ -328,6 +330,27 @@ export default function ReportList(): JSX.Element {
     setImportForm((current) => (current.workflowConfigId ? current : { ...current, workflowConfigId: defaultWorkflowId }));
   }, [defaultWorkflowId]);
 
+  useEffect(() => {
+    try {
+      const storedDraft = localStorage.getItem(reportDraftStorageKey);
+      if (!storedDraft) {
+        return;
+      }
+      const parsedDraft = JSON.parse(storedDraft) as Partial<typeof createForm>;
+      setCreateForm((current) => ({ ...current, ...parsedDraft }));
+    } catch {
+      // Ignore malformed draft payload in browser storage.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(reportDraftStorageKey, JSON.stringify(createForm));
+    } catch {
+      // Ignore private mode storage restrictions.
+    }
+  }, [createForm]);
+
   const openAttachmentsDrawer = async (report: StaffReportRecord): Promise<void> => {
     setAttachmentReport(report);
     setShowAttachmentAdvanced(false);
@@ -420,6 +443,56 @@ export default function ReportList(): JSX.Element {
       addToast('Could not publish report.', 'error');
     } finally {
       setPublishingReportId(null);
+    }
+  };
+
+  const handleBulkSubmitVisible = async (): Promise<void> => {
+    const targetReportIds = pagedReports
+      .filter((report) => report.workflowStatus === 'DRAFT' || report.workflowStatus === 'REJECTED')
+      .map((report) => report.id);
+    if (targetReportIds.length === 0) {
+      addToast('No visible draft reports to submit.', 'error');
+      return;
+    }
+
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const summary = await runReportBulkAction({ reportIds: targetReportIds, action: 'SUBMIT' });
+      await loadReports();
+      addToast(
+        `Submitted ${summary.succeeded}/${summary.requested} reports.`,
+        summary.failed.length > 0 ? 'error' : 'success',
+      );
+    } catch {
+      setError('Could not run bulk report submit.');
+      addToast('Could not run bulk report submit.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBulkPublishVisible = async (): Promise<void> => {
+    const targetReportIds = pagedReports.filter((report) => report.workflowStatus === 'APPROVED').map((report) => report.id);
+    if (targetReportIds.length === 0) {
+      addToast('No visible approved reports to publish.', 'error');
+      return;
+    }
+
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const summary = await runReportBulkAction({ reportIds: targetReportIds, action: 'PUBLISH' });
+      await loadReports();
+      addToast(
+        `Published ${summary.succeeded}/${summary.requested} reports.`,
+        summary.failed.length > 0 ? 'error' : 'success',
+      );
+    } catch {
+      setError('Could not run bulk report publish.');
+      addToast('Could not run bulk report publish.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -616,6 +689,7 @@ export default function ReportList(): JSX.Element {
         recommendations: '',
         financialImpact: '',
       });
+      localStorage.removeItem(reportDraftStorageKey);
       setIsCreateOpen(false);
       addToast('Report created successfully.', 'success');
     } catch {
@@ -813,6 +887,12 @@ export default function ReportList(): JSX.Element {
                 <option value="desc">Descending</option>
                 <option value="asc">Ascending</option>
               </select>
+              <button type="button" className="btn" disabled={isSubmitting} onClick={() => void handleBulkSubmitVisible()}>
+                Bulk Submit Visible
+              </button>
+              <button type="button" className="btn" disabled={isSubmitting} onClick={() => void handleBulkPublishVisible()}>
+                Bulk Publish Visible
+              </button>
             </div>
           </div>
           {isLoading ? <p className="muted">Loading reports...</p> : null}

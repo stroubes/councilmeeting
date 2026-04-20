@@ -15,6 +15,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { GovernanceService } from '../governance/governance.service';
 import { inferAgendaTemplateProfile } from '../governance/municipal-profile.constants';
 import { MeetingTypesService } from '../meeting-types/meeting-types.service';
+import { normalizePagination, toPaginatedResult, type PaginatedResult } from '../types/pagination';
+import type { BulkAgendaActionDto } from './dto/bulk-agenda-action.dto';
 
 export type AgendaStatus =
   | 'DRAFT'
@@ -48,6 +50,7 @@ export interface AgendaItemRecord {
   status: AgendaItemStatus;
   bylawId?: string;
   itemNumber?: string;
+  publishStatus: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -163,6 +166,13 @@ export class AgendasService {
 
   list(meetingId?: string): Promise<AgendaRecord[]> {
     return this.agendasRepository.list(meetingId);
+  }
+
+  async listPaged(input: { meetingId?: string; page?: number; limit?: number }): Promise<PaginatedResult<AgendaRecord>> {
+    const allAgendas = await this.agendasRepository.list(input.meetingId);
+    const pagination = normalizePagination(input.page, input.limit);
+    const pagedAgendas = allAgendas.slice(pagination.offset, pagination.offset + pagination.limit);
+    return toPaginatedResult(pagedAgendas, allAgendas.length, pagination.page, pagination.limit);
   }
 
   getById(id: string): Promise<AgendaRecord> {
@@ -535,6 +545,51 @@ export class AgendasService {
     return updated;
   }
 
+  async publishItem(agendaId: string, itemId: string): Promise<AgendaRecord> {
+    const agenda = await this.getById(agendaId);
+    const item = agenda.items.find((candidate) => candidate.id === itemId);
+    if (!item) {
+      throw new NotFoundException('Agenda item not found');
+    }
+    if (agenda.status !== 'PUBLISHED') {
+      throw new BadRequestException('Agenda must be published before individual items can be published');
+    }
+
+    await this.agendasRepository.updateItem(agendaId, itemId, {
+      publishStatus: 'PUBLISHED',
+    } as any);
+
+    const updated = await this.agendasRepository.update(agenda.id, { version: agenda.version + 1 });
+    await this.auditService.log({
+      action: 'agenda.item.publish',
+      entityType: 'agenda',
+      entityId: agenda.id,
+      changesJson: { itemId },
+    });
+    return this.getById(agenda.id);
+  }
+
+  async unpublishItem(agendaId: string, itemId: string): Promise<AgendaRecord> {
+    const agenda = await this.getById(agendaId);
+    const item = agenda.items.find((candidate) => candidate.id === itemId);
+    if (!item) {
+      throw new NotFoundException('Agenda item not found');
+    }
+
+    await this.agendasRepository.updateItem(agendaId, itemId, {
+      publishStatus: 'HIDDEN',
+    } as any);
+
+    const updated = await this.agendasRepository.update(agenda.id, { version: agenda.version + 1 });
+    await this.auditService.log({
+      action: 'agenda.item.unpublish',
+      entityType: 'agenda',
+      entityId: agenda.id,
+      changesJson: { itemId },
+    });
+    return this.getById(agenda.id);
+  }
+
   async carryForwardItems(sourceAgendaId: string, targetAgendaId: string, user: AuthenticatedUser): Promise<AgendaRecord> {
     const [source, target] = await Promise.all([this.getById(sourceAgendaId), this.getById(targetAgendaId)]);
     let sortOrder = target.items.length + 1;
@@ -562,6 +617,76 @@ export class AgendasService {
 
   hasAgendaItem(itemId: string): Promise<boolean> {
     return this.agendasRepository.hasAgendaItem(itemId);
+  }
+
+  async runScheduledPublicationSweep(runAt = new Date()): Promise<{ scanned: number; published: number; runAt: string }> {
+    const agendas = await this.agendasRepository.list();
+    let published = 0;
+    const dueTimestamp = runAt.getTime();
+
+    for (const agenda of agendas.filter((entry) => entry.status === 'PUBLISHED')) {
+      for (const item of agenda.items) {
+        const isAlreadyPublished = item.publishStatus === 'PUBLISHED';
+        const canPublishNow = item.isPublicVisible && (!item.publishAt || new Date(item.publishAt).getTime() <= dueTimestamp);
+        if (!isAlreadyPublished && canPublishNow) {
+          await this.agendasRepository.updateItem(agenda.id, item.id, { status: 'PUBLISHED' });
+          published += 1;
+        }
+      }
+    }
+
+    return {
+      scanned: agendas.length,
+      published,
+      runAt: runAt.toISOString(),
+    };
+  }
+
+  async runBulkAction(
+    dto: BulkAgendaActionDto,
+    user: AuthenticatedUser,
+  ): Promise<{ requested: number; succeeded: number; failed: Array<{ agendaId: string; reason: string }> }> {
+    const failures: Array<{ agendaId: string; reason: string }> = [];
+    let succeeded = 0;
+
+    for (const agendaId of dto.agendaIds) {
+      try {
+        if (dto.action === 'SUBMIT') {
+          await this.submitForDirector(agendaId);
+        } else {
+          await this.publish(agendaId);
+        }
+        succeeded += 1;
+      } catch (caughtError) {
+        failures.push({
+          agendaId,
+          reason: caughtError instanceof Error ? caughtError.message : 'Agenda bulk action failed',
+        });
+      }
+    }
+
+    await this.auditService.log({
+      actorUserId: user.id,
+      action: 'agenda.bulk_action',
+      entityType: 'agenda',
+      entityId: dto.agendaIds.join(','),
+      changesJson: {
+        action: dto.action,
+        requested: dto.agendaIds.length,
+        succeeded,
+        failed: failures.length,
+      },
+    });
+
+    return {
+      requested: dto.agendaIds.length,
+      succeeded,
+      failed: failures,
+    };
+  }
+
+  getVersionHistory(agendaId: string): Promise<unknown[]> {
+    return this.agendasRepository.getAgendaVersionHistory(agendaId);
   }
 
   async remove(id: string, user: AuthenticatedUser): Promise<{ ok: true }> {

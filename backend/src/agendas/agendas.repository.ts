@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { DatabaseUnavailableError, PostgresService } from '../database/postgres.service';
+import { PostgresService } from '../database/postgres.service';
+import { BaseRepository } from '../database/base.repository';
 import type { AgendaItemRecord, AgendaRecord, AgendaStatus } from './agendas.service';
 
 interface CreateAgendaInput {
@@ -45,11 +46,13 @@ interface TransitionAgendaWorkflowInput {
 }
 
 @Injectable()
-export class AgendasRepository {
+export class AgendasRepository extends BaseRepository {
   private readonly memoryAgendas = new Map<string, AgendaRecord>();
-  private schemaEnsured = false;
+  protected schemaEnsured = false;
 
-  constructor(private readonly postgresService: PostgresService) {}
+  constructor(postgresService: PostgresService) {
+    super(postgresService);
+  }
 
   async create(input: CreateAgendaInput): Promise<AgendaRecord> {
     return this.withFallback(async () => {
@@ -181,37 +184,38 @@ export class AgendasRepository {
       }
 
       for (const item of items) {
-        await this.postgresService.query(
-          `INSERT INTO app_agenda_items (
+          await this.postgresService.query(
+            `INSERT INTO app_agenda_items (
             id, agenda_id, item_type, title, description, parent_item_id,
             is_in_camera, is_public_visible, publish_at, redaction_note, carry_forward_to_next,
-            sort_order, status, bylaw_id, item_number, created_by, created_at, updated_at
+            sort_order, status, bylaw_id, item_number, publish_status, created_by, created_at, updated_at
           ) VALUES (
             $1, $2, $3, $4, $5, $6,
             $7, $8, $9, $10, $11,
-            $12, $13, $14, $15, $16, $17, $18
+            $12, $13, $14, $15, $16, $17, $18, $19
           )`,
-          [
-            item.id,
-            agendaId,
-            item.itemType,
-            item.title,
-            item.description,
-            item.parentItemId,
-            item.isInCamera,
-            item.isPublicVisible,
-            item.publishAt,
-            item.redactionNote,
-            item.carryForwardToNext,
-            item.sortOrder,
-            item.status,
-            item.bylawId ?? null,
-            item.itemNumber ?? null,
-            item.createdBy,
-            item.createdAt,
-            item.updatedAt,
-          ],
-        );
+            [
+              item.id,
+              agendaId,
+              item.itemType,
+              item.title,
+              item.description,
+              item.parentItemId,
+              item.isInCamera,
+              item.isPublicVisible,
+              item.publishAt,
+              item.redactionNote,
+              item.carryForwardToNext,
+              item.sortOrder,
+              item.status,
+              item.bylawId ?? null,
+              item.itemNumber ?? null,
+              (item as any).publishStatus ?? 'DRAFT',
+              item.createdBy,
+              item.createdAt,
+              item.updatedAt,
+            ],
+          );
       }
     }, async () => {
       const existing = await this.getById(agendaId);
@@ -238,7 +242,7 @@ export class AgendasRepository {
         }
 
         const existing = agendaResult.rows[0];
-        if (existing.updated_at !== input.expectedUpdatedAt) {
+        if (!timestampsMatch(existing.updated_at, input.expectedUpdatedAt)) {
           throw new ConflictException('Agenda changed by another user. Refresh and try again.');
         }
 
@@ -248,11 +252,11 @@ export class AgendasRepository {
             `INSERT INTO app_agenda_items (
               id, agenda_id, item_type, title, description, parent_item_id,
               is_in_camera, is_public_visible, publish_at, redaction_note, carry_forward_to_next,
-              sort_order, status, bylaw_id, item_number, created_by, created_at, updated_at
+              sort_order, status, bylaw_id, item_number, publish_status, created_by, created_at, updated_at
             ) VALUES (
               $1, $2, $3, $4, $5, $6,
               $7, $8, $9, $10, $11,
-              $12, $13, $14, $15, $16, $17, $18
+              $12, $13, $14, $15, $16, $17, $18, $19
             )`,
             [
               item.id,
@@ -270,6 +274,7 @@ export class AgendasRepository {
               item.status,
               item.bylawId ?? null,
               item.itemNumber ?? null,
+              (item as any).publishStatus ?? 'DRAFT',
               item.createdBy,
               item.createdAt,
               item.updatedAt,
@@ -304,7 +309,7 @@ export class AgendasRepository {
       });
     }, async () => {
       const existing = await this.getById(input.agendaId);
-      if (existing.updatedAt !== input.expectedUpdatedAt) {
+      if (!timestampsMatch(existing.updatedAt, input.expectedUpdatedAt)) {
         throw new ConflictException('Agenda changed by another user. Refresh and try again.');
       }
 
@@ -332,11 +337,11 @@ export class AgendasRepository {
         `INSERT INTO app_agenda_items (
           id, agenda_id, item_type, title, description, parent_item_id,
           is_in_camera, is_public_visible, publish_at, redaction_note, carry_forward_to_next,
-          sort_order, status, bylaw_id, item_number, created_by, created_at, updated_at
+          sort_order, status, bylaw_id, item_number, publish_status, created_by, created_at, updated_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6,
           $7, $8, $9, $10, $11,
-          $12, $13, $14, $15, $16, $17, $18
+          $12, $13, $14, $15, 'DRAFT', $16, $17, $18
         ) RETURNING *`,
         [
           id,
@@ -379,6 +384,7 @@ export class AgendasRepository {
         sortOrder: input.sortOrder,
         status: input.status,
         bylawId: input.bylawId,
+        publishStatus: 'DRAFT',
         createdBy: input.createdBy,
         createdAt: now,
         updatedAt: now,
@@ -431,7 +437,8 @@ export class AgendasRepository {
              status = $12,
              bylaw_id = $13,
              item_number = $14,
-             updated_at = $15
+             publish_status = $15,
+             updated_at = $16
           WHERE agenda_id = $1 AND id = $2
           RETURNING *`,
         [
@@ -449,6 +456,7 @@ export class AgendasRepository {
           patch.status ?? current.status,
           patch.bylawId ?? current.bylawId ?? null,
           patch.itemNumber ?? current.itemNumber ?? null,
+          (patch as any).publishStatus ?? current.publishStatus ?? 'DRAFT',
           updatedAt,
         ],
       );
@@ -580,6 +588,21 @@ export class AgendasRepository {
     await this.postgresService.query(
       `CREATE INDEX IF NOT EXISTS idx_app_agenda_items_agenda_id ON app_agenda_items(agenda_id)`,
     );
+    await this.postgresService.query(`
+      CREATE TABLE IF NOT EXISTS agenda_version_history (
+        id UUID PRIMARY KEY,
+        agenda_id UUID NOT NULL,
+        version INTEGER NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        status VARCHAR(50) NOT NULL,
+        snapshot_json JSONB NOT NULL,
+        changed_by VARCHAR(255),
+        changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await this.postgresService.query(
+      `CREATE INDEX IF NOT EXISTS idx_agenda_version_history_agenda ON agenda_version_history(agenda_id, version)`,
+    );
     await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS is_public_visible BOOLEAN NOT NULL DEFAULT TRUE`);
     await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS publish_at TIMESTAMPTZ`);
     await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS redaction_note TEXT`);
@@ -588,6 +611,8 @@ export class AgendasRepository {
     await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS item_number VARCHAR(50)`);
     await this.postgresService.query(`CREATE INDEX IF NOT EXISTS idx_app_agenda_items_bylaw_id ON app_agenda_items(bylaw_id) WHERE bylaw_id IS NOT NULL`);
     await this.postgresService.query(`CREATE INDEX IF NOT EXISTS idx_app_agenda_items_item_number ON app_agenda_items(item_number) WHERE item_number IS NOT NULL`);
+    await this.postgresService.query(`ALTER TABLE app_agenda_items ADD COLUMN IF NOT EXISTS publish_status VARCHAR(50) NOT NULL DEFAULT 'DRAFT'`);
+    await this.postgresService.query(`CREATE INDEX IF NOT EXISTS idx_app_agenda_items_publish_status ON app_agenda_items(publish_status)`);
 
     await this.postgresService.query(
       `DELETE FROM app_agendas a WHERE NOT EXISTS (
@@ -623,21 +648,6 @@ export class AgendasRepository {
     `);
 
     this.schemaEnsured = true;
-  }
-
-  private async withFallback<T>(dbFn: () => Promise<T>, fallbackFn: () => Promise<T> | T): Promise<T> {
-    if (!this.postgresService.isEnabled) {
-      return fallbackFn();
-    }
-
-    try {
-      return await dbFn();
-    } catch (error) {
-      if (error instanceof DatabaseUnavailableError) {
-        return fallbackFn();
-      }
-      throw error;
-    }
   }
 
   private createInMemory(input: CreateAgendaInput): AgendaRecord {
@@ -690,6 +700,7 @@ interface DbAgendaItemRow {
   status: AgendaStatus;
   bylaw_id: string | null;
   item_number: string | null;
+  publish_status: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -729,6 +740,7 @@ function toAgendaItemRecord(row: DbAgendaItemRow): AgendaItemRecord {
     status: row.status,
     bylawId: row.bylaw_id ?? undefined,
     itemNumber: row.item_number ?? undefined,
+    publishStatus: row.publish_status,
     createdBy: row.created_by,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -745,4 +757,15 @@ function groupItemsByAgenda(rows: DbAgendaItemRow[]): Map<string, AgendaItemReco
   }
 
   return grouped;
+}
+
+function timestampsMatch(left: string | Date, right: string | Date): boolean {
+  const leftTime = new Date(left).getTime();
+  const rightTime = new Date(right).getTime();
+
+  if (Number.isNaN(leftTime) || Number.isNaN(rightTime)) {
+    return String(left) === String(right);
+  }
+
+  return leftTime === rightTime;
 }

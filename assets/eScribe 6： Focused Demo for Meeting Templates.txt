@@ -1,0 +1,382 @@
+Hello, everyone. Welcome to our webinar. Let's go ahead and get this kicked off. Before we
+really get into things, I want to tell you about this next webinar that's coming up that
+you might be interested in. It is called Behind the Scenes with City Clerks, How These Unsung
+Heroes Manage It All. It sounds like it's going to be a really inspiring session, so
+I encourage you to check it out. All right. I want to take a second to introduce you to our
+speakers here today. We have Taylor Bold. He is our Senior Product Manager. We have Kelsey Harlow.
+She's also a Senior Product Manager. We have Viola Kajendra Kumar. She's our Customer Education
+Specialist. And my name is Michelle Enfield. I'm the Manager of Product Marketing, and I'm
+going to be moderating the session. Okay, so I want to go over some housekeeping notes real fast.
+All participants are going to be automatically muted. If you have any questions, please put them
+into the Q&A section. We're going to do our best to answer as many questions as we can, but if we
+don't get to yours, don't fret. Your CSM will get back to you as soon as they can. We're going to
+be recording the session, and we'll share it by email, and we'll also post it to the community
+portal. And then at the very end, if you have a chance to submit that post webinar survey,
+we'd really appreciate it. We'd really love to hear your feedback. And as a matter of fact,
+one of the things that we've heard from this group so far is how much you let the demo portion of
+things. So that's part of why we're trying to incorporate demos into these as much as possible.
+And then I do also want to call out that these webinars are not intended to be training sessions,
+but you should think of them as bite-sized info sessions that are meant to give you a high-level
+glimpse of what eScribe 6 will look like. Okay, so here's a quick look at today's agenda. We're
+going to talk about what is eScribe 6, do a quick review for anyone who's missed it,
+and then we'll do a quick recap of the June webinar. We'll have a quick update from product,
+we'll do a polling question, and then we'll go into the demo, and then finally we'll do a Q&A.
+All right, so what is eScribe 6? Really, eScribe 6 is an improved version of eScribe. It's designed
+to be faster, more user-friendly, and modernized. It is our goal to provide the most advanced and
+easy-to-use public meeting management solution in the industry. So why do we build eScribe 6?
+Well, first, we heard your feedback. You asked for fewer bugs and more feature improvements,
+and more feature improvements, better speed, performance, and usability.
+eScribe 6 will help you be more efficient, and it's going to be easier to use,
+and it's going to feel so much more modern. But do keep in mind that things are definitely
+going to continue to evolve as it relates to eScribe 6, and we will keep you informed
+as we move forward. And a quick recap of the last webinar in June. In that session,
+we shared more detail and did a demo of how document collaboration works, and we also did
+a demo that showcased the admin and participant experience. If you missed the session and you're
+curious about it, you can find it in the customer community portal. And then we also shared out a
+one-pager that explains how document collaboration works in more detail. Okay, next, I'd love to hand
+it over to Taylor from Product. He's brand new on the team, and I'd love to give him a chance to
+introduce himself and say hello. So, Taylor, you want to take it away? Yep, I'll take it away.
+Hello, everyone. Taylor Bold, the newest new product manager working on eScribe. As you can
+see, I'm a new addition to the team. One thing you'll definitely be hearing and seeing is I'm
+going to be spending more time interacting with everyone watching the webinar, those that are
+listening to the recap afterwards. I'll definitely be engaging more, understanding your current
+customer experience, your workflows, challenges, what goes well, what you want to see improved.
+So that's one aspect you'll definitely be seeing more of for me. Additionally, I will be joining
+this webinar to provide regular updates related to the product developments on eScribe 6,
+and that also includes our eScribe 6 roadmap, too. So all of the things that we're working on
+right now, things that are going to come next, and things that we're planning out for the future
+as it relates to eScribe 6, you'll be getting those regular updates from me. So I'm very
+customer-centric. I'm very excited to be here. You'll see me drinking coffee almost every single
+day. I need at least two to three cups a day. That's a fun fact about myself. But that's just
+a little bit about myself. You'll be hearing more from me, both on the eScribe 6 product,
+the product roadmap, and you'll definitely be hearing from me to get feedback on your experience.
+And I'm going to pass it back to Michelle. Awesome. Thank you so much, Taylor. We're so
+glad you're on the team and can't wait to see the impact that you make. Okay, so time for a
+quick poll question. We are curious, what is your favorite way to get eScribe updates? There are a
+few options you can choose from. Possible answers are email, webinars, monthly newsletters, community
+portal, directly through customer support, and my friend who also has eScribe. So if you could just
+take a quick second and fill that out. We'd love to see how you feel about this. So just take a
+second, and then Lori will show the outcome in a second here. All right. Oh, so we have a clear
+winner. We have email at 52%, webinars at 30%, and yeah, monthly newsletter 9%, customer portal
+is 6% directly to customer support, 1%, and my friend who also has eScribe, 1%. That's awesome.
+I'm also like a big get update through email type of person, but it does warm my heart to see so
+many of you chose webinars because it's my hope that we're making an impact in a positive way
+with these. So hopefully we're on the right path there. Okay. Let me get back to this real fast.
+Okay. Next, we're going to move into the demo portion of things. So I'm going to stop sharing
+my screen, and I'm going to let Viola take it away. Hi, everyone. Thank you for joining
+our webinar today, and I definitely will start off with our demo portion. So let me go ahead
+and share my screen, and then we could take a look at this together.
+Okay. So with eScribe version 6, welcome to this little portion here. I'm going to go ahead and
+start with some navigation pieces and then dive into further of the fields you may be seeing when
+you're working with meeting templates. So starting from the top here, whenever you do have your
+meeting templates, you're going to see them displayed on this left-hand panel here. And
+whenever you do click on a meeting template, you're going to see the agenda structure on the
+right-hand side. When it comes to creating new particular templates, you can do so by clicking
+on new template at the very top here, and then clicking on create template. Once you do, you're
+going to get this create meeting template fly out. And then in a couple of moments, I'm going to
+actually go through what each of these fields are so that you have a little bit more detail to it.
+So for now, I'm going to go ahead and close out of here. And then I'm also going to touch base on
+the best practices we're going to be recommending when it comes to creating new templates.
+So when it comes to creating new templates, the best practice we're going to be recommending
+is going to be duplicating or copying an existing template that is here. So to do that, you're able
+to click on the options menu for that existing template. And then there is an option here called
+duplicate. When you click on here, you're going to see this particular fly out. And then you're
+going to see multiple fields that have already been filled out. But definitely in a couple
+moments, I'm going to talk about what these particular fields are. So for now, I'm just
+going to go ahead and cancel out of this and talk to you more about other navigation pieces.
+So when it comes to meeting template, there also is a thought about how we could add agenda items
+to the structure. To add a brand new agenda item, all you would need to do is you're going to see
+there's an add item related option on the top right hand corner. When you click on here, you're
+going to get the add agenda item fly out, where you're going to see very similar fields you've
+seen before. So things like title, description, parents and place item after to explore orientation
+purposes. And then you will also see options of being able to add default minutes and default
+motions. So you're able to insert those into your agenda item. And then you'll see other additional
+settings for the item, including adding the special action and other settings below that you've seen
+in version five two. Away from all this, then when you fill all these fields, you're able to go ahead
+and click on add to then add the item into the structure. So for now, I'm just going to go close
+out of here. And when it comes to the time where you do add more agenda items into the structure,
+you can definitely make edits and adjustments to it by clicking on the options menu or this little
+candy kebab icon here. And then you'll get the edit item option here to give you the exact same
+fly out as before, where you are able to go ahead and make those adjustments as needed and you're
+able to save it in place too. So now with this being said, other things you can do is if you
+click on the options menu as well, you also have the option to delete the item. And then that would
+be the general idea of what you would do with the agenda items. Lastly, for this area, another thing
+you would consider would be the ordering. So if you do see that your order is incorrect and you
+want to make an adjustment to it, you do have the reorder option. When you click on reorder,
+you're going to see these grab little icons. They look like candy bars to me. So what you can then
+do is if you click on when you click on that particular icon and drop and drag it to the
+right positioning here, you're able to just confirm that the order is correct. And then you
+could click on save to save that particular order in place. So for now, I'm just going to go ahead
+and cancel this so that we can go back to this order. Away from this little area here for our
+agenda structure, other things you may want to be considering is going to be how you would
+manage those particular templates. So especially for those who are going to be creating multiple
+templates, or maybe over time, you're creating like some test ones to get adjusted to, there
+is going to be a newer feature here for managing those templates, which is located over here in our
+options menu. And that particular option is called deactivate. So this particular feature is now a
+feature that will move away from that permanent delete option we've seen before. And the purpose
+for this is to be able to prevent accidental deletes, give you actually more opportunity to
+determine which templates are going to be actively used around eScribe. So meaning for any future
+meetings you create, as well as the actually gives you more opportunity to reutilize a media
+template in the future. So for example, if you have templates that are more seasonal in nature,
+so seasonal committees, or maybe if you had a dedicated meeting template for trading only.
+So what this will do is it will add a status to it, so become a deactivated template,
+and then that won't be utilized as an option around eScribe, including creating a meeting.
+Away from this one last little thing I want to remind everyone on is the option about sync
+profile. So when it comes to updating meeting templates, we you do not have to click on the
+sync profile option anymore. So what this means ultimately is when you create an update for the
+template, all you would have to do is go into your existing meeting, prepare or reprepare the
+agenda or post minutes package to then see that change that you've made. So now you can save that
+one step in between. So that is something we're very proud to say that we have done here.
+Now that we talked about a little bit of navigation and those kinds of housekeeping items,
+let's go and talk about the fields that you have when it comes to meeting template.
+So if I went ahead here and click on the options menu and then click on duplicate,
+from the very top here, just to give you some ideas, you're going to see similar fields that
+you've seen before, including the template name, the meeting identifier, being able to select the
+option of copying the initial agenda structure. And then if I scroll down a little bit, you're
+going to see a permission section. So this permission section was created with the idea
+of being able to actually streamline the type of permissions you want eScribe users to have. So
+let's say if you had multiple administrators, you could actually utilize this permission section to
+be able to say that this administrator should be able to create or modify the meeting template,
+while other administrators maybe should manage the task. So this is really just to streamline
+and prevent confusion. With that being said, I'm going to scroll down a little bit more and then
+we're going to have a meeting section. Over here from the top, you're going to see there's
+an agenda, title, and numbering style. So this is similar to what you see in version five, where
+you're able to identify if you want letter, numbering, or none as your setup for level one,
+level two, and level three items. And you also have the option of being able to bold or underline
+them as well. Also, you will have the option of being able to hide the parent number. And then
+additionally here, you're going to have extra meeting settings as well you can work with.
+So if I go ahead and click on configure meeting settings, you're going to get this brand new kind
+of paneling here. So instead of that accordion style that you've seen before, you're able to
+see all the additional settings at the very top here in these individual tabs. So if I, for example,
+if I'm in the general tab, you're able to set up what percentage you want for quorum, the submission
+related deadline and reminders for document manager or report manager. And if I went to other
+particular tabs like the motion tab here, you're able to change your labels for your results for
+motions. If I went to voting, you'll be able to change like the results for your particular
+voting results. If I go to speakers list, you're able to enable speakers list and also identify
+who it's available to and when participants can submit their particular request. And then if I
+went into the public display, this particular tab is a little bit different than what you've seen
+before. So when it comes to public display, and you're in a meeting, you have the option of being
+able to switch between the agenda view and the logo view during that exact meeting. With version
+six, you will be able to now decide on that particular view setup from the meeting temple
+level. So let's say for example, you wanted to have logo view, but over time, you want to switch
+this over to agenda view. If you want to make that change, you would have to go to this area
+here of your particular meeting template for that to be applied to your meetings. So that is one
+change we have done in here. Otherwise, on this particular page, you're able to go ahead and make
+adjustments to how you would want your public display to show. The last little two tabs here
+are going to be for your participant and visitor. So this is just really allowing you to say what
+exactly should participants see when they log in to eScribe and what visitors should see when they
+log into eScribe. So if you have those particular user roles assigned to those individuals,
+this is where that setting is going to come from what they should see. All in all, when you do
+work with this particular tab, just make sure you click on save changes and save that in place.
+And then from there, you're able to take a look into your meeting and see those changes.
+For now, I'm going to go ahead and close out of here. And then I will talk about the package
+settings. So what package settings very straightforward settings have you seen before
+where you have your margins, you have your font sizing, font, page sizing, etc. If I scroll down
+a little bit more, you're going to if you're working with the bilingual side of things,
+you're able to set if you would want English or French being first. And then you're able to set
+your date formatting. The next little thing I want to talk about is going to be logo size and
+positioning because the way this is set up is different than what you've seen before.
+So before with logo size and position, we had that X and Y coordinate system to be able to
+identify where the logo should be placed in our packages. But instead of that, we now have moved
+to a percentage system here with the logo width. So what this is, is that 100% is going to represent
+the full width of a page. And now you could tell eScribe that we want the logo to take up this
+percentage of the page and such like that. So you'd be working around 20 or 25%. But you would
+definitely be working with the numbers to make sure the logo is formatted to where you're looking
+you would like it to be. Away from this little bit, you're able to go ahead and set what the
+alignment is for the logo. So left, right or center are your options. And then you can also
+set if you want the logo to be in line with your agenda title. From this, if I just scroll down a
+little bit more, you're going to see they're going to have the spacing and indentation options.
+So very straightforward, you're able to set these numbers in place to identify how much spacing you
+want at the first level, second level, third level items. And then you're also able to set
+the indentation for those particular items as well. With all that being said, I will pass it
+over to Kelsey to kind of elaborate a little bit more about the agenda and minute package settings
+we have. Thanks, Viola. I'm just going to go ahead and share my screen really quick.
+Okay, here we go. I'm just going to continue on and build on what Viola was talking about here.
+So you can see at the bottom here, you've got two main buttons for your agenda package and your
+minute package. And that's going to be the bulk of where those settings are to configure your
+agenda and minute package. So on the first tab here, it's the general tab, and we've got lots
+of settings for the agenda to configure it exactly how you'd like it. So separate agenda page, that
+means that you can have your title appear on a separate page, and then your items will appear on
+a page built in that so you can have your title really stand out. You can have page numbers on
+your package, you can decide if you'd like the motions to display in that package or not, what
+that prefix label would be for your motion. So you can customize that, decide if you'd like
+that bold or underlined, and even the motion text style if you'd like that bold. You can decide if
+you want to show the mover and seconders within your agenda package, and if there is no mover
+and seconder chosen at the time, maybe for your agenda package and not your post agenda package,
+if you'd like the blank labels to show, or if you would just like nothing to show if there's
+been no mover or seconder selected. You can also choose if you'd like the sponsor, the timer values,
+and then you can have a couple of signature lines as well in your agenda package. And you can add
+additional documents to the front or the top of your agenda by adding PDFs right here.
+These four tabs, the agenda, addendum, revised, and post are all pretty similar. What they do,
+they basically feed into the different agendas that we offer, so I'm just going to go over the
+agenda tab since they're all similar. So it's really exciting because you can decide what you
+want that meeting template's agenda header, title, or footer to be, and then it's going to span across
+all of those agendas once you create different meetings within that meeting template.
+So you can see here for header, you've got different styling options here. You can type
+in whatever text you want, and then when you go to create that meeting, it's going to span across
+all of them, like I said. So here on the right hand side, you have insert variable. So instead
+of having to manually type in headers and change the date or start time or meeting number, you can
+just click to insert a variable here, and you can easily just have that variable change as you work
+through your agendas. So now you won't have to make changes for agenda, as I said. So we've got
+agenda headers here for the open and closed session, and of course these fields are all
+bilingual as well, so you can customize it for your French agendas if you have that.
+Scrolling down, we have settings to include that on the first page. If you didn't want that on the
+first page of your agenda, you can uncheck that, and if you'd like that all included in your
+attachments. I'm just going to skip the title for one second, and it's the same idea for the footer
+here. We've got the four variables and then the same two settings. The title is where it really
+differs, so I'm just going to use this little button to expand this, and you can see here that
+I can make my title exactly how I want it, and I can also have a lot more variables to use.
+So you can see I've got meeting start time, the date, the end date, the time. If I have a second
+session and I want information about that in my agenda, I can do that. The meeting number, location,
+and the attendees variables are all really neat. You can choose if you like your attendees and
+your non-voting attendees to show in the list or the paragraph view. So I've got mine all set up
+here, and I can show you what it looks like when we're done going through this, but I'm not going
+to save that. No changes were made. It's the same idea for your addendum revised and post, like I
+said. The one that's really different is resolution packages. So if I click on that tab, same idea
+with the header and footers, but the resolutions open and close. You can really make it exactly
+what you want it to be by customizing the styling here, or you can also have a lot more variables,
+the same as before, but you can also add vote information because every motion will have a
+different page. You can decide if you want the agenda item moved by, seconded by, results,
+or the motion number on each page of your resolution package that displays a motion.
+So that's something new that we've gotten into. I'm just going to close out of the agenda package,
+and I'm going to move it to the minutes package here. So these are all settings that really affect
+motions, voting, and then your minutes packages. So same idea, the general tab takes up a lot of the
+general settings here. So showing the minutes in the same order as the agenda, and you can also
+include if you want the agenda items that were not visited throughout that meeting,
+if you want the description of the agenda included in the minutes, if you'd like attendance details
+shown, tasks, and then a couple of signature lines as well. Moving over to the pre-minutes
+and the post-minutes title, same idea as the agenda area, except these will feed into your
+pre-minutes packages and then your post-minutes packages. So you've got options for your title
+open and closed here. And again, it'll show them bilingual if you have French turned on.
+So I'm just going to expand this one open here. Same idea, the variables are a little bit different
+for the attendees. So if you click in, you can see there's a lot more options, because you can
+say if you'd like people who are present or absent to show within your title. You can also choose if
+you'd like the roll call comments as well, and that's the text box that you have at the bottom
+of the roll call in your meeting sign. I'm going to skip the post-minutes title, same idea that
+just feeds into your post package instead of your pre. And then you have your options for your
+header and footer to include on your first page and the same four variables as before.
+Motion goes over more motion settings for your package and even your meeting site for some of
+them. So if you'd like the motion number shown in your package, what that prefix label is,
+any styling, and then the motion number style itself. And scrolling down, I have options for
+if I'd like to move in seconded to be showed in my minutes package, those labels, and if I want
+them to be bold. And lastly, the consent motion piece, what information I'd like to be pulled
+over from my meeting site into my package. The last tab to go over here is the voting tab.
+So this decides if I'd like to show the voting type within my minutes package, how I want those
+recorded votes to show if I do have a recorded vote. So we still do have table format, that one's
+been cleaned up quite a bit. I'm sure people will be happy that that's been done. Paragraph format,
+oppose votes only and in favour. You also have the option to choose if you'd like absent voters to
+be shown within those results as well. These last few settings here are the results labels.
+You can choose to have a label or not where that result shows exactly in that post minutes package,
+whether it's right aligned or left, bold or underlined, and then showing that vote count
+beside those recorded votes. So I'm going to close out of here. And before I go over to the
+meeting site, I'm just going to go to the permissions area really quick because I saw a question there.
+To answer your question, permissions are almost the same as before. I think the only things that
+we've changed are a couple of naming conventions. So if I click in or I can edit that person's
+permissions, if I click in, you'll see that I can type in someone's name here and I've got the same
+permissions as what was available in eScribe 5. Just again, the titles are cleaned up on them.
+What's neat though is that we heard a lot of feedback on eScribe 5 that you could type
+someone's name in, give them permissions and nothing really happened. Well, it depended on
+the person's user role of what permissions they could be granted. So if I typed in a participant
+into this area here, then no permissions would show up because you can't give them any more
+permissions. They'd have to have a user role that would allow them to have the permission.
+Same idea if I typed in somebody who was a contributor, they'd only have a few of the
+options here. So we really wanted to help people be aware of you need to have a certain user role
+in order to gain certain permissions. So we hope that that cleans that up. And I can touch more on
+that in the next webinar if people have more questions. So I'm going to close out of here
+and go to my meeting for today. And I'm going to go to my post agenda package just by clicking
+on packages and going over here to my full package. Viewing that and it opens up in a
+new browser. And you can see here I've got my header for my, I believe it was my meeting
+number. And then if I scroll down, I've got my page, the variable of, and then my other variable,
+so page one of three. And then I've got my logo and my title here with that line underneath.
+And I have my agenda starting on a separate page. So you can see that items one and below will start
+on a separate page. My variables have all filled in. So I've got my date and my time, my meeting
+number, location, and my voting attendees and staff. And you can choose what you want these to
+be since you can type into that text box for that title. So I'll go back to my meeting site really
+quick and I'll go over to my minutes packages and I'll open up that post minutes package
+over here. And it's going to open up in a Word document and you'll see the exact same thing.
+My header is up at the top. I'm just going to drag it over once it opens my other screen.
+I've got my header up at the top, my title exactly the way that I configured it. I've got my
+attendees and my staff present in paragraph format, not list. And I don't have the option
+to have it start on a separate page. So you can see my items will start right after that line.
+And if I scroll down, I did choose to have my footer appear on my first page as well.
+That's it for the demo portion of the webinar. Michelle, I'm going to hand it back to you.
+Awesome. Thank you for that, ladies. Really great to see it in motion there. All right. So
+we have a few minutes for some questions. Let's start with this first one here.
+Taylor, I'm going to give this to you. The question is, when can I expect to be upgraded?
+That's a great question, number one. Thank you for whoever did submit that. So as you know,
+we're very excited about all the awesome experiences that are built into eScribe 6.
+As you can see, there's a lot of advantages. There's new features. There's improved usability,
+user experience. At least we were at. So we're currently rolling out eScribe 6 to net new
+customers coming onto eScribe. As they're coming on board, as they're going through implementation,
+we're collecting their feedback. We're using that to constantly improve the product.
+So as for timing, rest assured, we're going to give you ample time to let you know when the
+upgrade is actually going to happen and when you're going to be scheduled. But what I will say is,
+we're committed to giving you ample amount of time. We're committed to working with you to
+finding the right time. We're certainly not going to just spring this on you. We know there's a lot
+of other projects that you all have to support throughout your organizations. So at least from
+what we can say on our side, we're rolling this out to net new customers. We're collecting the
+feedback. We're making the product and the experience better. As you can see that Viola
+and Kelsey were showing. So just as a reminder, we're going to give you ample amount of time.
+We're going to work with you on the right timing for the upgrades. We're also committed to providing
+the necessary resources, the training material, the education, the support on the change management
+that you might need throughout your organization. So at least what we can say right now is we're
+rolling this out to new customers. We're getting that feedback. We're making the product and the
+experience better, as you can see through these webinars. But as I mentioned, we're committed to
+giving you as much time as possible and to work with you on the right upgrade schedule for everyone.
+Thanks for that, Taylor. It's great to hear all of that. And I do also want to say these are not
+training sessions. I know it seems like we're sharing a lot of information, but the idea is
+for you just to get a sense of what it's going to be like to sit back and enjoy the show. But that
+said, we do have a bunch of questions that were answered in the Q&A. Kelsey and Viola, are there
+any in particular that you'd like to highlight and speak to? I think the big one was the
+permissions one, which I went over. There is one right now about the terminology changing from
+V5 to V6. I think in general, you can expect things to stay pretty much the same. I know that
+we used to call reports reports, and now we call them documents. Viola, when you were doing any
+training videos or anything like that, was there any big terms that you noticed? I think maybe
+agendas would be one, like we call it agenda, an agenda full package versus I think it was
+cover sheet in V5. Yeah, exactly. So yeah, some of those terminologies that you highlighted are
+changes. And then definitely something that myself and Geeta kind of took into account is that for
+any type of terminology change, that's also going to be reflected upon videos, as well as other
+training other material, including help articles. So something that we have taken into account is
+creating a glossary for those new changes, like those terminology changes. So that could be a
+document that you could definitely prefer to if you do feel confused over what exactly has
+changed in that regard and what the definition of it is. So we have taken that into account.
+Awesome. And then I think this is a good one to maybe point out a little bit more. Will our
+templates be transferred to the new eScribe 6 or do we have to start new? Kelsey, would you
+like to talk a little bit more about that? Sure. Yes, your meeting templates will transfer over.
+So you won't have to build those out from scratch. They'll transfer over and then you'll work with
+your customer success manager. If there's any little changes that we've made, maybe something's
+been improved or removed, they'll help you navigate that and figure out how to work with that going
+forward. That's great. We have a question about doing demos in bilingual view. That is a great
+suggestion. We can consider doing that for our next one for sure. So thank you for calling that
+out. Let's see here. Steve was asking about what we mean by resolutions package. Viola, you want to
+speak to that real fast? Yeah. So resolution packages are a type of package that you can
+utilize just to print out only your motion. So some customers, they like to kind of just
+have dedicated pages to be able to fill in who the mover, the seconder, and the result is of that
+vote. It also gives you some space to like fill in extra information to it. So sometimes like some
+customers, they just want to highlight that as a separate documentation. And then from there,
+you could decide if you want that to be published on your website or not, or if that's just only
+going to be circulated internally. So it is something you could play around with if that's
+something you are looking for. That's great. And then let's do this one question to close things
+out with. If you have page numbers on your agenda and have an additional addendum agenda
+with a report that is being inserted in the middle of an agenda package,
+will the page numbers automatically change to include the additional report?
+Yeah, so definitely there is a setting in terms of being able to ensure that the page number is
+also flowing with attachments as well. So definitely when you play around with meeting templates,
+you can also see that kind of setting when you turn that on. And when you do add that attachment,
+you'll be able to see that the page numberings are following in that order you're expecting.
+That's great. Great. I know that there are a couple of questions. Oh, wait. Kelsey,
+there's one that you highlighted really fast. Will the terminology change in version six,
+or can we expect the same terms, menu, titles, etc.?
+Oh, yeah. Yeah. Not much has changed. Like I said, just maybe we call reports now. We call them
+documents, and there's no such thing as an agenda cover page anymore. It's just agenda,
+and then your full package is your agenda full package. I do see another question here.
+Can we do other webinars for tasks, process, resolution sheets? Yeah, we can definitely do
+that. We can add that to the list. And then to answer one other question, no, you can't give
+the admin role to someone for a specific meeting only. If you gave them that admin access, they'd
+have access to the other meetings within that meeting type. That's awesome. Thank you for all
+of that. Great. Well, everyone, we're going to wrap now. But if you do have a chance to do that
+post webinar survey, we'd really love it. We love to hear your feedback, and it helps guide us in
+the future to make these even better as we go forward. And again, we'll be sending up a follow
+up email that'll have a link to this recording so you can refer back to it. And any questions we
+didn't get to your CSM, we'll follow up with you directly. All right. Well, thank you so much,
+everyone. We appreciate you joining us here today.
