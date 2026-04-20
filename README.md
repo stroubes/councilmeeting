@@ -28,6 +28,16 @@ Initial scaffold for a municipal Council Meeting Management System.
 2. Install dependencies: `npm install`.
 3. Run dev server: `npm run dev`.
 
+Frontend lint and format scripts (run from `frontend/`):
+
+```bash
+npm run lint           # ESLint on src/**/*.{ts,tsx}
+npm run format         # Prettier auto-format
+npm run format:check   # Prettier check (what CI runs)
+```
+
+CI runs `lint` and `format:check` on every pull request.
+
 ## Database
 
 - Foundational schema migration is in:
@@ -349,10 +359,13 @@ Backend bypass is now header-gated and environment-gated:
 
 ## Local Reliability Notes
 
-- Backend CORS is enabled for local frontend origins:
+- Backend CORS allowed origins are configured via the `CORS_ORIGINS` env var
+  (comma-separated). The default in `backend/.env.example` covers local dev:
   - `http://localhost:5173`
   - `http://127.0.0.1:5173`
   - `http://127.0.0.1:4173`
+  - For other environments, override `CORS_ORIGINS` with the deployed frontend
+    origin(s). The backend fails fast on startup if `CORS_ORIGINS` is empty.
 - If meeting creation fails in browser, first verify:
   - frontend API base URL points to running backend (`VITE_API_BASE_URL=http://localhost:3000/api`)
   - dev bypass login is active when not using Microsoft auth (`VITE_AUTH_BYPASS=true`)
